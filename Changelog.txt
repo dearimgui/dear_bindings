@@ -1,0 +1,5 @@
+--- v0.02
+
+Removed some more ImVector functions that don't compile correctly due to the lack of operator== on certain types
+Removed ImNewWrapper on newer ImGui versions
+Made LogTextV() only get added on ImGui version that don't supply it themselves

@@ -1,3 +1,7 @@
+# Dear Bindings Version 0.02
+# Generates C-language headers for Dear ImGui
+# Developed by Ben Carter (ben@shironekolabs.com)
+
 import code_dom
 import c_lexer
 import modifiers.mod_remove_pragma_once
@@ -56,11 +60,17 @@ def parse_header():
         modifiers.mod_attach_preceding_comments.apply(dom_root)
         modifiers.mod_remove_function_bodies.apply(dom_root)
         # Remove ImGuiOnceUponAFrame for now as it needs custom fiddling to make it usable from C
-        # Remove ImNewDummy as it's a helper for C++ new (and C dislikes empty structs)
-        modifiers.mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame", "ImNewDummy"])
-        # Remove ImVector::contains() because most of the things ImVector gets used with have no equality operator,
-        # and thus contains() cannot compile correctly (on the C++ side)
-        modifiers.mod_remove_functions.apply(dom_root, ["ImVector::contains"])
+        # Remove ImNewDummy/ImNewWrapper as it's a helper for C++ new (and C dislikes empty structs)
+        modifiers.mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame",
+                                                      "ImNewDummy",  # ImGui <1.82
+                                                      "ImNewWrapper"  # ImGui >=1.82
+                                                      ])
+        # Remove ImVector::contains()/etc because most of the things ImVector gets used with have no equality operator,
+        # and thus they cannot compile correctly (on the C++ side)
+        modifiers.mod_remove_functions.apply(dom_root, ["ImVector::contains",
+                                                        "ImVector::find",
+                                                        "ImVector::find_erase",
+                                                        "ImVector::find_erase_unsorted"])
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
         # We remap the ImGui:: namespace to use ig as a prefix for brevity

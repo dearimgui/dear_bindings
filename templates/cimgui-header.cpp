@@ -10,9 +10,10 @@
 // Helper functions
 namespace ImGui
 {
+    // Missing LogTextV implementation, only needed for older ImGui versions (<1.82)
+#if IMGUI_VERSION_NUM < 18200
     void LogTextV(const char* fmt, va_list args)
     {
-        // Fixme: Add this to the main library rather than using this hack
         ImGuiContext& g = *GImGui;
         if (!g.LogEnabled)
             return;
@@ -22,4 +23,6 @@ namespace ImGui
         else
             g.LogBuffer.appendfv(fmt, args);
     }
+#endif
 }
+
