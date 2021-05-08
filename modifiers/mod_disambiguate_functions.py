@@ -4,7 +4,7 @@ import sys
 
 
 # This modifier finds any overloaded functions with identical names and disambiguates them
-def apply(dom_root, name_suffix_remaps):
+def apply(dom_root, name_suffix_remaps, functions_to_ignore):
     # Find all functions with name collisions
 
     functions_by_name = {}  # Contains lists of functions
@@ -22,6 +22,30 @@ def apply(dom_root, name_suffix_remaps):
     for functions in functions_by_name.values():
         if len(functions) < 2:
             continue  # No collision
+
+        if functions[0].name in functions_to_ignore:
+            continue
+
+        if len(functions) == 2:
+            # Special case - if we have exactly two functions, and they're in #ifdef or similar blocks that make them
+            # mutually exclusive (i.e. they can never both be compiled in), then this isn't a name clash and can be
+            # ignored
+
+            conditionals_a = utils.get_preprocessor_conditionals(functions[0])
+            conditionals_b = utils.get_preprocessor_conditionals(functions[1])
+
+            no_collision = False
+
+            for conditional_a in conditionals_a:
+                for conditional_b in conditionals_b:
+                    if conditional_a.condition_is_mutually_exclusive(conditional_b):
+                        no_collision = True
+                        break
+                if no_collision:
+                    break
+
+            if no_collision:
+                continue
 
         # Count the number of arguments that are identical across all overloads
         num_common_args = 0

@@ -74,10 +74,14 @@ class DOMElement:
             return DOMComment.parse(context, stream)
         elif tok.type == 'PPDEFINE':
             return DOMDefine.parse(context, stream)
+        elif tok.type == 'PPUNDEF':
+            return DOMUndef.parse(context, stream)
         elif (tok.type == 'PPIF') or (tok.type == 'PPIFDEF') or (tok.type == 'PPIFNDEF'):
             return DOMPreprocessorIf.parse(context, stream)
         elif tok.type == 'PRAGMA':
             return DOMPragma.parse(context, stream)
+        elif tok.type == 'PPERROR':
+            return DOMError.parse(context, stream)
         elif tok.type == 'PPINCLUDE':
             return DOMInclude.parse(context, stream)
         elif tok.type == 'NEWLINE':
@@ -107,10 +111,14 @@ class DOMElement:
             return DOMClassStructUnion.parse(context, stream)
         elif tok.type == 'PPDEFINE':
             return DOMDefine.parse(context, stream)
+        elif tok.type == 'PPUNDEF':
+            return DOMUndef.parse(context, stream)
         elif (tok.type == 'PPIF') or (tok.type == 'PPIFDEF') or (tok.type == 'PPIFNDEF'):
             return DOMPreprocessorIf.parse(context, stream)
         elif tok.type == 'PRAGMA':
             return DOMPragma.parse(context, stream)
+        elif tok.type == 'PPERROR':
+            return DOMError.parse(context, stream)
         elif tok.type == 'PPINCLUDE':
             return DOMInclude.parse(context, stream)
         elif tok.type == 'NAMESPACE':
@@ -476,6 +484,46 @@ class DOMDefine(DOMElement):
         return "Define: " + str(self.tokens)
 
 
+# A #undef statement
+class DOMUndef(DOMElement):
+    def __init__(self):
+        super().__init__()
+
+    # Parse tokens from the token stream given
+    @staticmethod
+    def parse(context, stream):
+        checkpoint = stream.get_checkpoint()
+
+        initial_token = stream.get_token_of_type(['PPUNDEF'])
+        if initial_token is None:
+            stream.rewind(checkpoint)
+            return None
+
+        dom_element = DOMUndef()
+
+        # Tokens up until the line end are part of the expression
+        while True:
+            token = stream.get_token(skip_newlines=False)
+            if token is None:
+                break
+
+            if token.type == 'NEWLINE':
+                break
+
+            dom_element.tokens.append(token)
+
+        return dom_element
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        write_c_line(file, indent, "#undef " + collapse_tokens_to_string(self.tokens) +
+                     self.get_attached_comment_as_c_string())
+
+    def __str__(self):
+        return "Undef: " + collapse_tokens_to_string(self.tokens)
+
+
 # A #if or #ifdef block (or #elif inside one)
 class DOMPreprocessorIf(DOMElement):
     def __init__(self):
@@ -555,6 +603,16 @@ class DOMPreprocessorIf(DOMElement):
                (self.is_ifdef == other.is_ifdef) and \
                (self.is_elif == other.is_elif) and \
                (self.is_negated == other.is_negated)
+
+    # Returns true if this is mutually exclusive with another condition
+    # (i.e. it is impossible for both to be active at the same time)
+    # Note that this currently only detects #ifdef/#ifndef pairs, not more complex expressions, nor does it check for
+    # the effect of being in the else-side of a conditional
+    def condition_is_mutually_exclusive(self, other):
+        return (self.get_expression() == other.get_expression()) and \
+               (self.is_ifdef == other.is_ifdef) and \
+               (self.is_elif == other.is_elif) and \
+               (self.is_negated != other.is_negated)
 
     # Get the expression used as a string
     def get_expression(self):
@@ -681,6 +739,38 @@ class DOMPragma(DOMElement):
 
     def get_pragma_text(self):
         return collapse_tokens_to_string(self.tokens)
+
+
+# A #error statement
+class DOMError(DOMElement):
+    def __init__(self):
+        super().__init__()
+
+    # Parse tokens from the token stream given
+    @staticmethod
+    def parse(context, stream):
+        checkpoint = stream.get_checkpoint()
+
+        token = stream.get_token_of_type(['PPERROR'])
+        if token is None:
+            stream.rewind(checkpoint)
+            return None
+
+        dom_element = DOMError()
+
+        # The error token contains the entire error body, so we don't need to do much here
+
+        dom_element.tokens = [token]
+
+        return dom_element
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+
+    def __str__(self):
+        return "Error: " + str(self.tokens)
 
 
 # A #include
@@ -1219,6 +1309,7 @@ class DOMFunctionDeclaration(DOMElement):
         self.name = None
         self.return_type = None
         self.arguments = []
+        self.initialiser_list_tokens = None  # List of tokens making up the initialiser list if one exists
         self.body = None
         self.is_const = False
         self.is_static = False
@@ -1302,24 +1393,24 @@ class DOMFunctionDeclaration(DOMElement):
         dom_element.tokens.append(name_token)
 
         if name_token.value == "operator":
-            # If we got "operator" then we need to read the real name from the next token too
-            name_token = stream.get_token()  # We don't use an explicit type because things like "operator==" are valid
-            if name_token is None:
-                stream.rewind(checkpoint)
-                return None
-            dom_element.tokens.append(name_token)
-            dom_element.is_operator = True
+            # If we got "operator" then we need to read the real name from the next tokens too
+            # (tokens because of things like "operator[]" and "operator*=")
 
-            if name_token.type == 'LSQUARE':
-                # Special-case for "operator[]"
-                if stream.get_token_of_type(['RSQUARE']) is None:
-                    # [] must appear as a pair, otherwise this is malformed
+            operator_name_tokens = []
+            while True:
+                next_token = stream.get_token()
+                if next_token is None:
                     stream.rewind(checkpoint)
                     return None
+                if next_token.type == 'LPAREN':
+                    #  We found the opening parentheses
+                    stream.rewind_one_token()  # Give this back as we want to parse it in a moment
+                    break
+                else:
+                    operator_name_tokens.append(next_token)
+            dom_element.is_operator = True
 
-                dom_element.name = "operator " + name_prefix + "[]"
-            else:
-                dom_element.name = "operator " + name_prefix + name_token.value
+            dom_element.name = "operator " + name_prefix + collapse_tokens_to_string(operator_name_tokens)
         else:
             dom_element.name = name_prefix + name_token.value
 
@@ -1373,6 +1464,36 @@ class DOMFunctionDeclaration(DOMElement):
             if stream.get_token_of_type(['RPAREN']) is None:
                 stream.rewind(checkpoint)
                 return None
+
+        # Possible attached comment
+        # (this is kinda hacky as there are a bunch of places comments can legitimately be that aren't properly parsed
+        # at the moment, but it'll do and this is arguably a valid special case as we want to treat a comment here
+        # as attached to the function rather than part of the body)
+
+        attached_comment = stream.get_token_of_type(["LINE_COMMENT", "BLOCK_COMMENT"])
+        if attached_comment is not None:
+            dom_element.attached_comment = attached_comment
+
+        # Possible initialiser list
+
+        initialiser_list_opener = stream.get_token_of_type(["COLON"])
+        if initialiser_list_opener is not None:
+            dom_element.initialiser_list_tokens = []
+            dom_element.initialiser_list_tokens.append(initialiser_list_opener)
+
+            while True:
+                tok = stream.get_token()
+
+                if tok.type == 'LBRACE':
+                    # Start of code block
+                    stream.rewind_one_token()
+                    break
+                elif tok.type == 'SEMICOLON':
+                    # End of declaration
+                    stream.rewind_one_token()
+                    break
+                else:
+                    dom_element.initialiser_list_tokens.append(tok)
 
         # Possible body
 
@@ -1476,6 +1597,8 @@ class DOMFunctionDeclaration(DOMElement):
         else:
             if self.body is not None:
                 write_c_line(file, indent, declaration + self.get_attached_comment_as_c_string())
+                if self.initialiser_list_tokens is not None:
+                    write_c_line(file, indent, collapse_tokens_to_string(self.initialiser_list_tokens))
                 self.body.write_to_c(file, indent, context)  # No +1 here because we want the body braces at our level
             else:
                 write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
@@ -1645,7 +1768,7 @@ class DOMType(DOMElement):
         have_valid_type = False
         while True:
             tok = stream.get_token_of_type(['THING', 'ASTERISK', 'AMPERSAND', 'CONST', 'SIGNED', 'UNSIGNED',
-                                            'LSQUARE', 'LTRIANGLE'])
+                                            'LSQUARE', 'LTRIANGLE', 'COLON'])
             if tok is None:
                 if not have_valid_type:
                     stream.rewind(checkpoint)
@@ -1686,6 +1809,10 @@ class DOMType(DOMElement):
                 elif (tok.type == 'ASTERISK') or (tok.type == 'AMPERSAND') or (tok.type == 'CONST'):
                     # Type suffix
                     dom_element.tokens.append(tok)
+                elif tok.type == 'COLON':
+                    # Namespace separator
+                    dom_element.tokens.append(tok)
+                    have_valid_type = False  # Go back to the state of expecting a type name
                 elif tok.value == 'long':
                     # "long long" is... a thing :-(
                     dom_element.tokens.append(tok)
@@ -1696,6 +1823,9 @@ class DOMType(DOMElement):
             else:
                 if (tok.type == 'CONST') or (tok.type == 'SIGNED') or (tok.type == 'UNSIGNED'):
                     # Type prefix
+                    dom_element.tokens.append(tok)
+                elif tok.type == 'COLON':
+                    # Leading namespace separator
                     dom_element.tokens.append(tok)
                 else:
                     # Type name
@@ -1808,6 +1938,21 @@ class DOMHeaderFile(DOMElement):
             return "Header file"
 
 
+# A collection of header files
+class DOMHeaderFileSet(DOMElement):
+    def __init__(self):
+        super().__init__()
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        for child in self.children:
+            child.write_to_c(file, indent=indent, context=context)
+
+    def __str__(self):
+        return "Header file set"
+
+
 class DOMComment(DOMElement):
     def __init__(self):
         super().__init__()
@@ -1861,6 +2006,8 @@ class DOMClassStructUnion(DOMElement):
         self.is_forward_declaration = True
         self.is_by_value = False  # Is this to be passed by value? (set during modification)
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
+        self.is_imgui_api = False  # Does this use IMGUI_API?
+        self.base_classes = None  # List of base classes, as tuples with their accessibility (i.e. ("private", "CBase"))
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1872,6 +2019,33 @@ class DOMClassStructUnion(DOMElement):
         name_tok = stream.get_token_of_type(['THING'])
         if name_tok is not None:
             dom_element.name = name_tok.value
+
+            # Deal with things like "struct IMGUI_API ImRect"
+            if name_tok.value == 'IMGUI_API':
+                dom_element.is_imgui_api = True
+                name_tok = stream.get_token_of_type(['THING'])
+                if name_tok is not None:
+                    dom_element.name = name_tok.value
+
+        base_class_separator = stream.get_token_of_type(['COLON'])
+
+        if base_class_separator is not None:
+            # We have a base class list
+            dom_element.base_classes = []
+            next_accessibility = "private"
+            while True:
+                tok = stream.get_token()
+                if tok.type == 'LBRACE':
+                    # Start of actual class members
+                    stream.rewind_one_token()
+                    break
+                elif (tok.value == "public") or (tok.value == "private") or (tok.value == "protected"):
+                    # Accessibility
+                    next_accessibility = tok.value
+                else:
+                    # Class name
+                    dom_element.base_classes.append((next_accessibility, tok.value))
+                    next_accessibility = "private"
 
         # print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "Anonymous"))
 
@@ -1925,6 +2099,13 @@ class DOMClassStructUnion(DOMElement):
 
         if self.name is not None:
             declaration += " " + self.name
+
+        # Add base classes
+        if self.base_classes is not None:
+            is_first = True
+            for accessibility, class_name in self.base_classes:
+                declaration += " : " if is_first else ", "
+                declaration += accessibility + " " + class_name
 
         if not self.is_forward_declaration:
             write_c_line(file, indent, declaration + self.get_attached_comment_as_c_string())
@@ -2039,6 +2220,10 @@ class DOMEnumElement(DOMElement):
         checkpoint = stream.get_checkpoint()
 
         dom_element = DOMEnumElement()
+
+        # It's possible to have a comment here in very rare cases that we don't have a good way to deal with, so
+        # for now eat it
+        stream.get_token_of_type(['LINE_COMMENT', 'BLOCK_COMMENT'])
 
         name_tok = stream.get_token_of_type(['THING'])
         if name_tok is None:

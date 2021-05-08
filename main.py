@@ -2,6 +2,7 @@
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (ben@shironekolabs.com)
 
+import os
 import code_dom
 import c_lexer
 import modifiers.mod_remove_pragma_once
@@ -11,6 +12,7 @@ import modifiers.mod_remove_function_bodies
 import modifiers.mod_remove_operators
 import modifiers.mod_remove_structs
 import modifiers.mod_remove_functions
+import modifiers.mod_add_prefix_to_loose_functions
 import modifiers.mod_flatten_class_functions
 import modifiers.mod_flatten_nested_classes
 import modifiers.mod_flatten_templates
@@ -32,12 +34,12 @@ import generators.gen_struct_converters
 import generators.gen_function_stubs
 
 
-def parse_header():
-    print("Parsing")
+# Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
+# dest_file_no_ext.cpp. implementation_header should point to a file containing the header block for the implementation.
+def convert_header(src_file, dest_file_no_ext, implementation_header):
+    print("Parsing " + src_file)
 
-    # with open(r"Test.h", "r") as f:
-    #    file_content = f.read()
-    with open(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui.h", "r") as f:
+    with open(src_file, "r") as f:
         file_content = f.read()
 
     # Tokenize file and then convert into a DOM
@@ -46,15 +48,17 @@ def parse_header():
 
     if False:  # Debug dump tokens
         while True:
-            tok = lexer.token()
+            tok = stream.get_token()
             if not tok:
                 break  # No more input
             print(tok)
     else:
         context = code_dom.ParseContext()
-        dom_root = code_dom.DOMHeaderFile.parse(context, stream)
-        dom_root.filename = "imgui.h"
+        dom_root = code_dom.DOMHeaderFileSet()
+        dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream))
+        _, dom_root.filename = os.path.split(src_file)
         dom_root.validate_hierarchy()
+        #  dom_root.dump()
 
         print("Storing unmodified DOM")
 
@@ -81,10 +85,11 @@ def parse_header():
                                                       ])
         # Remove all functions from ImVector, as they're not really useful
         modifiers.mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+        modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
         # We remap the ImGui:: namespace to use ig as a prefix for brevity
-        modifiers.mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ig'})
+        modifiers.mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
         modifiers.mod_flatten_nested_classes.apply(dom_root)
         # The custom type fudge here is a workaround for how template parameters are expanded
         modifiers.mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
@@ -93,11 +98,19 @@ def parse_header():
         modifiers.mod_flatten_class_functions.apply(dom_root)
         modifiers.mod_remove_nested_typedefs.apply(dom_root)
         modifiers.mod_remove_static_fields.apply(dom_root)
-        modifiers.mod_disambiguate_functions.apply(dom_root, {
+        modifiers.mod_disambiguate_functions.apply(dom_root, name_suffix_remaps={
             # Some more user-friendly suffixes for certain types
             'const char*': 'Str',
             'char*': 'Str',
-            'unsigned int': 'Uint'})
+            'unsigned int': 'Uint'},
+            # Functions that look like they have name clashes but actually don't
+            # thanks to preprocessor conditionals
+            functions_to_ignore=[
+                "cImFileOpen",
+                "cImFileClose",
+                "cImFileGetSize",
+                "cImFileRead",
+                "cImFileWrite"])
 
         # Make all functions use CIMGUI_API
         modifiers.mod_make_all_functions_use_imgui_api.apply(dom_root)
@@ -119,14 +132,14 @@ def parse_header():
 
         print("Writing output")
 
-        with open(r"TestCode\sdl2-cimgui-demo\generated\cimgui.h", "w") as file:
+        with open(dest_file_no_ext + ".h", "w") as file:
             write_context = code_dom.WriteContext()
             write_context.for_c = True
             dom_root.write_to_c(file, context=write_context)
 
         # Generate implementations
-        with open(r"TestCode\sdl2-cimgui-demo\generated\cimgui.cpp", "w") as file:
-            with open(r"templates/cimgui-header.cpp", "r") as src_file:
+        with open(dest_file_no_ext + ".cpp", "w") as file:
+            with open(implementation_header, "r") as src_file:
                 file.writelines(src_file.readlines())
 
             generators.gen_struct_converters.generate(dom_root, file, indent=0)
@@ -136,4 +149,10 @@ def parse_header():
 
 
 if __name__ == '__main__':
-    parse_header()
+    # convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui.h",
+    #               r"TestCode\sdl2-cimgui-demo\generated\cimgui",
+    #               r"templates/cimgui-header.cpp")
+
+    convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui_internal.h",
+                   r"TestCode\sdl2-cimgui-demo\generated\cimgui_internal",
+                   r"templates/cimgui_internal-header.cpp")

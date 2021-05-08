@@ -16,3 +16,14 @@ Added lots of namespace-related shenanigans to deal with using namespaces to sep
 Added by-value struct conversion functions
 Added support for converting arrays of by-value types
 Removed all of the ImVector functions as they're probably more dangerous than useful
+Tidied up filename handling a bit
+Added support for base class lists on class declarations
+Added support for comments in a few more places
+Added support for adding a name prefix to all loose functions
+Make function name disambiguation aware of mutually-exclusive #ifdefs, and added manual exclusions
+Fixed escaped character literals not getting parsed correctly
+Fixed namespaced typenames not getting parsed correctly sometimes
+Fixed #error and #undef not getting parsed
+Made operator name parsing more generic and able to cope with things like "operator+=" without the previous ugly special-casing
+Made it possible to have multiple header files in the DOM
+Changed ImGui class prefix
