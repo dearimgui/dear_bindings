@@ -12,6 +12,8 @@ def apply(dom_root):
 
         current_add_point = struct
 
+        is_by_value = struct.is_by_value
+
         # Find any child functions
         # Note that this doesn't handle functions in nested classes correctly
         # (but that isn't an issue because we flatten them beforehand)
@@ -21,21 +23,25 @@ def apply(dom_root):
             if function.is_constructor:
                 # Constructors get modified to return a pointer to the newly-created object
                 function.return_type = code_dom.DOMType()
-                function.return_type.tokens = [utils.create_token(struct.name),
-                                               utils.create_token("*")]
-                # Set implementation override to keep original name if this was a flattened template or similar
-                function.return_type.implementation_name_override = struct.original_fully_qualified_name + "*"
+                if is_by_value:
+                    # By-value types have constructors that return by-value, unsurprisingly
+                    function.return_type.tokens = [utils.create_token(struct.name)]
+                else:
+                    function.return_type.tokens = [utils.create_token(struct.name),
+                                                   utils.create_token("*")]
                 function.return_type.parent = function
+                # Make a note for the code generator that this is a by-value constructor
+                function.is_by_value_constructor = is_by_value
             elif function.is_destructor:
+                if is_by_value:
+                    # We don't support this for fairly obvious reasons
+                    raise Exception("By-value type " + struct.name + " has a destructor")
                 # Remove ~ and add suffix to name
                 function.name = function.name[1:] + "_destroy"
                 # Destructors get modified to return void
                 function.return_type = code_dom.DOMType()
                 function.return_type.tokens = [utils.create_token("void")]
                 function.return_type.parent = function
-
-            # Remove const-ness as that has no meaning when the function is moved outside
-            function.is_const = False
 
             # Prefix structure name onto the function
             function.name = struct.name + "_" + function.name
@@ -49,11 +55,18 @@ def apply(dom_root):
                 self_arg.arg_type = code_dom.DOMType()
                 self_arg.arg_type.parent = self_arg
                 self_arg.arg_type.tokens = [utils.create_token(struct.name), utils.create_token("*")]
-                # Set implementation override to keep original name if this was a flattened template or similar
-                self_arg.arg_type.implementation_name_override = struct.original_fully_qualified_name + "*"
+
+                # Make self const if the original function was const
+                if function.is_const:
+                    self_arg.arg_type.tokens.insert(0, utils.create_token("const"))
+
                 self_arg.name = "self"
                 self_arg.parent = function
                 function.arguments.insert(0, self_arg)
+
+            # Remove const-ness as that has no meaning when the function is moved outside
+            # (and we've applied const to the self parameter, which achieves the same effect in C-land)
+            function.is_const = False
 
             # Move the function out into the scope the structure is in
 

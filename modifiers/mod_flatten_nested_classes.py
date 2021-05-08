@@ -31,17 +31,17 @@ def apply(dom_root):
                     found_element_to_change = True
 
             if found_element_to_change:
-                # This is a little fiddly - if we changed something, we need to update the implementation override
+                # This is a little fiddly - if we changed something, we need to update the original override
                 # to use the original name in fully-qualified form, since post-flattening things won't be in the same
                 # scope any more
-                if type_element.implementation_name_override is not None:
+                if type_element.original_name_override is not None:
                     # In this case we don't replace new_name because it won't have been modified by the code above
-                    type_element.implementation_name_override = type_element.implementation_name_override\
+                    type_element.original_name_override = type_element.original_name_override\
                         .replace(struct.name, qualified_name)
                 else:
                     write_context = code_dom.WriteContext()
-                    write_context.for_implementation = True
-                    type_element.implementation_name_override = type_element.to_c_string(write_context)\
+                    write_context.use_original_names = True
+                    type_element.original_name_override = type_element.to_c_string(write_context)\
                         .replace(new_name, qualified_name)
 
         # Global-scope references using the parent-qualified name
@@ -52,8 +52,10 @@ def apply(dom_root):
                     type_element.tokens[i].value = new_name
 
             if found_element_to_change:
-                if type_element.implementation_name_override is None:
-                    type_element.implementation_name_override = type_element.to_c_string(for_implementation=True)\
+                if type_element.original_name_override is None:
+                    write_context = code_dom.WriteContext()
+                    write_context.use_original_names = True
+                    type_element.original_name_override = type_element.to_c_string(write_context)\
                         .replace(new_name, qualified_name)
 
         # Update the name

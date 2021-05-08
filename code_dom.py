@@ -12,8 +12,10 @@ class ParseContext:
 class WriteContext:
     def __init__(self):
         self.for_implementation = False  # Are we outputting code for an implementation file (i.e. not a header)?
+        self.use_original_names = False  # Do we want to use the original (unmodified C++) names for things?
         self.for_c = False  # Are we outputting C (as opposed to C++) code?
         self.known_structs = None  # List of known struct names, for applying struct tags when writing C
+        self.include_leading_colons = False  # Do we want to include leading colons to fully-qualify all names?
 
 
 # Collapse a list of tokens back into a C-style string, attempting to be reasonably intelligent and/or aesthetic
@@ -55,9 +57,12 @@ class DOMElement:
         self.children = []  # Basic child elements (note that some elements have multiple child lists)
         self.pre_comments = []  # If this element is preceded with comments that are related to it, they go here
         self.attached_comment = None  # If a comment appears after this element (on the same line), this is it
-        self.original_fully_qualified_name = None  # FQN this element had before DOM manipulation occurred, if any
         self.no_default_add = False  # Should this element not be added to the DOM upon creation? (mainly for
-                                     # attached comments)
+        #                              attached comments)
+        self.unmodified_element = None  # The original (unmodified) element, as part of a complete clone of the
+        #                                 pre-modification document structure
+        self.original_name_override = None  # Optional name to use for the original name of this type
+        #                                     (primarily for template parameter expansion and the like)
 
     # Parse tokens that can appear anywhere, returning an appropriate element if possible or None if not
     @staticmethod
@@ -172,11 +177,22 @@ class DOMElement:
             child.dump(indent + 1)
 
     # Gets the fully-qualified name (C++-style) of this element (including namespaces/etc)
-    def get_fully_qualified_name(self, leaf_name=""):
+    # If include_leading_colons is true then the name will be returned in a genuinely "fully-qualified" fashion -
+    # i.e. "::MyClass::Something"
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(leaf_name)
+            return self.parent.get_fully_qualified_name(leaf_name, include_leading_colons)
         else:
-            return leaf_name
+            return ("::" if include_leading_colons else "") + leaf_name
+
+    # Gets the original (i.e. unmodified) fully-qualified name of this element for implementation purposes
+    def get_original_fully_qualified_name(self, include_leading_colons=False):
+        if self.original_name_override is not None:
+            return self.original_name_override
+        if self.unmodified_element is not None:
+            return self.unmodified_element.get_fully_qualified_name("", include_leading_colons)
+        else:
+            return self.get_fully_qualified_name("", include_leading_colons)
 
     # Gets the class/struct that contains this element (if one exists)
     def get_parent_class(self):
@@ -290,6 +306,14 @@ class DOMElement:
 
         return result
 
+    # Override for pickling that removes unmodified_element (mainly for cloning, as otherwise we would basically
+    # end up cloning the entire unmodified tree every time we cloned anything)
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "unmodified_element" in state:
+            state["unmodified_element"] = None
+        return state
+
     # Performs a deep clone of this element and all children
     def clone(self):
         # We need to temporarily remove our parent reference to prevent the tree above us getting cloned
@@ -297,6 +321,7 @@ class DOMElement:
         self.parent = None
         clone = copy.deepcopy(self)
         self.parent = temp_parent
+        clone.__reconnect_unmodified(self)
         return clone
 
     # Clone this element but without any children, where "children" means explicit children, such as contained
@@ -307,6 +332,41 @@ class DOMElement:
         clone = self.clone()
         self.children = temp_children
         return clone
+
+    # Reconnect "unmodified_element" on a whole tree of elements
+    # (used after cloning, as we don't clone unmodified_element)
+    def __reconnect_unmodified(self, original):
+        self.unmodified_element = original.unmodified_element
+
+        for child_list, original_child_list in zip(self.get_child_lists(), original.get_child_lists()):
+            for child, original_child in zip(child_list, original_child_list):
+                child.__reconnect_unmodified(original_child)
+
+    # This creates a clone of this element and all children, stored in the "unmodified_element" field of each
+    # corresponding element
+    def save_unmodified_clones(self):
+        clone = copy.deepcopy(self)
+        self.__attach_unmodified_clones(clone)
+
+    # Attach unmodified clones to the tree recursively
+    def __attach_unmodified_clones(self, clone):
+
+        # This shouldn't really be necessary, but as a sanity check make sure we're matching (probably) the correct
+        # elements to each other
+        if str(self) != str(clone):
+            raise Exception("Unmodified clone mismatch error")
+
+        self.unmodified_element = clone
+
+        if len(self.get_child_lists()) != len(clone.get_child_lists()):
+            raise Exception("Unmodified clone mismatch error")
+
+        for child_list, clone_child_list in zip(self.get_child_lists(), clone.get_child_lists()):
+            if len(child_list) != len(clone_child_list):
+                raise Exception("Unmodified clone mismatch error")
+
+            for child, clone_child in zip(child_list, clone_child_list):
+                child.__attach_unmodified_clones(clone_child)
 
     # Is this element a preprocessor container (#if or similar)?
     def __is_preprocessor_container(self):
@@ -325,6 +385,17 @@ class DOMElement:
                         result.append(container_child)
                 else:
                     result.append(child)
+        return result
+
+    # Get a list of all directly contained children that match the type supplied
+    # (see list_directly_contained_children() for a definition of what "directly contained" means here)
+    def list_directly_contained_children_of_type(self, element_type):
+        result = []
+
+        for element in self.list_directly_contained_children():
+            if isinstance(element, element_type):
+                result.append(element)
+
         return result
 
     # Replace the direct child element given with one or more new children
@@ -631,18 +702,23 @@ class DOMInclude(DOMElement):
 
         dom_element.tokens = [token]
 
-        # Tokens up until the line end are part of the directive
+        # Tokens up until the line end or line comment are part of the directive
         while True:
             token = stream.get_token(skip_newlines=False)
             if token is None:
                 break
 
-            if token.type == 'NEWLINE':
+            if (token.type == 'NEWLINE') or (token.type == 'LINE_COMMENT'):
                 break
 
             dom_element.tokens.append(token)
 
         return dom_element
+
+    # Get the referred include file
+    def get_include_file_name(self):
+        # Skip token 0 as that is the #include itself
+        return collapse_tokens_to_string(self.tokens[1:])
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
@@ -771,14 +847,14 @@ class DOMNamespace(DOMElement):
 
         return dom_element
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         name = self.name
         if leaf_name != "":
             name += "::" + leaf_name
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(name)
+            return self.parent.get_fully_qualified_name(name, include_leading_colons)
         else:
-            return name
+            return ("::" if include_leading_colons else "") + name
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
@@ -803,6 +879,7 @@ class DOMFieldDeclaration(DOMElement):
         self.is_array = []  # One per name, because C
         self.width_specifiers = []  # One per name
         self.array_bounds_tokens = []  # One list of tokens per name
+        self.is_imgui_api = False  # Does this use IMGUI_API?
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -816,7 +893,10 @@ class DOMFieldDeclaration(DOMElement):
             if prefix_token is None:
                 break
 
-            if prefix_token.value == 'static':
+            if prefix_token.value == 'IMGUI_API':
+                stream.get_token()  # Eat token
+                dom_element.is_imgui_api = True
+            elif prefix_token.value == 'static':
                 stream.get_token()  # Eat token
                 dom_element.is_static = True
             else:
@@ -897,9 +977,10 @@ class DOMFieldDeclaration(DOMElement):
     def get_writable_child_lists(self):
         return DOMElement.get_writable_child_lists(self)
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(self.names[0] if len(self.names) > 0 else leaf_name)
+            return self.parent.get_fully_qualified_name(self.names[0] if len(self.names) > 0 else leaf_name,
+                                                        include_leading_colons)
         else:
             return self.names[0] if len(self.names) > 0 else leaf_name
 
@@ -908,6 +989,12 @@ class DOMFieldDeclaration(DOMElement):
         self.write_preceding_comments(file, indent, context)
         declaration = self.field_type.to_c_string(context)
 
+        if self.is_imgui_api:
+            if context.for_c:
+                declaration = "CIMGUI_API " + declaration  # Use CIMGUI_API instead of IMGUI_API as our define here
+            else:
+                declaration = "IMGUI_API " + declaration
+
         if self.is_static:
             declaration = "static " + declaration
 
@@ -915,19 +1002,19 @@ class DOMFieldDeclaration(DOMElement):
         if not isinstance(self.field_type, DOMFunctionPointerType):
             first_name = True
             for i in range(0, len(self.names)):
-                    if first_name:
-                        declaration += " "
-                    else:
-                        declaration += ", "
-                    declaration += self.names[i]
-                    if self.is_array[i]:
-                        declaration += "["
-                        if self.array_bounds_tokens[i] is not None:
-                            declaration += collapse_tokens_to_string(self.array_bounds_tokens[i])
-                        declaration += "]"
-                    if self.width_specifiers[i] is not None:
-                        declaration += " : " + str(self.width_specifiers[i])
-                    first_name = False
+                if first_name:
+                    declaration += " "
+                else:
+                    declaration += ", "
+                declaration += self.names[i]
+                if self.is_array[i]:
+                    declaration += "["
+                    if self.array_bounds_tokens[i] is not None:
+                        declaration += collapse_tokens_to_string(self.array_bounds_tokens[i])
+                    declaration += "]"
+                if self.width_specifiers[i] is not None:
+                    declaration += " : " + str(self.width_specifiers[i])
+                first_name = False
 
         write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
 
@@ -1036,9 +1123,9 @@ class DOMFunctionArgument(DOMElement):
     def get_writable_child_lists(self):
         return DOMElement.get_writable_child_lists(self)
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(self.name)
+            return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
 
@@ -1138,10 +1225,13 @@ class DOMFunctionDeclaration(DOMElement):
         self.is_inline = False
         self.is_operator = False
         self.is_constructor = False
+        self.is_by_value_constructor = False  # Is this a by-value type constructor? (set during flattening)
         self.is_destructor = False
         self.is_imgui_api = False
         self.im_fmtargs = None
         self.im_fmtlist = None
+        self.original_class = None  # The class this function belonged to pre-flattening
+        #                             (set when functions are flattened)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1295,17 +1385,18 @@ class DOMFunctionDeclaration(DOMElement):
             stream.rewind_one_token()
             dom_element.body = DOMCodeBlock.parse(context, stream)
 
-        #print(dom_element)
+        # print(dom_element)
         return dom_element
 
-    def get_fully_qualified_name(self, leaf_name="", return_fqn_even_for_member_functions=False):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False,
+                                 return_fqn_even_for_member_functions=False):
         if self.parent is not None:
             # When referring to non-static class member functions we use the leaf name (as the class name is supplied
             # by the instance)
             if (self.get_parent_class() is not None) and not self.is_static and \
                     not return_fqn_even_for_member_functions:
                 return self.name
-            return self.parent.get_fully_qualified_name(self.name)
+            return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
 
@@ -1333,12 +1424,24 @@ class DOMFunctionDeclaration(DOMElement):
         lists.append(self.arguments)
         return lists
 
+    def clone(self):
+        # We don't want to clone the original class, but just keep a shallow reference to it
+        old_original_class = self.original_class
+        self.original_class = None
+        clone = DOMElement.clone(self)
+        self.original_class = old_original_class
+        clone.original_class = old_original_class
+        return clone
+
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
         declaration = ""
-        if self.is_imgui_api and (not context.for_implementation):
-            declaration += "IMGUI_API "
+        if self.is_imgui_api:
+            if context.for_c:
+                declaration += "CIMGUI_API "  # Use CIMGUI_API instead of IMGUI_API as our define here
+            else:
+                declaration += "IMGUI_API "
         if self.is_static and (not context.for_implementation):
             declaration += "static "
         if self.is_inline and (not context.for_implementation):
@@ -1356,6 +1459,9 @@ class DOMFunctionDeclaration(DOMElement):
                     declaration += ", "
                 declaration += arg.to_c_string(context)
                 first_arg = False
+        else:
+            if context.for_c:
+                declaration += "void"  # Explicit void for C
         declaration += ")"
         if self.is_const:
             declaration += " const"
@@ -1467,7 +1573,7 @@ class DOMFunctionPointerType(DOMElement):
             # Eat any trailing comma
             stream.get_token_of_type(["COMMA"])
 
-        #print(dom_element)
+        # print(dom_element)
         return dom_element
 
     def get_child_lists(self):
@@ -1482,9 +1588,9 @@ class DOMFunctionPointerType(DOMElement):
         lists.append(self.arguments)
         return lists
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(self.name)
+            return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
 
@@ -1520,7 +1626,6 @@ class DOMFunctionPointerType(DOMElement):
 class DOMType(DOMElement):
     def __init__(self):
         super().__init__()
-        self.implementation_name_override = None  # Optional name to use for this type when emitting implementation
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1623,33 +1728,36 @@ class DOMType(DOMElement):
                 primary_name = tok.value  # We use the last of the "name-like" things we see
         return primary_name
 
+    # Gets the fully-qualified name (C++-style) of this element (including namespaces/etc)
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
+        context = WriteContext()
+        context.include_leading_colons=include_leading_colons
+        return self.to_c_string(context)
+
     def to_c_string(self, context=WriteContext()):
-        # For implementation, return the implementation name override if one exists
-        if context.for_implementation and self.implementation_name_override is not None:
-            return self.implementation_name_override
-        if context.for_c:
-            # Add "struct" before structure names in C by injecting some tokens
+        # Return the original name if requested
+        if context.use_original_names:
+            if self.original_name_override is not None:
+                return self.original_name_override
+            elif self.unmodified_element is not None:
+                return self.unmodified_element.to_c_string(context)
 
-            temp_tokens = []
-
-            for token in self.tokens:
-                if token.value in context.known_structs:
-                    struct_token = lex.LexToken()
-                    struct_token.type = 'STRUCT'
-                    struct_token.value = 'struct'
-                    struct_token.lineno = 0
-                    struct_token.lexpos = 0
-                    temp_tokens.append(struct_token)
-                temp_tokens.append(token)
-
-            return collapse_tokens_to_string(temp_tokens)
+        if context.include_leading_colons:
+            # Add leading colons to anything that looks like a user type
+            fudged_tokens = []
+            for tok in self.tokens:
+                new_tok = copy.deepcopy(tok)
+                if new_tok.type == 'THING':
+                    new_tok.value = "::" + new_tok.value
+                fudged_tokens.append(new_tok)
+            return collapse_tokens_to_string(fudged_tokens)
         else:
             return collapse_tokens_to_string(self.tokens)
 
     def __str__(self):
         result = "Type: " + collapse_tokens_to_string(self.tokens)
-        if self.implementation_name_override is not None:
-            result += " (implementation name " + self.implementation_name_override + ")"
+        if self.original_name_override is not None:
+            result += " (original name " + self.original_name_override + ")"
         return result
 
 
@@ -1717,8 +1825,8 @@ class DOMComment(DOMElement):
         # print("Comment: " + dom_element.commentText)
 
         # If this comment appeared immediately after another element on the same line, attach it
-        if tok.type == 'LINE_COMMENT' and context.last_element is not None\
-                and not isinstance(context.last_element, DOMComment)\
+        if tok.type == 'LINE_COMMENT' and context.last_element is not None \
+                and not isinstance(context.last_element, DOMComment) \
                 and not isinstance(context.last_element, DOMBlankLines):
             context.last_element.attached_comment = dom_element
             dom_element.is_attached_comment = True
@@ -1751,7 +1859,8 @@ class DOMClassStructUnion(DOMElement):
         super().__init__()
         self.name = None  # Can be none for anonymous things
         self.is_forward_declaration = True
-        self.structure_type = None
+        self.is_by_value = False  # Is this to be passed by value? (set during modification)
+        self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1764,7 +1873,7 @@ class DOMClassStructUnion(DOMElement):
         if name_tok is not None:
             dom_element.name = name_tok.value
 
-        #print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "Anonymous"))
+        # print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "Anonymous"))
 
         if stream.get_token_of_type(['LBRACE']) is not None:
             dom_element.is_forward_declaration = False
@@ -1787,14 +1896,14 @@ class DOMClassStructUnion(DOMElement):
 
         return dom_element
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         name = self.name or "anonymous"
         if leaf_name != "":
             name += "::" + leaf_name
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(name)
+            return self.parent.get_fully_qualified_name(name, include_leading_colons)
         else:
-            return name
+            return ("::" if include_leading_colons else "") + name
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
@@ -1827,11 +1936,22 @@ class DOMClassStructUnion(DOMElement):
             else:
                 write_c_line(file, indent, "};")
         else:
+            # Forward-declarations need to be C++-compatible, so we have this ugliness
+            # Todo: Less ugliness
+
+            if context.for_c:
+                write_c_line(file, 0, "#ifdef __cplusplus")
+                self.write_to_c(file, indent)  # Write C++-compatible declaration
+                write_c_line(file, 0, "#else")
+
             if context.for_c and (self.name is not None):
                 write_c_line(file, indent, declaration + " " + self.name + ";" +
                              self.get_attached_comment_as_c_string())
             else:
                 write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
+
+            if context.for_c:
+                write_c_line(file, 0, "#endif")
 
     def __str__(self):
         if self.name is not None:
@@ -1885,9 +2005,9 @@ class DOMTypedef(DOMElement):
     def get_writable_child_lists(self):
         return DOMElement.get_writable_child_lists(self)
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(self.name)
+            return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
 
@@ -1954,9 +2074,9 @@ class DOMEnumElement(DOMElement):
         stream.get_token_of_type(['COMMA'])  # Eat any trailing comma
         return dom_element
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.parent is not None:
-            return self.parent.get_fully_qualified_name(self.name)
+            return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
 
@@ -2043,22 +2163,23 @@ class DOMEnum(DOMElement):
         else:
             return None
 
-    def get_fully_qualified_name(self, leaf_name=""):
+    def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         if self.is_enum_class:
             # Namespaced "enum class" enum
             name = self.name
             if leaf_name != "":
                 name += "::" + leaf_name
             if self.parent is not None:
-                return self.parent.get_fully_qualified_name(name)
+                return self.parent.get_fully_qualified_name(name, include_leading_colons)
             else:
                 return name
         else:
             # Non-namespaced old-style enum
             if self.parent is not None:
-                return self.parent.get_fully_qualified_name(self.name)
+                return ("::" if include_leading_colons else "") + \
+                       self.parent.get_fully_qualified_name(self.name, include_leading_colons)
             else:
-                return self.name
+                return ("::" if include_leading_colons else "") + self.name
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):

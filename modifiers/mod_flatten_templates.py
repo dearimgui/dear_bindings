@@ -62,17 +62,17 @@ def apply(dom_root, custom_type_fudges={}):
                 if instantiation_parameter not in instantiation_parameters:
                     instantiation_parameters.append(instantiation_parameter)
 
-                    #print("Template " + template_name + " referenced in " + str(type_element) + " with parameter " +
+                    # print("Template " + template_name + " referenced in " + str(type_element) + " with parameter " +
                     #      instantiation_parameter)
 
                     # Figure out what the implementation parameter is and record that
                     implementation_parameter = None
-                    if type_element.implementation_name_override is not None:
-                        opening_bracket = type_element.implementation_name_override.index('<')
-                        closing_bracket = type_element.implementation_name_override.index('>')
+                    if type_element.original_name_override is not None:
+                        opening_bracket = type_element.original_name_override.index('<')
+                        closing_bracket = type_element.original_name_override.index('>')
                         if (opening_bracket >= 0) and (closing_bracket > opening_bracket):
                             implementation_parameter = \
-                                type_element.implementation_name_override[opening_bracket + 1:closing_bracket]
+                                type_element.original_name_override[opening_bracket + 1:closing_bracket]
 
                     implementation_instantiation_parameters.append(implementation_parameter)
 
@@ -90,16 +90,17 @@ def apply(dom_root, custom_type_fudges={}):
             instantiation = templated_obj.clone()
             instantiation.parent = None
 
-            # Update the original name to contain the instantiated template parameters
-            if instantiation.original_fully_qualified_name is None:
-                instantiation.original_fully_qualified_name = instantiation.get_fully_qualified_name()
+            # We need to set up an override so that instead of using the original template typename the
+            # implementation uses the name with parameter substitution doe
+            if instantiation.original_name_override is None:
+                instantiation.original_name_override = instantiation.get_fully_qualified_name()
 
-            # The original FQN should use the implementation version of the instantiation parameter if
+            # The implementation name should use the implementation version of the instantiation parameter if
             # possible, so we get "ImVector<ImGuiTextFilter::TextRange>" instead of
             # "ImVector<ImGuiTextFilter_TextRange>"
-            instantiation.original_fully_qualified_name += "<" + \
-                                                           (implementation_instantiation_parameter or
-                                                            instantiation_parameter) + ">"
+            instantiation.original_name_override += "<" + \
+                                                    (implementation_instantiation_parameter or
+                                                     instantiation_parameter) + ">"
 
             # Generate a new name for the instantiation
             instantiation.name += "_" + utils.sanitise_name_for_identifier(instantiation_parameter)
@@ -117,21 +118,21 @@ def apply(dom_root, custom_type_fudges={}):
                         modified_anything = True
 
                 if modified_anything:
-                    # Do the same for any implementation name overrides, using the implementation override version of
+                    # Do the same for any original name overrides, using the original override version of
                     # the parameter
                     if implementation_instantiation_parameter is not None:
-                        if element.implementation_name_override is None:
+                        if element.original_name_override is None:
                             write_context = code_dom.WriteContext()
                             write_context.for_implementation = True
-                            element.implementation_name_override = element.to_c_string(write_context)
-                            element.implementation_name_override = element.implementation_name_override \
+                            element.original_name_override = element.to_c_string(write_context)
+                            element.original_name_override = element.original_name_override \
                                 .replace(instantiation_parameter,
                                          implementation_instantiation_parameter)
                         else:
                             # This is kinda dubious because parameter names can be things like T, which will then match
                             # *any* T in the type, but for now I'm banking on that not happening as template types
                             # aren't very complicated and have little aside from the odd "const", * or & on them.
-                            element.implementation_name_override = element.implementation_name_override \
+                            element.original_name_override = element.original_name_override \
                                 .replace(template_parameter_name,
                                          implementation_instantiation_parameter)
 
@@ -162,8 +163,8 @@ def apply(dom_root, custom_type_fudges={}):
                             if num_converted_references > 0:
                                 element.tokens[0].was_reference = True
 
-                            if element.implementation_name_override is not None:
-                                element.implementation_name_override = element.implementation_name_override \
+                            if element.original_name_override is not None:
+                                element.original_name_override = element.original_name_override \
                                     .replace(fudge_key, custom_type_fudges[fudge_key])
 
             # Create a comment to note where this came from
@@ -179,7 +180,7 @@ def apply(dom_root, custom_type_fudges={}):
 
                 declaration_comment = code_dom.DOMComment()
                 declaration_comment.comment_text = "// Forward declaration of " + template_name + \
-                                                  "<" + instantiation_parameter + ">"
+                                                   "<" + instantiation_parameter + ">"
 
                 declaration = instantiation.clone()
                 declaration.children.clear()
@@ -189,9 +190,9 @@ def apply(dom_root, custom_type_fudges={}):
 
                 # Add at end of file
                 dom_root.add_children([code_dom.DOMBlankLines(1),
-                                        comment,
-                                        code_dom.DOMBlankLines(1),
-                                        instantiation])
+                                       comment,
+                                       code_dom.DOMBlankLines(1),
+                                       instantiation])
             else:
                 # Insert new instance at point of template
                 template.parent.insert_after_child(template,
@@ -212,8 +213,8 @@ def apply(dom_root, custom_type_fudges={}):
                     # Set the original (parameterised) name as the override so it gets used for the
                     # implementation code
                     write_context = code_dom.WriteContext()
-                    write_context.for_implementation = True
-                    type_element.implementation_name_override = type_element.to_c_string(write_context)
+                    write_context.use_original_names = True
+                    type_element.original_name_override = type_element.to_c_string(write_context)
                     # ...then replace the main name with our instance name
 
                     # -2 because first_token is the parameter, so we need to step back over the < and the template name
