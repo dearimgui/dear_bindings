@@ -27,3 +27,5 @@ Fixed #error and #undef not getting parsed
 Made operator name parsing more generic and able to cope with things like "operator+=" without the previous ugly special-casing
 Made it possible to have multiple header files in the DOM
 Changed ImGui class prefix
+Fixed function/structure removal not removing associated template DOM element
+Added class member accessibility support

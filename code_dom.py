@@ -970,6 +970,7 @@ class DOMFieldDeclaration(DOMElement):
         self.width_specifiers = []  # One per name
         self.array_bounds_tokens = []  # One list of tokens per name
         self.is_imgui_api = False  # Does this use IMGUI_API?
+        self.accessibility = None  # The field accessibility
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1321,6 +1322,7 @@ class DOMFunctionDeclaration(DOMElement):
         self.is_imgui_api = False
         self.im_fmtargs = None
         self.im_fmtlist = None
+        self.accessibility = None  # The function accessibility (if part of a class)
         self.original_class = None  # The class this function belonged to pre-flattening
         #                             (set when functions are flattened)
 
@@ -1472,7 +1474,10 @@ class DOMFunctionDeclaration(DOMElement):
 
         attached_comment = stream.get_token_of_type(["LINE_COMMENT", "BLOCK_COMMENT"])
         if attached_comment is not None:
-            dom_element.attached_comment = attached_comment
+            stream.rewind_one_token()
+            dom_element.attached_comment = DOMComment.parse(context, stream)
+            dom_element.attached_comment.is_attached_comment = True
+            dom_element.attached_comment.parent = dom_element
 
         # Possible initialiser list
 
@@ -2049,6 +2054,8 @@ class DOMClassStructUnion(DOMElement):
 
         # print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "Anonymous"))
 
+        current_accessibility = "public" if (dom_element.structure_type != 'CLASS') else "private"
+
         if stream.get_token_of_type(['LBRACE']) is not None:
             dom_element.is_forward_declaration = False
             while True:
@@ -2057,7 +2064,15 @@ class DOMClassStructUnion(DOMElement):
                     stream.get_token()  # Eat the closing brace
                     break
 
+                if (tok.value == 'public') or (tok.value == 'private') or (tok.value == 'protected'):
+                    # Accessibility modifier
+                    stream.get_token()  # Eat token
+                    stream.get_token_of_type(['COLON'])  # Eat colon
+                    current_accessibility = tok.value
+                    continue
+
                 child_element = context.current_content_parser()
+                child_element.accessibility = current_accessibility
 
                 if child_element is not None:
                     if not child_element.no_default_add:

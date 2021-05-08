@@ -81,10 +81,23 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         # Remove ImNewDummy/ImNewWrapper as it's a helper for C++ new (and C dislikes empty structs)
         modifiers.mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame",
                                                       "ImNewDummy",  # ImGui <1.82
-                                                      "ImNewWrapper"  # ImGui >=1.82
-                                                      ])
+                                                      "ImNewWrapper",  # ImGui >=1.82
+                                                      # Templated stuff in imgui_internal.h
+                                                      "ImBitArray",
+                                                      "ImBitVector",
+                                                      "ImSpan",
+                                                      "ImSpanAllocator",
+                                                      "ImPool",
+                                                      "ImChunkStream"])
         # Remove all functions from ImVector, as they're not really useful
         modifiers.mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+        # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
+        modifiers.mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
+                                                        "ImGui::ScaleValueFromRatioT",
+                                                        "ImGui::DragBehaviorT",
+                                                        "ImGui::SliderBehaviorT",
+                                                        "ImGui::RoundScalarWithFormatT",
+                                                        "ImGui::CheckboxFlagsT"])
         modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
@@ -103,14 +116,14 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
             'const char*': 'Str',
             'char*': 'Str',
             'unsigned int': 'Uint'},
-            # Functions that look like they have name clashes but actually don't
-            # thanks to preprocessor conditionals
-            functions_to_ignore=[
-                "cImFileOpen",
-                "cImFileClose",
-                "cImFileGetSize",
-                "cImFileRead",
-                "cImFileWrite"])
+                                                   # Functions that look like they have name clashes but actually don't
+                                                   # thanks to preprocessor conditionals
+                                                   functions_to_ignore=[
+                                                       "cImFileOpen",
+                                                       "cImFileClose",
+                                                       "cImFileGetSize",
+                                                       "cImFileRead",
+                                                       "cImFileWrite"])
 
         # Make all functions use CIMGUI_API
         modifiers.mod_make_all_functions_use_imgui_api.apply(dom_root)

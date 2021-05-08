@@ -40,7 +40,8 @@ def apply(dom_root, custom_type_fudges={}):
             if token.value != 'typename':
                 if template_parameter_name is not None:
                     raise Exception(
-                        "Template appears to have more than one parameter (which is not currently supported)")
+                        "Template " + str(template) +
+                        " appears to have more than one parameter (which is not currently supported)")
                 template_parameter_name = token.value
 
         # Instantiation parameters as they exist in the DOM at present
