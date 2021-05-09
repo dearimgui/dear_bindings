@@ -29,3 +29,6 @@ Made it possible to have multiple header files in the DOM
 Changed ImGui class prefix
 Fixed function/structure removal not removing associated template DOM element
 Added class member accessibility support
+Removed IM_VEC2_CLASS_EXTRA from generated file
+Added metadata generator
+Fixed comments getting incorrectly treated as part of the expression for preprocessor conditionals

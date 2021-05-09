@@ -557,10 +557,15 @@ class DOMPreprocessorIf(DOMElement):
             if token is None:
                 break
 
-            if token.type == 'NEWLINE':
+            if (token.type == 'LINE_COMMENT') or (token.type == 'BLOCK_COMMENT'):
+                stream.rewind_one_token()
+                dom_element.attached_comment = DOMComment.parse(context, stream)
+                dom_element.attached_comment.is_attached_comment = True
+                dom_element.attached_comment.parent = dom_element
+            elif token.type == 'NEWLINE':
                 break
-
-            dom_element.expression_tokens.append(token)
+            else:
+                dom_element.expression_tokens.append(token)
 
         # Then we have the actual body of the conditional
         in_else = False

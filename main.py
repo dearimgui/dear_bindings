@@ -16,6 +16,7 @@ import modifiers.mod_add_prefix_to_loose_functions
 import modifiers.mod_flatten_class_functions
 import modifiers.mod_flatten_nested_classes
 import modifiers.mod_flatten_templates
+import modifiers.mod_flatten_conditionals
 import modifiers.mod_disambiguate_functions
 import modifiers.mod_convert_references_to_pointers
 import modifiers.mod_remove_static_fields
@@ -32,10 +33,12 @@ import modifiers.mod_add_includes
 import modifiers.mod_remove_includes
 import generators.gen_struct_converters
 import generators.gen_function_stubs
+import generators.gen_metadata
 
 
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
-# dest_file_no_ext.cpp. implementation_header should point to a file containing the header block for the implementation.
+# dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
+# containing the initial header block for the implementation (provided in the templates/ directory).
 def convert_header(src_file, dest_file_no_ext, implementation_header):
     print("Parsing " + src_file)
 
@@ -101,8 +104,9 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
-        # We remap the ImGui:: namespace to use ig as a prefix for brevity
-        modifiers.mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
+        # Assume IM_VEC2_CLASS_EXTRA is never defined as it's likely to just cause problems if anyone tries to use it
+        modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
+        modifiers.mod_flatten_namespaces.apply(dom_root)
         modifiers.mod_flatten_nested_classes.apply(dom_root)
         # The custom type fudge here is a workaround for how template parameters are expanded
         modifiers.mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
@@ -111,11 +115,12 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_flatten_class_functions.apply(dom_root)
         modifiers.mod_remove_nested_typedefs.apply(dom_root)
         modifiers.mod_remove_static_fields.apply(dom_root)
-        modifiers.mod_disambiguate_functions.apply(dom_root, name_suffix_remaps={
-            # Some more user-friendly suffixes for certain types
-            'const char*': 'Str',
-            'char*': 'Str',
-            'unsigned int': 'Uint'},
+        modifiers.mod_disambiguate_functions.apply(dom_root,
+                                                   name_suffix_remaps={
+                                                       # Some more user-friendly suffixes for certain types
+                                                       'const char*': 'Str',
+                                                       'char*': 'Str',
+                                                       'unsigned int': 'Uint'},
                                                    # Functions that look like they have name clashes but actually don't
                                                    # thanks to preprocessor conditionals
                                                    functions_to_ignore=[
@@ -160,12 +165,18 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
             generators.gen_function_stubs.generate(dom_root, file, indent=0,
                                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes)
 
+        # Generate metadata
+        with open(dest_file_no_ext + ".json", "w") as file:
+            generators.gen_metadata.generate(dom_root, file)
+
 
 if __name__ == '__main__':
-    # convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui.h",
-    #               r"TestCode\sdl2-cimgui-demo\generated\cimgui",
-    #               r"templates/cimgui-header.cpp")
+    convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui.h",
+                   r"TestCode\sdl2-cimgui-demo\generated\cimgui",
+                   r"templates/cimgui-header.cpp")
 
-    convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui_internal.h",
-                   r"TestCode\sdl2-cimgui-demo\generated\cimgui_internal",
-                   r"templates/cimgui_internal-header.cpp")
+    # convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui_internal.h",
+    #               r"TestCode\sdl2-cimgui-demo\generated\cimgui_internal",
+    #               r"templates/cimgui_internal-header.cpp")
+
+    print("Done")
