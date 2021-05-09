@@ -171,7 +171,11 @@ def emit_function(function):
     result["arguments"] = arguments_root
 
     for argument in function.arguments:
+        if argument.is_implicit_default:
+            continue  # Don't emit implicit default arguments
         arguments_root.append(emit_function_argument(argument))
+
+    result["is_default_argument_helper"] = function.is_default_argument_helper
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)

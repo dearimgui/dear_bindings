@@ -20,13 +20,14 @@ def apply(dom_root):
                     # useful, but we'll deal with that if it ever happens)
                     forward_declarations[struct.name] = None
                 else:
-                    # Generate a new forward declaration
-                    new_declaration = struct.clone_without_children()
-                    new_declaration.is_forward_declaration = True
-                    # Remove comments from forward-declarations
-                    new_declaration.attached_comment = None
-                    new_declaration.pre_comments = []
-                    forward_declarations[struct.name] = new_declaration
+                    if struct.name not in forward_declarations:
+                        # Generate a new forward declaration
+                        new_declaration = struct.clone_without_children()
+                        new_declaration.is_forward_declaration = True
+                        # Remove comments from forward-declarations
+                        new_declaration.attached_comment = None
+                        new_declaration.pre_comments = []
+                        forward_declarations[struct.name] = new_declaration
 
     # Generate a list of declarations to add
 

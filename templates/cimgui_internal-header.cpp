@@ -12,8 +12,11 @@
 // Wrap this in a namespace to keep in separate from the C++ API
 namespace cimgui
 {
+extern "C"
+{
 #include "cimgui.h"
 #include "cimgui_internal.h"
+}
 }
 
 // Helper functions

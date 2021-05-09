@@ -168,7 +168,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         #                                    indexed by the original name
 
         for (arg, original_arg) in zip(fudged_function_arguments, original_function.arguments):
-            if original_arg.is_array:
+            if original_arg.is_array and not arg.is_implicit_default:
                 if len(original_arg.arg_type.tokens) >= 1:
                     type_name = original_arg.arg_type.tokens[len(original_arg.arg_type.tokens) - 1].value
                     if type_name in imgui_classes_and_callbacks:
@@ -263,6 +263,9 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
 
         first_arg = True
         for (arg, original_arg) in zip(fudged_function_arguments, original_function.arguments):
+            if arg.is_implicit_default:
+                continue  # Skip implicit default arguments
+
             # Generate a set of dereference operators to convert any pointer that was originally a reference and
             # converted by mod_convert_references_to_pointers back into reference form for passing to the C++ API
             # This isn't perfect but it should deal correctly with all the reasonably simple cases

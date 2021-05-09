@@ -45,7 +45,7 @@ def generate(dom_root, file, indent=0):
                 function_prefix = "ConvertToCPP_" if to_cpp else "ConvertFromCPP_"
 
                 file.write("\n")
-                write_c_line(file, indent,
+                write_c_line(file, indent, "static inline " +
                              dest_type + " " + function_prefix + struct.name + "(const " + src_type + "& src" + ")")
                 write_c_line(file, indent, "{")
                 indent += 1

@@ -31,6 +31,7 @@ import modifiers.mod_forward_declare_structs
 import modifiers.mod_mark_by_value_structs
 import modifiers.mod_add_includes
 import modifiers.mod_remove_includes
+import modifiers.mod_generate_default_argument_functions
 import generators.gen_struct_converters
 import generators.gen_function_stubs
 import generators.gen_metadata
@@ -117,6 +118,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_flatten_class_functions.apply(dom_root)
         modifiers.mod_remove_nested_typedefs.apply(dom_root)
         modifiers.mod_remove_static_fields.apply(dom_root)
+        modifiers.mod_generate_default_argument_functions.apply(dom_root)
         modifiers.mod_disambiguate_functions.apply(dom_root,
                                                    name_suffix_remaps={
                                                        # Some more user-friendly suffixes for certain types
