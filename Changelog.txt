@@ -33,3 +33,4 @@ Removed IM_VEC2_CLASS_EXTRA/IM_VEC4_CLASS_EXTRA from generated file
 Added metadata generator
 Fixed comments getting incorrectly treated as part of the expression for preprocessor conditionals
 Added generation of helper functions with defaulted arguments
+Improved function name disambiguation to use minimal number of suffixes necessary to ensure uniqueness

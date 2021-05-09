@@ -73,13 +73,17 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore):
 
         # Add suffixes based on non-common arguments
 
+        suffixes_by_function = {}  # Dictionary indexed by function, containing proposed suffix lists
+
         for function in functions:
+
+            function_suffixes = []
+            suffixes_by_function[function] = function_suffixes
 
             # Do not alter the name of the function with the fewest arguments
             if function == lowest_arg_function:
                 continue
 
-            suffix = ""
             for i in range(num_common_args, len(function.arguments)):
                 if not function.arguments[i].is_varargs:  # Don't try and append a suffix for ... arguments
                     # Check to see if the full type name is in the remap list, and if so remap it
@@ -88,14 +92,55 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore):
                         suffix_name = name_suffix_remaps[full_name]
                     else:
                         # Otherwise make a best guess
-                        suffix_name = function.arguments[i].arg_type.get_primary_type_name()
+                        if isinstance(function.arguments[i].arg_type, code_dom.DOMFunctionPointerType):
+                            suffix_name = "Callback"  # All function pointers get called "callback" for simplicity
+                        else:
+                            suffix_name = function.arguments[i].arg_type.get_primary_type_name()
                         # Capitalise the first letter of the name
                         suffix_name = suffix_name[0].upper() + suffix_name[1:]
                         # Slight bodge to differentiate pointers
                         if function.arguments[i].arg_type.to_c_string().endswith('*'):
                             suffix_name += "Ptr"
-                    suffix += utils.sanitise_name_for_identifier(suffix_name)
-            function.name += suffix
+
+                    # Semi-hack - "Ref" is rarely meaningful as a disambiguator and just clutters things, so don't
+                    # include it
+                    suffix_name = suffix_name.replace("&", "")
+
+                    function_suffixes.append(utils.sanitise_name_for_identifier(suffix_name))
+
+        # Optimise the suffix lists - we want the shortest version that differentiates the functions in question, so
+        # figure out the minimal number of suffixes that achieves that
+
+        max_suffixes = 0  # Maximum number of suffixes
+        for function in functions:
+            max_suffixes = max(max_suffixes, len(suffixes_by_function[function]))
+
+        num_suffixes_needed = 1
+        while num_suffixes_needed < max_suffixes:
+            clash_exists = False
+            existing_names = {}
+            for function in functions:
+                suffixes = suffixes_by_function[function]
+                if len(suffixes) > num_suffixes_needed:
+                    suffixes = suffixes[:num_suffixes_needed]
+                potential_name = ''.join(suffixes)
+                if potential_name in existing_names:
+                    clash_exists = True
+                    break
+                existing_names[potential_name] = function
+
+            if clash_exists:
+                num_suffixes_needed += 1
+            else:
+                break
+
+        # Apply the optimised names
+
+        for function in functions:
+            suffixes = suffixes_by_function[function]
+            if len(suffixes) > num_suffixes_needed:
+                suffixes = suffixes[:num_suffixes_needed]
+            function.name += ''.join(suffixes)
 
         # Semi-special case - if we have exactly two functions that still clash at this point, and they differ in
         # the const-ness of their return type, then add _Const to one
