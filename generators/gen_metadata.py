@@ -1,4 +1,5 @@
 import code_dom
+import utils
 import json
 
 
@@ -7,10 +8,10 @@ def add_comments(element, root):
     comments_root = {}
     had_any_comments = False
     if element.pre_comments:
-        preceeding_root = []
-        comments_root["preceeding"] = preceeding_root
+        preceding_root = []
+        comments_root["preceeding"] = preceding_root
         for comment in element.pre_comments:
-            preceeding_root.append(comment.to_c_string())
+            preceding_root.append(comment.to_c_string())
             had_any_comments = True
     if element.attached_comment:
         comments_root["attached"] = element.attached_comment.to_c_string()
@@ -20,9 +21,74 @@ def add_comments(element, root):
         root["comments"] = comments_root
 
 
+# Add preprocessor conditional information for an element to the dictionary given
+def add_preprocessor_conditionals(element, root):
+    conditionals_root = []
+    had_any_conditionals = False
+
+    conditionals = utils.get_preprocessor_conditionals(element)
+
+    for conditional in conditionals:
+        if conditional.is_include_guard:
+            continue  # Don't include include guards
+
+        expression = code_dom.collapse_tokens_to_string(conditional.expression_tokens)
+
+        if conditional.is_ifdef and conditional.is_negated and (expression == "IMGUI_DISABLE"):
+            # Semi-hack - don't clutter up the metadata with "#ifndef IMGUI_DISABLE" as it's kinda redundant
+            continue
+
+        conditional_root = {}
+        conditionals_root.append(conditional_root)
+        if conditional.is_ifdef:
+            if conditional.is_negated:
+                conditional_root["condition"] = "ifndef"
+            else:
+                conditional_root["condition"] = "ifdef"
+        else:
+            conditional_root["condition"] = "if"
+        conditional_root["expression"] = expression
+        had_any_conditionals = True
+
+    if had_any_conditionals:
+        root["conditionals"] = conditionals_root
+
+
 # Emit data for a single type
 def emit_type(type_info):
     return type_info.to_c_string()
+
+
+# Emit data for an enum element
+def emit_enum_element(enum):
+    result = {}
+
+    result["name"] = enum.name
+    if enum.value_tokens is not None:
+        result["value"] = code_dom.collapse_tokens_to_string(enum.value_tokens)
+
+    add_comments(enum, result)
+    add_preprocessor_conditionals(enum, result)
+
+    return result
+
+
+# Emit data for an enum
+def emit_enum(enum):
+    result = {}
+
+    result["name"] = enum.name
+
+    elements_root = []
+    result["elements"] = elements_root
+
+    for element in enum.list_all_children_of_type(code_dom.DOMEnumElement):
+        elements_root.append(emit_enum_element(element))
+
+    add_comments(enum, result)
+    add_preprocessor_conditionals(enum, result)
+
+    return result
 
 
 # Emit data for a single field
@@ -49,6 +115,7 @@ def emit_field(field):
     result["type"] = emit_type(field.field_type)
 
     add_comments(field, result)
+    add_preprocessor_conditionals(field, result)
 
     return result
 
@@ -58,7 +125,7 @@ def emit_struct(struct):
     result = {}
 
     result["name"] = struct.name
-    result["type"] = struct.structure_type
+    result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
 
     fields_root = []
@@ -68,6 +135,7 @@ def emit_struct(struct):
         fields_root.append(emit_field(field))
 
     add_comments(struct, result)
+    add_preprocessor_conditionals(struct, result)
 
     return result
 
@@ -106,6 +174,7 @@ def emit_function(function):
         arguments_root.append(emit_function_argument(argument))
 
     add_comments(function, result)
+    add_preprocessor_conditionals(function, result)
 
     return result
 
@@ -113,6 +182,13 @@ def emit_function(function):
 # Write metadata about our file to a JSON file
 def generate(dom_root, file):
     metadata_root = {}
+
+    # Emit enums
+    enums_root = []
+    metadata_root["enums"] = enums_root
+
+    for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
+        enums_root.append(emit_enum(enum))
 
     # Emit struct declarations
     structs_root = []

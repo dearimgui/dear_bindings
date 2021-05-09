@@ -104,8 +104,10 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
-        # Assume IM_VEC2_CLASS_EXTRA is never defined as it's likely to just cause problems if anyone tries to use it
+        # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
+        # if anyone tries to use it
         modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
+        modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
         modifiers.mod_flatten_namespaces.apply(dom_root)
         modifiers.mod_flatten_nested_classes.apply(dom_root)
         # The custom type fudge here is a workaround for how template parameters are expanded
