@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-// Wrap this in a namespace to keep in separate from the C++ API
+// Wrap this in a namespace to keep it separate from the C++ API
 namespace cimgui
 {
 extern "C"
