@@ -78,6 +78,7 @@ def emit_enum(enum):
     result = {}
 
     result["name"] = enum.name
+    result["original_fully_qualified_name"] = enum.get_original_fully_qualified_name()
 
     elements_root = []
     result["elements"] = elements_root
@@ -125,6 +126,7 @@ def emit_struct(struct):
     result = {}
 
     result["name"] = struct.name
+    result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
     result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
 
@@ -163,6 +165,7 @@ def emit_function(function):
     result = {}
 
     result["name"] = function.name
+    result["original_fully_qualified_name"] = function.get_original_fully_qualified_name()
 
     if function.return_type is not None:
         result["return_type"] = emit_type(function.return_type)

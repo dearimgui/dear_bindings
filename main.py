@@ -31,6 +31,7 @@ import modifiers.mod_forward_declare_structs
 import modifiers.mod_mark_by_value_structs
 import modifiers.mod_add_includes
 import modifiers.mod_remove_includes
+import modifiers.mod_remove_heap_constructors_and_destructors
 import modifiers.mod_generate_default_argument_functions
 import generators.gen_struct_converters
 import generators.gen_function_stubs
@@ -104,6 +105,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                         "ImGui::CheckboxFlagsT"])
         modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
         modifiers.mod_remove_operators.apply(dom_root)
+        modifiers.mod_remove_heap_constructors_and_destructors.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
         # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
         # if anyone tries to use it
