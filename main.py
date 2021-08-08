@@ -33,6 +33,7 @@ import modifiers.mod_add_includes
 import modifiers.mod_remove_includes
 import modifiers.mod_remove_heap_constructors_and_destructors
 import modifiers.mod_generate_default_argument_functions
+import modifiers.mod_align_comments
 import generators.gen_struct_converters
 import generators.gen_function_stubs
 import generators.gen_metadata
@@ -111,11 +112,11 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         # if anyone tries to use it
         modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
         modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
-        modifiers.mod_flatten_namespaces.apply(dom_root)
+        modifiers.mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
         modifiers.mod_flatten_nested_classes.apply(dom_root)
         # The custom type fudge here is a workaround for how template parameters are expanded
         modifiers.mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
-        # We treat ImVec2 and ImVec4 as by-value types
+        # We treat ImVec2, ImVec4 and ImColor as by-value types
         modifiers.mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor'])
         modifiers.mod_flatten_class_functions.apply(dom_root)
         modifiers.mod_remove_nested_typedefs.apply(dom_root)
@@ -145,6 +146,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_remove_empty_conditionals.apply(dom_root)
         modifiers.mod_merge_blank_lines.apply(dom_root)
         modifiers.mod_remove_blank_lines.apply(dom_root)
+        modifiers.mod_align_comments.apply(dom_root)
 
         dom_root.validate_hierarchy()
 

@@ -46,8 +46,9 @@ def collapse_tokens_to_string_with_whitespace(tokens):
     return result
 
 
+# Write a C-style line with indentation, and any trailing whitespace removed
 def write_c_line(file, indent, text):
-    file.write("".ljust(indent * 4) + text + "\n")
+    file.write("".ljust(indent * 4) + text.rstrip() + "\n")
 
 
 class DOMElement:
@@ -155,12 +156,14 @@ class DOMElement:
             comment.parent = self
             comment.is_preceding_comment = True
 
-    # Get any attached comment for this element as a C string
-    def get_attached_comment_as_c_string(self):
+    # Add an attached comment (if present) to the line given, respecting the comment alignment
+    def add_attached_comment_to_line(self, line):
         if self.attached_comment is not None:
-            return " " + self.attached_comment.to_c_string()
+            padding = self.attached_comment.alignment - len(line)
+            padding = max(padding, 1) # Always have at least one space after the body of the line
+            return line + (" " * padding) + self.attached_comment.to_c_string()
         else:
-            return ""
+            return line
 
     # Write any preceding comments
     def write_preceding_comments(self, file, indent=0, context=WriteContext()):
@@ -175,8 +178,7 @@ class DOMElement:
         write_c_line(file, indent, " // Unsupported element " + str(self))
         for child in self.children:
             child.write_to_c(file, indent + 1, context)
-        write_c_line(file, indent, " // End of unsupported element " + str(self) +
-                     self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(" // End of unsupported element " + str(self)))
 
     # Dump this element for debugging
     def dump(self, indent=0):
@@ -478,7 +480,7 @@ class DOMDefine(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Define: " + str(self.tokens)
@@ -517,8 +519,8 @@ class DOMUndef(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, "#undef " + collapse_tokens_to_string(self.tokens) +
-                     self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line("#undef " +
+                                                                     collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Undef: " + collapse_tokens_to_string(self.tokens)
@@ -650,7 +652,7 @@ class DOMPreprocessorIf(DOMElement):
 
         # If we don't have an existing attached comment, note the opening clause
         if self.attached_comment is not None:
-            comment = self.get_attached_comment_as_c_string()
+            comment = self.attached_comment.to_c_string()
         else:
             comment = " // " + opening_clause
 
@@ -737,7 +739,7 @@ class DOMPragma(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Pragma: " + str(self.tokens)
@@ -772,7 +774,7 @@ class DOMError(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Error: " + str(self.tokens)
@@ -818,7 +820,7 @@ class DOMInclude(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Include: " + str(self.tokens)
@@ -889,7 +891,7 @@ class DOMUnparsableThing(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, collapse_tokens_to_string(self.tokens) + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Unparsable: " + str(self.tokens)
@@ -954,7 +956,7 @@ class DOMNamespace(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, "namespace " + self.name + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line("namespace " + self.name))
         write_c_line(file, indent, "{")
         for child in self.children:
             child.write_to_c(file, indent + 1, context)
@@ -1112,7 +1114,7 @@ class DOMFieldDeclaration(DOMElement):
                     declaration += " : " + str(self.width_specifiers[i])
                 first_name = False
 
-        write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
 
     def __str__(self):
         result = "Field: Type=" + str(self.field_type) + " Names="
@@ -1303,10 +1305,12 @@ class DOMCodeBlock(DOMElement):
         if self.code_on_different_line_to_braces:
             write_c_line(file, indent, "{")
             write_c_line(file, indent + 1, collapse_tokens_to_string_with_whitespace(self.tokens))
-            write_c_line(file, indent, "};" + self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line("};"))
         else:
-            write_c_line(file, indent + 1, "{ " + collapse_tokens_to_string_with_whitespace(self.tokens) + " }"
-                         + self.get_attached_comment_as_c_string())
+            write_c_line(file, indent + 1,
+                         self.add_attached_comment_to_line("{ " +
+                                                           collapse_tokens_to_string_with_whitespace(self.tokens) +
+                                                           " }"))
 
     def __str__(self):
         return "CodeBlock: Length=" + str(len(self.tokens))
@@ -1614,12 +1618,12 @@ class DOMFunctionDeclaration(DOMElement):
             write_c_line(file, indent, declaration)
         else:
             if self.body is not None:
-                write_c_line(file, indent, declaration + self.get_attached_comment_as_c_string())
+                write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
                 if self.initialiser_list_tokens is not None:
                     write_c_line(file, indent, collapse_tokens_to_string(self.initialiser_list_tokens))
                 self.body.write_to_c(file, indent, context)  # No +1 here because we want the body braces at our level
             else:
-                write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
+                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
 
     def __str__(self):
         result = "Function: Return type=" + str(self.return_type) + " Name=" + str(self.name)
@@ -1977,6 +1981,8 @@ class DOMComment(DOMElement):
         self.comment_text = None
         self.is_attached_comment = False
         self.is_preceding_comment = False
+        self.alignment = 0  # Column to try to align to when outputting (relative to current indent level),
+        #                     only affects attached comments
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -2147,7 +2153,7 @@ class DOMClassStructUnion(DOMElement):
                 declaration += accessibility + " " + class_name
 
         if not self.is_forward_declaration:
-            write_c_line(file, indent, declaration + self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
             write_c_line(file, indent, "{")
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
@@ -2157,10 +2163,9 @@ class DOMClassStructUnion(DOMElement):
                 write_c_line(file, indent, "};")
         else:
             if context.for_c and (self.name is not None):
-                write_c_line(file, indent, declaration + " " + self.name + ";" +
-                             self.get_attached_comment_as_c_string())
+                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + " " + self.name + ";"))
             else:
-                write_c_line(file, indent, declaration + ";" + self.get_attached_comment_as_c_string())
+                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
 
     def __str__(self):
         if self.name is not None:
@@ -2226,11 +2231,10 @@ class DOMTypedef(DOMElement):
 
         # Function pointers have the name/etc included
         if isinstance(self.type, DOMFunctionPointerType):
-            write_c_line(file, indent, "typedef " + self.type.to_c_string() + ";" +
-                         self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line("typedef " + self.type.to_c_string() + ";"))
         else:
-            write_c_line(file, indent, "typedef " + self.type.to_c_string() + " " + self.name + ";" +
-                         self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line("typedef " + self.type.to_c_string() +
+                                                                         " " + self.name + ";"))
 
     def __str__(self):
         return "Typedef: " + self.name + " type=" + str(self.type)
@@ -2297,10 +2301,11 @@ class DOMEnumElement(DOMElement):
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
         if self.value_tokens is not None:
-            write_c_line(file, indent, self.name + " = " + collapse_tokens_to_string(self.value_tokens) + "," +
-                         self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line(self.name + " = " +
+                                                                         collapse_tokens_to_string(self.value_tokens) +
+                                                                         ","))
         else:
-            write_c_line(file, indent, self.name + "," + self.get_attached_comment_as_c_string())
+            write_c_line(file, indent, self.add_attached_comment_to_line(self.name + ","))
 
     def __str__(self):
         if self.value_tokens is None:
@@ -2397,7 +2402,7 @@ class DOMEnum(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, "enum " + self.name + self.get_attached_comment_as_c_string())
+        write_c_line(file, indent, self.add_attached_comment_to_line("enum " + self.name))
         write_c_line(file, indent, "{")
         for child in self.children:
             child.write_to_c(file, indent + 1, context)
@@ -2486,8 +2491,9 @@ class DOMTemplate(DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, "template <" + collapse_tokens_to_string(self.template_parameter_tokens) + ">" +
-                     self.get_attached_comment_as_c_string())
+        write_c_line(file, indent,
+                     self.add_attached_comment_to_line("template <" +
+                                                       collapse_tokens_to_string(self.template_parameter_tokens) + ">"))
         for child in self.children:
             child.write_to_c(file, indent, context)
 

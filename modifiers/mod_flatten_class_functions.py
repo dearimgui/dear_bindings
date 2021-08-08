@@ -68,7 +68,8 @@ def apply(dom_root):
             # (and we've applied const to the self parameter, which achieves the same effect in C-land)
             function.is_const = False
 
-            # Move the function out into the scope the structure is in
+            # Move the function out into the scope the structure is in, adding/removing preprocessor conditionals
+            # as required to make sure the function declaration is subject to the same conditions after the move
 
             # See if we need to change any conditionals
             add_point_conditionals = utils.get_preprocessor_conditionals(current_add_point)
