@@ -1,10 +1,13 @@
-# Dear Bindings Version 0.02
+# Dear Bindings Version 0.03
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (ben@shironekolabs.com)
 
 import os
 import code_dom
 import c_lexer
+import argparse
+import sys
+import traceback
 import modifiers.mod_remove_pragma_once
 import modifiers.mod_flatten_namespaces
 import modifiers.mod_attach_preceding_comments
@@ -156,7 +159,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         # custom suffix instead
         custom_varargs_list_suffixes = {'appendf': 'v'}
 
-        print("Writing output")
+        print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
         with open(dest_file_no_ext + ".h", "w") as file:
             write_context = code_dom.WriteContext()
@@ -179,12 +182,43 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
 
 
 if __name__ == '__main__':
-    convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui.h",
-                   r"TestCode\sdl2-cimgui-demo\generated\cimgui",
-                   r"templates/cimgui-header.cpp")
+    # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
+    # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
+    # containing the initial header block for the implementation (provided in the templates/ directory).
 
-    # convert_header(r"TestCode\sdl2-cimgui-demo\externals\cimgui\imgui\imgui_internal.h",
-    #               r"TestCode\sdl2-cimgui-demo\generated\cimgui_internal",
-    #               r"templates/cimgui_internal-header.cpp")
+    parser = argparse.ArgumentParser(description='Convert Dear ImGui headers to C',
+                                     epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
+                                            'parameter errors')
+    parser.add_argument('src',
+                        help='Path to source header file to process (generally imgui.h or imgui_internal.h)')
+    parser.add_argument('--output', '-o',
+                        required=True,
+                        help='Path to output file(s). This should have no extension, as <output>.h, <output>.cpp and '
+                             '<output>.json will be written.')
+    parser.add_argument('--templatedir', '-t',
+                        default="./templates",
+                        help='Path to the implementation template directory (default: ./templates)')
+
+    args = parser.parse_args()
+
+    # Generate expected header template name from the source filename
+    # Note that "header" in the name here means "file header" not "C header file", slightly confusingly
+    template = os.path.join(args.templatedir, os.path.splitext(os.path.basename(args.src))[0] + "-header.cpp")
+
+    if not os.path.isfile(template):
+        print("Implementation template file " + template + " could not be found (note that template file names are "
+                                                           "expected to match source file names, so if you have "
+                                                           "renamed imgui.h you will need to rename the template as "
+                                                           "well)")
+        sys.exit(2)
+
+    # Perform conversion
+    try:
+        convert_header(args.src, args.output, template)
+    except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
+        print("Exception during conversion:")
+        traceback.print_exc()
+        sys.exit(1)
 
     print("Done")
+    sys.exit(0)
