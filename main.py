@@ -37,6 +37,7 @@ import modifiers.mod_remove_includes
 import modifiers.mod_remove_heap_constructors_and_destructors
 import modifiers.mod_generate_default_argument_functions
 import modifiers.mod_align_comments
+import modifiers.mod_add_manual_helper_functions
 import generators.gen_struct_converters
 import generators.gen_function_stubs
 import generators.gen_metadata
@@ -139,6 +140,21 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                        "cImFileGetSize",
                                                        "cImFileRead",
                                                        "cImFileWrite"])
+
+        # Add helper functions to create/destroy ImVectors
+        # Implementation code for these can be found in templates/imgui-header.cpp
+        modifiers.mod_add_manual_helper_functions.apply(dom_root,
+                                                        [
+                                                            "void ImVector_Construct(void* vector); // Construct a "
+                                                            "zero-size ImVector<> (of any type). This is primarily "
+                                                            "useful when calling "
+                                                            "ImFontGlyphRangesBuilder_BuildRanges()",
+
+                                                            "void ImVector_Destruct(void* vector); // Destruct an "
+                                                            "ImVector<> (of any type). Important: Frees the vector "
+                                                            "memory but does not call destructors on contained objects "
+                                                            "(if they have them)"
+                                                        ])
 
         # Make all functions use CIMGUI_API
         modifiers.mod_make_all_functions_use_imgui_api.apply(dom_root)

@@ -129,6 +129,7 @@ def emit_struct(struct):
     result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
     result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
+    result["forward_declaration"] = struct.is_forward_declaration
 
     fields_root = []
     result["fields"] = fields_root
@@ -178,7 +179,12 @@ def emit_function(function):
             continue  # Don't emit implicit default arguments
         arguments_root.append(emit_function_argument(argument))
 
-    result["is_default_argument_helper"] = function.is_default_argument_helper
+    result["is_default_argument_helper"] = \
+        function.is_default_argument_helper  # True for functions that are variants of existing functions but with
+    #                                          some of the arguments remove (to emulate C++ default argument behaviour)
+    result["is_manual_helper"] = function.is_manual_helper  # True for functions that aren't in the C++ API originally
+    #                                                         but have been added manually here to provide helpful
+    #                                                         extra functionality
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)
@@ -201,9 +207,19 @@ def generate(dom_root, file):
     structs_root = []
     metadata_root["structs"] = structs_root
 
+    # Make a list of all structs we have full definitions for
+    structs_with_definitions = {}
     for struct in dom_root.list_all_children_of_type(code_dom.DOMClassStructUnion):
-        if struct.is_forward_declaration:
-            continue  # Don't emit anything for forward declarations
+        if not struct.is_forward_declaration:
+            structs_with_definitions[struct.name] = True
+
+    for struct in dom_root.list_all_children_of_type(code_dom.DOMClassStructUnion):
+        # We want to emit forward declarations IFF they don't have a corresponding actual declaration
+        # (because the consumer of the JSON file may want to know about the existence of undefined structs,
+        # but there's no point in emitting data for a forward declaration that also has a real definition
+        # elsewhere in the file)
+        if struct.is_forward_declaration and (struct.name in structs_with_definitions):
+            continue
 
         structs_root.append(emit_struct(struct))
 

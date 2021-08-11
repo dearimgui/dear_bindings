@@ -13,7 +13,6 @@ def generate_cast(from_type, to_type, imgui_classes_and_callbacks, nested_classe
     cast_suffix = ""
 
     if (from_type is not None) and (to_type is not None):
-
         context = code_dom.WriteContext()
         context.for_c = to_cpp
         context.for_implementation = True
@@ -95,6 +94,9 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
     write_c_line(file, indent, "// Function stubs")
     # Emit functions
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+        if function.is_manual_helper:
+            continue  # Don't emit any code for manual helpers, we assume they are implemented by hand in the template
+
         # Emit conditionals (#ifdefs/etc)
         generator.write_conditionals(function, file, indent)
 

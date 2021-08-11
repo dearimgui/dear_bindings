@@ -41,3 +41,5 @@ Removed constructors/destructors that involve heap allocation
 Added alignment for comment indentation
 Added command line arguments
 Renamed templates to make them easier to match with source files
+Added struct forward declarations to metadata
+Added ImVector_Construct() and ImVector_Destruct() helpers
