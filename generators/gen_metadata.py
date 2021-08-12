@@ -54,9 +54,35 @@ def add_preprocessor_conditionals(element, root):
         root["conditionals"] = conditionals_root
 
 
+# Emit data for a single function pointer type
+def emit_function_pointer_type(function_ptr):
+    result = {}
+
+    if function_ptr.return_type is not None:
+        result["return_type"] = emit_type(function_ptr.return_type)
+
+    arguments_root = []
+    result["arguments"] = arguments_root
+
+    for argument in function_ptr.arguments:
+        if argument.is_implicit_default:
+            continue  # Don't emit implicit default arguments
+        arguments_root.append(emit_function_argument(argument))
+
+    return result
+
+
 # Emit data for a single type
 def emit_type(type_info):
-    return type_info.to_c_string()
+    result = {}
+
+    result["declaration"] = type_info.to_c_string()
+
+    if isinstance(type_info, code_dom.DOMFunctionPointerType):
+        # Special case for function pointers - we want to include a parsed version as well
+        result["parsed_type"] = emit_function_pointer_type(type_info)
+
+    return result
 
 
 # Emit data for an enum element
@@ -88,6 +114,18 @@ def emit_enum(enum):
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
+
+    return result
+
+# Emit data for a single typedef
+def emit_typedef(typedef):
+    result = {}
+
+    result["name"] = typedef.name
+    result["type"] = emit_type(typedef.type)
+
+    add_comments(typedef, result)
+    add_preprocessor_conditionals(typedef, result)
 
     return result
 
@@ -202,6 +240,13 @@ def generate(dom_root, file):
 
     for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
         enums_root.append(emit_enum(enum))
+
+    # Emit typedefs
+    typedefs_root = []
+    metadata_root["typedefs"] = typedefs_root
+
+    for typedef in dom_root.list_all_children_of_type(code_dom.DOMTypedef):
+        typedefs_root.append(emit_typedef(typedef))
 
     # Emit struct declarations
     structs_root = []
