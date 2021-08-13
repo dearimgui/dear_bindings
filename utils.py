@@ -53,3 +53,16 @@ def sanitise_name_for_identifier(name):
         .replace('*', 'Ptr') \
         .replace('&', 'Ref') \
         .replace(' ', '_')
+
+
+# Append comment text to an element
+# Mainly useful for debugging
+def append_comment_text(element, message):
+    if element.attached_comment is not None:
+        element.attached_comment.comment_text += " " + message
+    else:
+        comment = code_dom.DOMComment()
+        comment.comment_text = "// " + message
+        comment.is_attached_comment = True
+        comment.parent = element
+        element.attached_comment = comment

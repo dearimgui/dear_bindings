@@ -38,6 +38,8 @@ import modifiers.mod_remove_heap_constructors_and_destructors
 import modifiers.mod_generate_default_argument_functions
 import modifiers.mod_align_comments
 import modifiers.mod_add_manual_helper_functions
+import modifiers.mod_add_function_comment
+import modifiers.mod_mark_internal_members
 import generators.gen_struct_converters
 import generators.gen_function_stubs
 import generators.gen_metadata
@@ -109,6 +111,27 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                         "ImGui::RoundScalarWithFormatT",
                                                         "ImGui::CheckboxFlagsT"])
         modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
+
+        # Add helper functions to create/destroy ImVectors
+        # Implementation code for these can be found in templates/imgui-header.cpp
+        modifiers.mod_add_manual_helper_functions.apply(dom_root,
+                                                        [
+                                                            "void ImVector_Construct(void* vector); // Construct a "
+                                                            "zero-size ImVector<> (of any type). This is primarily "
+                                                            "useful when calling "
+                                                            "ImFontGlyphRangesBuilder_BuildRanges()",
+
+                                                            "void ImVector_Destruct(void* vector); // Destruct an "
+                                                            "ImVector<> (of any type). Important: Frees the vector "
+                                                            "memory but does not call destructors on contained objects "
+                                                            "(if they have them)"
+                                                        ])
+        # Add a note to ImFontGlyphRangesBuilder_BuildRanges() pointing people at the helpers
+        modifiers.mod_add_function_comment.apply(dom_root,
+                                                 "ImFontGlyphRangesBuilder::BuildRanges",
+                                                 "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
+                                                 "construct out_ranges)")
+
         modifiers.mod_remove_operators.apply(dom_root)
         modifiers.mod_remove_heap_constructors_and_destructors.apply(dom_root)
         modifiers.mod_convert_references_to_pointers.apply(dom_root)
@@ -122,6 +145,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
         # We treat ImVec2, ImVec4 and ImColor as by-value types
         modifiers.mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor'])
+        modifiers.mod_mark_internal_members.apply(dom_root)
         modifiers.mod_flatten_class_functions.apply(dom_root)
         modifiers.mod_remove_nested_typedefs.apply(dom_root)
         modifiers.mod_remove_static_fields.apply(dom_root)
@@ -140,21 +164,6 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                        "cImFileGetSize",
                                                        "cImFileRead",
                                                        "cImFileWrite"])
-
-        # Add helper functions to create/destroy ImVectors
-        # Implementation code for these can be found in templates/imgui-header.cpp
-        modifiers.mod_add_manual_helper_functions.apply(dom_root,
-                                                        [
-                                                            "void ImVector_Construct(void* vector); // Construct a "
-                                                            "zero-size ImVector<> (of any type). This is primarily "
-                                                            "useful when calling "
-                                                            "ImFontGlyphRangesBuilder_BuildRanges()",
-
-                                                            "void ImVector_Destruct(void* vector); // Destruct an "
-                                                            "ImVector<> (of any type). Important: Frees the vector "
-                                                            "memory but does not call destructors on contained objects "
-                                                            "(if they have them)"
-                                                        ])
 
         # Make all functions use CIMGUI_API
         modifiers.mod_make_all_functions_use_imgui_api.apply(dom_root)

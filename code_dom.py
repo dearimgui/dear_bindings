@@ -64,6 +64,7 @@ class DOMElement:
         #                                 pre-modification document structure
         self.original_name_override = None  # Optional name to use for the original name of this type
         #                                     (primarily for template parameter expansion and the like)
+        self.is_internal = False  # Indicates that the associated element is an internal API component
 
     # Parse tokens that can appear anywhere, returning an appropriate element if possible or None if not
     @staticmethod

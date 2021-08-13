@@ -54,9 +54,21 @@ def add_preprocessor_conditionals(element, root):
         root["conditionals"] = conditionals_root
 
 
+# Add internal flag if present
+def add_internal_flag(element, root):
+
+    # Note that this is more of a hint than a prohibition, and it may well be desirable for users to have access to
+    # elements marked with this flag (but ideally marked in some way so they are aware that the functionality isn't
+    # part of the primary API)
+    if element.is_internal:
+        root["is_internal"] = True
+
+
 # Emit data for a single function pointer type
 def emit_function_pointer_type(function_ptr):
     result = {}
+
+    result["flavour"] = "function_pointer"
 
     if function_ptr.return_type is not None:
         result["return_type"] = emit_type(function_ptr.return_type)
@@ -80,7 +92,7 @@ def emit_type(type_info):
 
     if isinstance(type_info, code_dom.DOMFunctionPointerType):
         # Special case for function pointers - we want to include a parsed version as well
-        result["parsed_type"] = emit_function_pointer_type(type_info)
+        result["type_details"] = emit_function_pointer_type(type_info)
 
     return result
 
@@ -95,6 +107,7 @@ def emit_enum_element(enum):
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
+    add_internal_flag(enum, result)
 
     return result
 
@@ -114,6 +127,7 @@ def emit_enum(enum):
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
+    add_internal_flag(enum, result)
 
     return result
 
@@ -126,6 +140,7 @@ def emit_typedef(typedef):
 
     add_comments(typedef, result)
     add_preprocessor_conditionals(typedef, result)
+    add_internal_flag(typedef, result)
 
     return result
 
@@ -155,6 +170,7 @@ def emit_field(field):
 
     add_comments(field, result)
     add_preprocessor_conditionals(field, result)
+    add_internal_flag(field, result)
 
     return result
 
@@ -177,6 +193,7 @@ def emit_struct(struct):
 
     add_comments(struct, result)
     add_preprocessor_conditionals(struct, result)
+    add_internal_flag(struct, result)
 
     return result
 
@@ -226,6 +243,7 @@ def emit_function(function):
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)
+    add_internal_flag(function, result)
 
     return result
 
