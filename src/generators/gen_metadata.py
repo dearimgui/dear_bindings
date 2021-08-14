@@ -9,7 +9,7 @@ def add_comments(element, root):
     had_any_comments = False
     if element.pre_comments:
         preceding_root = []
-        comments_root["preceeding"] = preceding_root
+        comments_root["preceding"] = preceding_root
         for comment in element.pre_comments:
             preceding_root.append(comment.to_c_string())
             had_any_comments = True
@@ -40,13 +40,19 @@ def add_preprocessor_conditionals(element, root):
 
         conditional_root = {}
         conditionals_root.append(conditional_root)
+
+        is_in_else_block = conditional.is_element_in_else_block(element)
+
         if conditional.is_ifdef:
-            if conditional.is_negated:
+            if conditional.is_negated ^ is_in_else_block:
                 conditional_root["condition"] = "ifndef"
             else:
                 conditional_root["condition"] = "ifdef"
         else:
-            conditional_root["condition"] = "if"
+            if is_in_else_block:
+                conditional_root["condition"] = "ifnot"
+            else:
+                conditional_root["condition"] = "if"
         conditional_root["expression"] = expression
         had_any_conditionals = True
 

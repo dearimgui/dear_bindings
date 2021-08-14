@@ -638,6 +638,16 @@ class DOMPreprocessorIf(DOMElement):
                (self.is_elif == other.is_elif) and \
                (self.is_negated != other.is_negated)
 
+    # Returns true if the element given is part of our else block
+    def is_element_in_else_block(self, element):
+        if element in self.else_children:
+            return True
+        if element in self.children:
+            return False
+        if element.parent is None:
+            return False
+        return self.is_element_in_else_block(element.parent)
+
     # Get the expression used as a string
     def get_expression(self):
         return collapse_tokens_to_string(self.expression_tokens)

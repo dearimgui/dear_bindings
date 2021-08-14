@@ -226,7 +226,7 @@ if __name__ == '__main__':
                                      epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
                                             'parameter errors')
     parser.add_argument('src',
-                        help='Path to source header file to process (generally imgui.h or imgui_internal.h)')
+                        help='Path to source header file to process (generally imgui.h)')
     parser.add_argument('--output', '-o',
                         required=True,
                         help='Path to output file(s). This should have no extension, as <output>.h, <output>.cpp and '
