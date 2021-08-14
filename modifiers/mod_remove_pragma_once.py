@@ -21,8 +21,7 @@ def apply(dom_root):
 
             # Add #define
             define = code_dom.DOMDefine()
-            define_token = utils.create_token('#define ' + guard_name)
-            define.tokens = [define_token]
+            define.name = guard_name
 
             ifguard.add_child(define)
 

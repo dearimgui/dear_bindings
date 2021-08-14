@@ -40,6 +40,7 @@ import modifiers.mod_align_comments
 import modifiers.mod_add_manual_helper_functions
 import modifiers.mod_add_function_comment
 import modifiers.mod_mark_internal_members
+import modifiers.mod_exclude_defines_from_metadata
 import generators.gen_struct_converters
 import generators.gen_function_stubs
 import generators.gen_metadata
@@ -175,6 +176,15 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
         modifiers.mod_merge_blank_lines.apply(dom_root)
         modifiers.mod_remove_blank_lines.apply(dom_root)
         modifiers.mod_align_comments.apply(dom_root)
+
+        # Exclude some defines that aren't really useful from the metadata
+        modifiers.mod_exclude_defines_from_metadata.apply(dom_root, [
+            "IMGUI_IMPL_API",
+            "IM_COL32_WHITE",
+            "IM_COL32_BLACK",
+            "IM_COL32_BLACK_TRANS",
+            "ImDrawCallback_ResetRenderState",
+        ])
 
         dom_root.validate_hierarchy()
 

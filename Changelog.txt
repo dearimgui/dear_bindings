@@ -46,3 +46,6 @@ Added ImVector_Construct() and ImVector_Destruct() helpers
 Added typedefs to the metadata output
 Added parsed versions of complex types to the metadata output
 Added marking of internal API elements
+Fixed line comments on preprocessor directives getting treated as part of the directive
+Added better #define parsing
+Added defines to metadata output

@@ -248,23 +248,63 @@ def emit_function(function):
     return result
 
 
+def emit_define(define):
+    result = {}
+
+    result["name"] = define.name
+    if define.content is not None:
+        content = define.content
+        # Remove quotes around value if present
+        if content.startswith('"') and content.endswith('"'):
+            content = content[1:len(content)-1]
+        # Remove ()s around value if present
+        if content.startswith('(') and content.endswith(')'):
+            content = content[1:len(content)-1]
+        result["content"] = content
+
+    add_comments(define, result)
+    add_preprocessor_conditionals(define, result)
+    add_internal_flag(define, result)
+
+    return result
+
+
 # Write metadata about our file to a JSON file
 def generate(dom_root, file):
     metadata_root = {}
+
+    # Emit defines
+    defines_root = []
+    metadata_root["defines"] = defines_root
+
+    for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
+        if not define.exclude_from_metadata:
+
+            # Don't include defines with no actual content
+            if define.content is None:
+                continue
+
+            # Don't include function-style defines
+            if "(" in define.name:
+                continue
+
+            defines_root.append(emit_define(define))
 
     # Emit enums
     enums_root = []
     metadata_root["enums"] = enums_root
 
     for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
-        enums_root.append(emit_enum(enum))
+        if not enum.exclude_from_metadata:
+            enums_root.append(emit_enum(enum))
 
     # Emit typedefs
     typedefs_root = []
     metadata_root["typedefs"] = typedefs_root
 
     for typedef in dom_root.list_all_children_of_type(code_dom.DOMTypedef):
-        typedefs_root.append(emit_typedef(typedef))
+        if not typedef.exclude_from_metadata:
+            typedefs_root.append(emit_typedef(typedef))
 
     # Emit struct declarations
     structs_root = []
@@ -284,14 +324,16 @@ def generate(dom_root, file):
         if struct.is_forward_declaration and (struct.name in structs_with_definitions):
             continue
 
-        structs_root.append(emit_struct(struct))
+        if not struct.exclude_from_metadata:
+            structs_root.append(emit_struct(struct))
 
     # Emit function declarations
     functions_root = []
     metadata_root["functions"] = functions_root
 
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
-        functions_root.append(emit_function(function))
+        if not function.exclude_from_metadata:
+            functions_root.append(emit_function(function))
 
     # Write JSON to file
     json.dump(metadata_root, file, indent=4)
