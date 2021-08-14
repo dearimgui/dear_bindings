@@ -49,3 +49,4 @@ Added marking of internal API elements
 Fixed line comments on preprocessor directives getting treated as part of the directive
 Added better #define parsing
 Added defines to metadata output
+Tidied up directory structure a bit

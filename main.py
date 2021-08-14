@@ -3,47 +3,47 @@
 # Developed by Ben Carter (ben@shironekolabs.com)
 
 import os
-import code_dom
-import c_lexer
+from src import code_dom
+from src import c_lexer
 import argparse
 import sys
 import traceback
-import modifiers.mod_remove_pragma_once
-import modifiers.mod_flatten_namespaces
-import modifiers.mod_attach_preceding_comments
-import modifiers.mod_remove_function_bodies
-import modifiers.mod_remove_operators
-import modifiers.mod_remove_structs
-import modifiers.mod_remove_functions
-import modifiers.mod_add_prefix_to_loose_functions
-import modifiers.mod_flatten_class_functions
-import modifiers.mod_flatten_nested_classes
-import modifiers.mod_flatten_templates
-import modifiers.mod_flatten_conditionals
-import modifiers.mod_disambiguate_functions
-import modifiers.mod_convert_references_to_pointers
-import modifiers.mod_remove_static_fields
-import modifiers.mod_remove_nested_typedefs
-import modifiers.mod_remove_all_functions_from_classes
-import modifiers.mod_merge_blank_lines
-import modifiers.mod_remove_blank_lines
-import modifiers.mod_remove_empty_conditionals
-import modifiers.mod_make_all_functions_use_imgui_api
-import modifiers.mod_rename_defines
-import modifiers.mod_forward_declare_structs
-import modifiers.mod_mark_by_value_structs
-import modifiers.mod_add_includes
-import modifiers.mod_remove_includes
-import modifiers.mod_remove_heap_constructors_and_destructors
-import modifiers.mod_generate_default_argument_functions
-import modifiers.mod_align_comments
-import modifiers.mod_add_manual_helper_functions
-import modifiers.mod_add_function_comment
-import modifiers.mod_mark_internal_members
-import modifiers.mod_exclude_defines_from_metadata
-import generators.gen_struct_converters
-import generators.gen_function_stubs
-import generators.gen_metadata
+from src.modifiers import mod_remove_pragma_once
+from src.modifiers import mod_flatten_namespaces
+from src.modifiers import mod_attach_preceding_comments
+from src.modifiers import mod_remove_function_bodies
+from src.modifiers import mod_remove_operators
+from src.modifiers import mod_remove_structs
+from src.modifiers import mod_remove_functions
+from src.modifiers import mod_add_prefix_to_loose_functions
+from src.modifiers import mod_flatten_class_functions
+from src.modifiers import mod_flatten_nested_classes
+from src.modifiers import mod_flatten_templates
+from src.modifiers import mod_flatten_conditionals
+from src.modifiers import mod_disambiguate_functions
+from src.modifiers import mod_convert_references_to_pointers
+from src.modifiers import mod_remove_static_fields
+from src.modifiers import mod_remove_nested_typedefs
+from src.modifiers import mod_remove_all_functions_from_classes
+from src.modifiers import mod_merge_blank_lines
+from src.modifiers import mod_remove_blank_lines
+from src.modifiers import mod_remove_empty_conditionals
+from src.modifiers import mod_make_all_functions_use_imgui_api
+from src.modifiers import mod_rename_defines
+from src.modifiers import mod_forward_declare_structs
+from src.modifiers import mod_mark_by_value_structs
+from src.modifiers import mod_add_includes
+from src.modifiers import mod_remove_includes
+from src.modifiers import mod_remove_heap_constructors_and_destructors
+from src.modifiers import mod_generate_default_argument_functions
+from src.modifiers import mod_align_comments
+from src.modifiers import mod_add_manual_helper_functions
+from src.modifiers import mod_add_function_comment
+from src.modifiers import mod_mark_internal_members
+from src.modifiers import mod_exclude_defines_from_metadata
+from src.generators import gen_struct_converters
+from src.generators import gen_function_stubs
+from src.generators import gen_metadata
 
 
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
@@ -65,161 +65,162 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
             if not tok:
                 break  # No more input
             print(tok)
-    else:
-        context = code_dom.ParseContext()
-        dom_root = code_dom.DOMHeaderFileSet()
-        dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream))
-        _, dom_root.filename = os.path.split(src_file)
-        dom_root.validate_hierarchy()
-        #  dom_root.dump()
+        return
 
-        print("Storing unmodified DOM")
+    context = code_dom.ParseContext()
+    dom_root = code_dom.DOMHeaderFileSet()
+    dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream))
+    _, dom_root.filename = os.path.split(src_file)
+    dom_root.validate_hierarchy()
+    #  dom_root.dump()
 
-        dom_root.save_unmodified_clones()
+    print("Storing unmodified DOM")
 
-        print("Applying modifiers")
+    dom_root.save_unmodified_clones()
 
-        # Apply modifiers
+    print("Applying modifiers")
 
-        # Add headers we need and remove those we don't
-        modifiers.mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
-        modifiers.mod_remove_includes.apply(dom_root, ["<float.h>",
-                                                       "<stdarg.h>",
-                                                       "<stddef.h>",
-                                                       "<string.h>"])
+    # Apply modifiers
 
-        modifiers.mod_attach_preceding_comments.apply(dom_root)
-        modifiers.mod_remove_function_bodies.apply(dom_root)
-        # Remove ImGuiOnceUponAFrame for now as it needs custom fiddling to make it usable from C
-        # Remove ImNewDummy/ImNewWrapper as it's a helper for C++ new (and C dislikes empty structs)
-        modifiers.mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame",
-                                                      "ImNewDummy",  # ImGui <1.82
-                                                      "ImNewWrapper",  # ImGui >=1.82
-                                                      # Templated stuff in imgui_internal.h
-                                                      "ImBitArray",
-                                                      "ImBitVector",
-                                                      "ImSpan",
-                                                      "ImSpanAllocator",
-                                                      "ImPool",
-                                                      "ImChunkStream"])
-        # Remove all functions from ImVector, as they're not really useful
-        modifiers.mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
-        # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
-        modifiers.mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
-                                                        "ImGui::ScaleValueFromRatioT",
-                                                        "ImGui::DragBehaviorT",
-                                                        "ImGui::SliderBehaviorT",
-                                                        "ImGui::RoundScalarWithFormatT",
-                                                        "ImGui::CheckboxFlagsT"])
-        modifiers.mod_add_prefix_to_loose_functions.apply(dom_root, "c")
+    # Add headers we need and remove those we don't
+    mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
+    mod_remove_includes.apply(dom_root, ["<float.h>",
+                                         "<stdarg.h>",
+                                         "<stddef.h>",
+                                         "<string.h>"])
 
-        # Add helper functions to create/destroy ImVectors
-        # Implementation code for these can be found in templates/imgui-header.cpp
-        modifiers.mod_add_manual_helper_functions.apply(dom_root,
-                                                        [
-                                                            "void ImVector_Construct(void* vector); // Construct a "
-                                                            "zero-size ImVector<> (of any type). This is primarily "
-                                                            "useful when calling "
-                                                            "ImFontGlyphRangesBuilder_BuildRanges()",
+    mod_attach_preceding_comments.apply(dom_root)
+    mod_remove_function_bodies.apply(dom_root)
+    # Remove ImGuiOnceUponAFrame for now as it needs custom fiddling to make it usable from C
+    # Remove ImNewDummy/ImNewWrapper as it's a helper for C++ new (and C dislikes empty structs)
+    mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame",
+                                        "ImNewDummy",  # ImGui <1.82
+                                        "ImNewWrapper",  # ImGui >=1.82
+                                        # Templated stuff in imgui_internal.h
+                                        "ImBitArray",
+                                        "ImBitVector",
+                                        "ImSpan",
+                                        "ImSpanAllocator",
+                                        "ImPool",
+                                        "ImChunkStream"])
+    # Remove all functions from ImVector, as they're not really useful
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+    # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
+    mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
+                                          "ImGui::ScaleValueFromRatioT",
+                                          "ImGui::DragBehaviorT",
+                                          "ImGui::SliderBehaviorT",
+                                          "ImGui::RoundScalarWithFormatT",
+                                          "ImGui::CheckboxFlagsT"])
+    mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
-                                                            "void ImVector_Destruct(void* vector); // Destruct an "
-                                                            "ImVector<> (of any type). Important: Frees the vector "
-                                                            "memory but does not call destructors on contained objects "
-                                                            "(if they have them)"
-                                                        ])
-        # Add a note to ImFontGlyphRangesBuilder_BuildRanges() pointing people at the helpers
-        modifiers.mod_add_function_comment.apply(dom_root,
-                                                 "ImFontGlyphRangesBuilder::BuildRanges",
-                                                 "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
-                                                 "construct out_ranges)")
+    # Add helper functions to create/destroy ImVectors
+    # Implementation code for these can be found in templates/imgui-header.cpp
+    mod_add_manual_helper_functions.apply(dom_root,
+                                          [
+                                              "void ImVector_Construct(void* vector); // Construct a "
+                                              "zero-size ImVector<> (of any type). This is primarily "
+                                              "useful when calling "
+                                              "ImFontGlyphRangesBuilder_BuildRanges()",
 
-        modifiers.mod_remove_operators.apply(dom_root)
-        modifiers.mod_remove_heap_constructors_and_destructors.apply(dom_root)
-        modifiers.mod_convert_references_to_pointers.apply(dom_root)
-        # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
-        # if anyone tries to use it
-        modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
-        modifiers.mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
-        modifiers.mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
-        modifiers.mod_flatten_nested_classes.apply(dom_root)
-        # The custom type fudge here is a workaround for how template parameters are expanded
-        modifiers.mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
-        # We treat ImVec2, ImVec4 and ImColor as by-value types
-        modifiers.mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor'])
-        modifiers.mod_mark_internal_members.apply(dom_root)
-        modifiers.mod_flatten_class_functions.apply(dom_root)
-        modifiers.mod_remove_nested_typedefs.apply(dom_root)
-        modifiers.mod_remove_static_fields.apply(dom_root)
-        modifiers.mod_generate_default_argument_functions.apply(dom_root)
-        modifiers.mod_disambiguate_functions.apply(dom_root,
-                                                   name_suffix_remaps={
-                                                       # Some more user-friendly suffixes for certain types
-                                                       'const char*': 'Str',
-                                                       'char*': 'Str',
-                                                       'unsigned int': 'Uint'},
-                                                   # Functions that look like they have name clashes but actually don't
-                                                   # thanks to preprocessor conditionals
-                                                   functions_to_ignore=[
-                                                       "cImFileOpen",
-                                                       "cImFileClose",
-                                                       "cImFileGetSize",
-                                                       "cImFileRead",
-                                                       "cImFileWrite"])
+                                              "void ImVector_Destruct(void* vector); // Destruct an "
+                                              "ImVector<> (of any type). Important: Frees the vector "
+                                              "memory but does not call destructors on contained objects "
+                                              "(if they have them)"
+                                          ])
+    # Add a note to ImFontGlyphRangesBuilder_BuildRanges() pointing people at the helpers
+    mod_add_function_comment.apply(dom_root,
+                                   "ImFontGlyphRangesBuilder::BuildRanges",
+                                   "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
+                                   "construct out_ranges)")
 
-        # Make all functions use CIMGUI_API
-        modifiers.mod_make_all_functions_use_imgui_api.apply(dom_root)
-        modifiers.mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
+    mod_remove_operators.apply(dom_root)
+    mod_remove_heap_constructors_and_destructors.apply(dom_root)
+    mod_convert_references_to_pointers.apply(dom_root)
+    # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
+    # if anyone tries to use it
+    mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
+    mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
+    mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
+    mod_flatten_nested_classes.apply(dom_root)
+    # The custom type fudge here is a workaround for how template parameters are expanded
+    mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+    # We treat ImVec2, ImVec4 and ImColor as by-value types
+    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor'])
+    mod_mark_internal_members.apply(dom_root)
+    mod_flatten_class_functions.apply(dom_root)
+    mod_remove_nested_typedefs.apply(dom_root)
+    mod_remove_static_fields.apply(dom_root)
+    mod_generate_default_argument_functions.apply(dom_root)
+    mod_disambiguate_functions.apply(dom_root,
+                                     name_suffix_remaps={
+                                         # Some more user-friendly suffixes for certain types
+                                         'const char*': 'Str',
+                                         'char*': 'Str',
+                                         'unsigned int': 'Uint'},
+                                     # Functions that look like they have name clashes but actually don't
+                                     # thanks to preprocessor conditionals
+                                     functions_to_ignore=[
+                                         "cImFileOpen",
+                                         "cImFileClose",
+                                         "cImFileGetSize",
+                                         "cImFileRead",
+                                         "cImFileWrite"])
 
-        modifiers.mod_forward_declare_structs.apply(dom_root)
-        modifiers.mod_remove_pragma_once.apply(dom_root)
-        modifiers.mod_remove_empty_conditionals.apply(dom_root)
-        modifiers.mod_merge_blank_lines.apply(dom_root)
-        modifiers.mod_remove_blank_lines.apply(dom_root)
-        modifiers.mod_align_comments.apply(dom_root)
+    # Make all functions use CIMGUI_API
+    mod_make_all_functions_use_imgui_api.apply(dom_root)
+    mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
 
-        # Exclude some defines that aren't really useful from the metadata
-        modifiers.mod_exclude_defines_from_metadata.apply(dom_root, [
-            "IMGUI_IMPL_API",
-            "IM_COL32_WHITE",
-            "IM_COL32_BLACK",
-            "IM_COL32_BLACK_TRANS",
-            "ImDrawCallback_ResetRenderState",
-        ])
+    mod_forward_declare_structs.apply(dom_root)
+    mod_remove_pragma_once.apply(dom_root)
+    mod_remove_empty_conditionals.apply(dom_root)
+    mod_merge_blank_lines.apply(dom_root)
+    mod_remove_blank_lines.apply(dom_root)
+    mod_align_comments.apply(dom_root)
 
-        dom_root.validate_hierarchy()
+    # Exclude some defines that aren't really useful from the metadata
+    mod_exclude_defines_from_metadata.apply(dom_root, [
+        "IMGUI_IMPL_API",
+        "IM_COL32_WHITE",
+        "IM_COL32_BLACK",
+        "IM_COL32_BLACK_TRANS",
+        "ImDrawCallback_ResetRenderState",
+    ])
 
-        # dom_root.dump()
+    dom_root.validate_hierarchy()
 
-        # Cases where the varargs list version of a function does not simply have a V added to the name and needs a
-        # custom suffix instead
-        custom_varargs_list_suffixes = {'appendf': 'v'}
+    # dom_root.dump()
 
-        print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
+    # Cases where the varargs list version of a function does not simply have a V added to the name and needs a
+    # custom suffix instead
+    custom_varargs_list_suffixes = {'appendf': 'v'}
 
-        with open(dest_file_no_ext + ".h", "w") as file:
-            write_context = code_dom.WriteContext()
-            write_context.for_c = True
-            dom_root.write_to_c(file, context=write_context)
+    print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
-        # Generate implementations
-        with open(dest_file_no_ext + ".cpp", "w") as file:
-            with open(implementation_header, "r") as src_file:
-                file.writelines(src_file.readlines())
+    with open(dest_file_no_ext + ".h", "w") as file:
+        write_context = code_dom.WriteContext()
+        write_context.for_c = True
+        dom_root.write_to_c(file, context=write_context)
 
-            generators.gen_struct_converters.generate(dom_root, file, indent=0)
+    # Generate implementations
+    with open(dest_file_no_ext + ".cpp", "w") as file:
+        with open(implementation_header, "r") as src_file:
+            file.writelines(src_file.readlines())
 
-            generators.gen_function_stubs.generate(dom_root, file, indent=0,
-                                                   custom_varargs_list_suffixes=custom_varargs_list_suffixes)
+        gen_struct_converters.generate(dom_root, file, indent=0)
 
-        # Generate metadata
-        with open(dest_file_no_ext + ".json", "w") as file:
-            generators.gen_metadata.generate(dom_root, file)
+        gen_function_stubs.generate(dom_root, file, indent=0,
+                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes)
+
+    # Generate metadata
+    with open(dest_file_no_ext + ".json", "w") as file:
+        gen_metadata.generate(dom_root, file)
 
 
 if __name__ == '__main__':
     # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
-    # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
-    # containing the initial header block for the implementation (provided in the templates/ directory).
+    # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a
+    # file containing the initial header block for the implementation (provided in the templates/ directory).
 
     parser = argparse.ArgumentParser(description='Convert Dear ImGui headers to C',
                                      epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
@@ -231,8 +232,8 @@ if __name__ == '__main__':
                         help='Path to output file(s). This should have no extension, as <output>.h, <output>.cpp and '
                              '<output>.json will be written.')
     parser.add_argument('--templatedir', '-t',
-                        default="./templates",
-                        help='Path to the implementation template directory (default: ./templates)')
+                        default="./src/templates",
+                        help='Path to the implementation template directory (default: ./src/templates)')
 
     args = parser.parse_args()
 
