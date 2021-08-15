@@ -22,10 +22,12 @@ Each of the top-level keys contains information about one type of object in the 
 ```json
 {
     "name": "IMGUI_VERSION",
-    "content": "1.83 WIP"
+    "content": "\"1.83 WIP\""
 }
 ```
 Defines represent `#define` values.
+
+> Note that the content includes quotes if the define was a string in the original header (as seen above), but _does_ remove brackets from around values (so in the case of `IM_DRAWLIST_TEX_LINES_WIDTH_MAX`, the content is `63` not `(63)`). 
 
 |Key|Description|
 |---|-----------|
