@@ -260,9 +260,6 @@ def emit_define(define):
     result["name"] = define.name
     if define.content is not None:
         content = define.content
-        # Remove quotes around value if present
-        if content.startswith('"') and content.endswith('"'):
-            content = content[1:len(content)-1]
         # Remove ()s around value if present
         if content.startswith('(') and content.endswith(')'):
             content = content[1:len(content)-1]

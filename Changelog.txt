@@ -53,3 +53,7 @@ Tidied up directory structure a bit
 Fixed metadata conditionals not getting generated correctly for else blocks
 Fixed spelling of "preceding" in metadata
 Removed help reference to processing imgui_internal.h for now in case it confuses people
+
+--- v0.04 WIP
+
+Put quotes back on string define values in the metadata
