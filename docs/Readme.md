@@ -48,13 +48,11 @@ Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors
 ```
 
-Generated metadata
-------------------
+# Generated metadata
 
 You can find details of the `cimgui.json` file format [here](MetadataFormat.md).
 
-Generated code differences
---------------------------
+# Generated code differences
 
 The generated header should hopefully be relatively self-explanatory, but here are some of the key differences between it and the original ImGui C++ API:
 
@@ -142,9 +140,7 @@ Templates are expanded into their concrete instantiations, so for example `ImVec
 These minor features are removed, mostly because they either rely on C++ language features to function correctly or are helpers that don't make sense as part of the bindings.
 
 ```
-ImGuiOnceUponAFrame
-ImNewDummy
-ImNewWrapper
+ImGuiOnceUponAFrame, ImNewDummy, ImNewWrapper, ImGui::Value
 ```
 
 License
