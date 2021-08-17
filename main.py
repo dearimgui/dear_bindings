@@ -222,7 +222,7 @@ if __name__ == '__main__':
     # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a
     # file containing the initial header block for the implementation (provided in the templates/ directory).
 
-    parser = argparse.ArgumentParser(description='Convert Dear ImGui headers to C',
+    parser = argparse.ArgumentParser(description='Parse Dear ImGui headers, convert to C and output metadata',
                                      epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
                                             'parameter errors')
     parser.add_argument('src',

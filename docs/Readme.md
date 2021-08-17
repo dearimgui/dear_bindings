@@ -5,11 +5,56 @@ Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/oc
 
 At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users. 
 
-It should be compatible with ImGui v1.82 onwards (some earlier versions also work but compatibility isn't guaranteed).
+It should be compatible with Dear ImGui v1.82 onwards (some earlier versions also work but compatibility isn't guaranteed).
 
-The intention with Dear Bindings is to try and produce a C header file which is as close as reasonably possible to what a human would generate, and thus special attention has been given to preserving formatting, comments and the like such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
+The intention with Dear Bindings is to try and **produce a C header file which is as close as reasonably possible to what a human would generate**, and thus special attention has been given to preserving formatting, comments and the like such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
 
-## Generated code differences
+# Requirements
+
+* Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
+* [ply](https://www.dabeaz.com/ply/) (Python Lex-Yacc, v3.11 tested)
+
+# Usage
+
+Assuming you have `imgui.h` in the project directory, and would like to generate `cimgui.h`, `cimgui.cpp` and `cimgui.json`:
+
+```
+python main.py -o cimgui imgui.h
+```
+
+Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a project to generate a C API (`cimgui.h` defines the API, whilst `cimgui.cpp` implements the binding to the underlying C++ code).
+
+Other command line arguments:
+
+```
+usage: main.py [-h] --output OUTPUT [--templatedir TEMPLATEDIR] src
+
+Parse Dear ImGui headers, convert to C and output metadata
+
+positional arguments:
+  src                   Path to source header file to process (generally imgui.h)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --output OUTPUT, -o OUTPUT
+                        Path to output file(s). This should have no extension,
+                        as <output>.h, <output>.cpp and <output>.json will be
+                        written.
+  --templatedir TEMPLATEDIR, -t TEMPLATEDIR
+                        Path to the implementation template directory
+                        (default: ./src/templates)
+
+Result code 0 is returned on success, 1 on conversion failure and 2 on
+parameter errors
+```
+
+Generated metadata
+------------------
+
+You can find details of the `cimgui.json` file format [here](MetadataFormat.md).
+
+Generated code differences
+--------------------------
 
 The generated header should hopefully be relatively self-explanatory, but here are some of the key differences between it and the original ImGui C++ API:
 
@@ -101,55 +146,6 @@ ImGuiOnceUponAFrame
 ImNewDummy
 ImNewWrapper
 ```
-
----
-
-# Requirements
-
-* Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
-* [ply](https://www.dabeaz.com/ply/) (Python Lex-Yacc, v3.11 tested)
-
-# Usage
-
-Assuming you have `imgui.h` in the project directory, and would like to generate `cimgui.h`, `cimgui.cpp` and `cimgui.json`:
-
-```
-python main.py -o cimgui imgui.h
-```
-
-Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a project to generate a C API (`cimgui.h` defines the API, whilst `cimgui.cpp` implements the binding to the underlying C++ code).
-
-Other command line arguments:
-
-```
-usage: main.py [-h] --output OUTPUT [--templatedir TEMPLATEDIR] src
-
-Convert Dear ImGui headers to C
-
-positional arguments:
-  src                   Path to source header file to process (generally
-                        imgui.h)
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --output OUTPUT, -o OUTPUT
-                        Path to output file(s). This should have no extension,
-                        as <output>.h, <output>.cpp and <output>.json will be
-                        written.
-  --templatedir TEMPLATEDIR, -t TEMPLATEDIR
-                        Path to the implementation template directory
-                        (default: ./src/templates)
-
-Result code 0 is returned on success, 1 on conversion failure and 2 on
-parameter errors
-
-Process finished with exit code 0
-```
-
-Generated metadata
-------------------
-
-You can find details of the `cimgui.json` file format [here](MetadataFormat.md).
 
 License
 -------
