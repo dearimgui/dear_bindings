@@ -157,7 +157,8 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                          # Some more user-friendly suffixes for certain types
                                          'const char*': 'Str',
                                          'char*': 'Str',
-                                         'unsigned int': 'Uint'},
+                                         'unsigned int': 'Uint',
+                                         'ImGuiID': 'ID'},
                                      # Functions that look like they have name clashes but actually don't
                                      # thanks to preprocessor conditionals
                                      functions_to_ignore=[
