@@ -1,0 +1,63 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_run:
+    # Use a workflow as a trigger of scheduled builds. Forked repositories can disable scheduled builds by disabling
+    # "scheduled" workflow, while maintaining ability to perform local CI builds.
+    workflows:
+      - scheduled
+    types:
+      - requested
+
+jobs:
+  Linux:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - master
+          - docking
+        compiler:
+          - gcc
+          - clang
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/checkout@v2
+      with:
+        path: imgui
+        repository: ocornut/imgui
+        ref: ${{ matrix.branch }}
+        fetch-depth: 1
+
+    - name: Dependencies
+      run: |
+        sudo pip3 install ply
+
+    - name: Generate
+      run: |
+         python3 main.py --output cimgui          imgui/imgui.h
+         python3 main.py --output cimgui_internal imgui/imgui_internal.h
+
+    - name: Build
+      run: |
+        # FIXME: cimgui_internal.cpp can be added when generator produces compilable result.
+        ${{ matrix.compiler }}                  \
+          -o example_null                       \
+          -Iimgui -I.                           \
+          -x c examples/example_null.c          \
+          -x c++ cimgui.cpp                     \
+          imgui/imgui.cpp                       \
+          imgui/imgui_demo.cpp                  \
+          imgui/imgui_draw.cpp                  \
+          imgui/imgui_tables.cpp                \
+          imgui/imgui_widgets.cpp               \
+          -lm -lstdc++
+
+    - name: Run
+      run: ./example_null
