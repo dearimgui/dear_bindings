@@ -2,6 +2,12 @@
 --- v0.04 WIP
 
 Put quotes back on string define values in the metadata
+Fixed incorrect codegen for synthetic #define elements
+Changed document filename to be the output filename (fixes include guard naming)
+Removed "#pragma once" removal (by default)
+Added a protective "extern C" around the majority of the header file, and removed it from the generated binding CPP
+Fixed blank lines emitting indenting
+Fixed invalid use of "static" in linkage specification [@rokups]
 
 --- v0.03
 
@@ -58,12 +64,3 @@ Fixed comments getting incorrectly treated as part of the expression for preproc
 Added generation of helper functions with defaulted arguments
 Improved function name disambiguation to use minimal number of suffixes necessary to ensure uniqueness
 Removed constructors/destructors that involve heap allocation
-
---- v0.03 WIP
-
-Fixed incorrect codegen for synthetic #define elements
-Changed document filename to be the output filename (fixes include guard naming)
-Removed "#pragma once" removal (by default)
-Added a protective "extern C" around the majority of the header file, and removed it from the generated binding CPP
-Fixed blank lines emitting indenting
-Fixed invalid use of "static" in linkage specification [@rokups]
