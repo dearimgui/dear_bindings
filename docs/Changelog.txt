@@ -59,3 +59,10 @@ Added generation of helper functions with defaulted arguments
 Improved function name disambiguation to use minimal number of suffixes necessary to ensure uniqueness
 Removed constructors/destructors that involve heap allocation
 
+--- v0.03 WIP
+
+Fixed incorrect codegen for synthetic #define elements
+Changed document filename to be the output filename (fixes include guard naming)
+Removed "#pragma once" removal (by default)
+Added a protective "extern C" around the majority of the header file, and removed it from the generated binding CPP
+Fixed blank lines emitting indenting

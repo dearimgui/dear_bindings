@@ -41,6 +41,7 @@ from src.modifiers import mod_add_manual_helper_functions
 from src.modifiers import mod_add_function_comment
 from src.modifiers import mod_mark_internal_members
 from src.modifiers import mod_exclude_defines_from_metadata
+from src.modifiers import mod_wrap_with_extern_c
 from src.generators import gen_struct_converters
 from src.generators import gen_function_stubs
 from src.generators import gen_metadata
@@ -70,7 +71,11 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
     dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream))
-    _, dom_root.filename = os.path.split(src_file)
+
+    # Assign a filename based on the output file
+    _, dom_root.filename = os.path.split(dest_file_no_ext)
+    dom_root.filename += ".h"  # Presume the primary output file is the .h
+
     dom_root.validate_hierarchy()
     #  dom_root.dump()
 
@@ -175,7 +180,11 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
 
     mod_forward_declare_structs.apply(dom_root)
-    mod_remove_pragma_once.apply(dom_root)
+    mod_wrap_with_extern_c.apply(dom_root)
+    # For now we leave #pragma once intact on the assumption that modern compilers all support it, but if necessary
+    # it can be replaced with a traditional #include guard by uncommenting the line below. If you find yourself needing
+    # this functionality in a significant way please let me know!
+    # mod_remove_pragma_once.apply(dom_root)
     mod_remove_empty_conditionals.apply(dom_root)
     mod_merge_blank_lines.apply(dom_root)
     mod_remove_blank_lines.apply(dom_root)

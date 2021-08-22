@@ -132,6 +132,14 @@ class DOMElement:
             return DOMTemplate.parse(context, stream)
         elif (tok.type == 'THING') or (tok.type == 'CONST') or (tok.type == 'SIGNED') or (tok.type == 'UNSIGNED') or \
                 (tok.type == '~'):  # ~ is necessary because destructor names start with it
+
+            # It might be an extern "C" statement
+
+            if tok.value == 'extern':
+                extern = DOMExternC.parse(context, stream)
+                if extern is not None:
+                    return extern
+
             # This could be either a field declaration or a function declaration, so try both
 
             function_declaration = DOMFunctionDeclaration.parse(context, stream)
@@ -160,7 +168,7 @@ class DOMElement:
     def add_attached_comment_to_line(self, line):
         if self.attached_comment is not None:
             padding = self.attached_comment.alignment - len(line)
-            padding = max(padding, 1) # Always have at least one space after the body of the line
+            padding = max(padding, 1)  # Always have at least one space after the body of the line
             return line + (" " * padding) + self.attached_comment.to_c_string()
         else:
             return line
@@ -492,7 +500,7 @@ class DOMDefine(DOMElement):
         self.write_preceding_comments(file, indent, context)
         # This is a little bit weird because we want to try and preserve formatting (whitespace), which means if we
         # have tokens we use those to generate the output, otherwise we synthesize a new statement
-        if self.tokens is not None:
+        if len(self.tokens) > 0:
             write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
         elif self.content is not None:
             write_c_line(file, indent, self.add_attached_comment_to_line("#define " + self.name + " " + self.content))
@@ -885,7 +893,7 @@ class DOMBlankLines(DOMElement):
         self.write_preceding_comments(file, indent, context)
         if self.num_blank_lines > 0:
             for i in range(0, self.num_blank_lines):
-                write_c_line(file, indent, "")
+                write_c_line(file, 0, "")
 
     def __str__(self):
         return "Blank lines: " + str(self.num_blank_lines)
@@ -1911,7 +1919,7 @@ class DOMType(DOMElement):
     # Gets the fully-qualified name (C++-style) of this element (including namespaces/etc)
     def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         context = WriteContext()
-        context.include_leading_colons=include_leading_colons
+        context.include_leading_colons = include_leading_colons
         return self.to_c_string(context)
 
     def to_c_string(self, context=WriteContext()):
@@ -2529,3 +2537,81 @@ class DOMTemplate(DOMElement):
 
     def __str__(self):
         return "Template: " + collapse_tokens_to_string(self.template_parameter_tokens)
+
+
+class DOMExternC(DOMElement):
+    def __init__(self):
+        super().__init__()
+        self.is_cpp_guarded = False  # Is this extern block surrounded with an implicit #ifdef __cplusplus guard?
+        #                              (only used for synthetic blocks - the parser isn't smart enough to autodetect
+        #                               that situation yet)
+
+    # Parse tokens from the token stream given
+    @staticmethod
+    def parse(context, stream):
+        checkpoint = stream.get_checkpoint()
+        dom_element = DOMExternC()
+        tok = stream.get_token_of_type(['THING'])
+        if tok is None or tok.value != "extern":
+            stream.rewind(checkpoint)
+            return None
+
+        dom_element.tokens.append(tok)
+
+        tok = stream.get_token_of_type(['STRING_LITERAL'])
+        if tok is None or (tok.value != '"C"' and tok.value != '"c"'):
+            stream.rewind(checkpoint)
+            return None
+
+        has_braces = stream.get_token_of_type(['LBRACE'])
+
+        while True:
+            tok = stream.peek_token()
+            if has_braces and (tok.type == 'RBRACE'):
+                stream.get_token()  # Eat the closing brace
+                break
+
+            child_element = context.current_content_parser()
+            if child_element is not None:
+                if not child_element.no_default_add:
+                    dom_element.add_child(child_element, context)
+            else:
+                print("Unrecognised element: " + str(vars(tok)))
+                break
+
+            if not has_braces:
+                break  # Only parse one element if there we no braces
+
+        if not has_braces:
+            stream.get_token_of_type(['SEMICOLON'])  # Eat the trailing semicolon
+
+        return dom_element
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        if self.is_cpp_guarded:
+            write_c_line(file, indent, '#ifdef __cplusplus')
+        write_c_line(file, indent, self.add_attached_comment_to_line('extern "C"'))
+        if len(self.children) == 1:
+            # Single-line(-ish) version
+            if self.is_cpp_guarded:
+                write_c_line(file, indent, '#endif')
+            for child in self.children:
+                child.write_to_c(file, indent + 1, context)
+        else:
+            # Multi-line version
+            write_c_line(file, indent, "{")
+            if self.is_cpp_guarded:
+                write_c_line(file, indent, '#endif')
+            for child in self.children:
+                # Only indent in the non-guarded case, for aesthetic purposes
+                child.write_to_c(file, indent + (0 if self.is_cpp_guarded else 1), context)
+            if self.is_cpp_guarded:
+                write_c_line(file, indent, '#ifdef __cplusplus')
+            write_c_line(file, indent, '} // End of extern "C" block')
+            if self.is_cpp_guarded:
+                write_c_line(file, indent, '#endif')
+
+    def __str__(self):
+        return "Extern C block"

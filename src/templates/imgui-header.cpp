@@ -3,19 +3,13 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
-// API for exported functions
-#define CIMGUI_API extern "C"
-
 #include <stdio.h>
 #include <stdarg.h>
 
 // Wrap this in a namespace to keep it separate from the C++ API
 namespace cimgui
 {
-extern "C"
-{
 #include "cimgui.h"
-}
 }
 
 // Helper functions
