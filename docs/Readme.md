@@ -5,7 +5,7 @@ Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/oc
 
 At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users. 
 
-It should be compatible with Dear ImGui v1.82 onwards (some earlier versions also work but compatibility isn't guaranteed).
+It should be compatible with Dear ImGui v1.84 onwards (some earlier versions also work but compatibility isn't guaranteed).
 
 The intention with Dear Bindings is to try and **produce a C header file which is as close as reasonably possible to what a human would generate**, and thus special attention has been given to preserving formatting, comments and the like such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
 

@@ -12,25 +12,6 @@ namespace cimgui
 #include "cimgui.h"
 }
 
-// Helper functions
-namespace ImGui
-{
-    // Missing LogTextV implementation, only needed for older ImGui versions (<1.82)
-#if IMGUI_VERSION_NUM < 18200
-    void LogTextV(const char* fmt, va_list args)
-    {
-        ImGuiContext& g = *GImGui;
-        if (!g.LogEnabled)
-            return;
-
-        if (g.LogFile)
-            vfprintf(g.LogFile, fmt, args);
-        else
-            g.LogBuffer.appendfv(fmt, args);
-    }
-#endif
-}
-
 // Manual helpers
 // These implement functionality that isn't in the original C++ API, but is useful to callers from other languages
 
