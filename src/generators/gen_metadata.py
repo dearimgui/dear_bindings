@@ -246,6 +246,7 @@ def emit_function(function):
     result["is_manual_helper"] = function.is_manual_helper  # True for functions that aren't in the C++ API originally
     #                                                         but have been added manually here to provide helpful
     #                                                         extra functionality
+    result["is_synthetic"] = function.is_synthetic
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)

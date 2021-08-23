@@ -725,6 +725,7 @@ class DOMPreprocessorIf(DOMElement):
         self.else_children = []
         clone = DOMElement.clone_without_children(self)
         self.else_children = temp_else_children
+        self.is_synthetic = True
         return clone
 
     def __str__(self):
@@ -1376,6 +1377,7 @@ class DOMFunctionDeclaration(DOMElement):
         #                                         (see mod_generate_default_argument_functions)
         self.is_manual_helper = False  # Set if this is a manually-added helper function (see
         # mod_add_helper_functions for more details)
+        self.is_synthetic = False
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1608,6 +1610,7 @@ class DOMFunctionDeclaration(DOMElement):
         clone = DOMElement.clone(self)
         self.original_class = old_original_class
         clone.original_class = old_original_class
+        self.is_synthetic = True
         return clone
 
     # Write this element out as C code
