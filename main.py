@@ -165,7 +165,9 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                          'const char*': 'Str',
                                          'char*': 'Str',
                                          'unsigned int': 'Uint',
-                                         'ImGuiID': 'ID'},
+                                         'ImGuiID': 'ID',
+                                         'const void*': 'Ptr',
+                                         'void*': 'Ptr'},
                                      # Functions that look like they have name clashes but actually don't
                                      # thanks to preprocessor conditionals
                                      functions_to_ignore=[
