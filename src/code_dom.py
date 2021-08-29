@@ -1012,6 +1012,7 @@ class DOMFieldDeclaration(DOMElement):
         self.array_bounds_tokens = []  # One list of tokens per name
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.accessibility = None  # The field accessibility
+        self.name_alignment = 0  # Column to align name to (for aesthetic purposes)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1116,9 +1117,9 @@ class DOMFieldDeclaration(DOMElement):
         else:
             return self.names[0] if len(self.names) > 0 else leaf_name
 
-    # Write this element out as C code
-    def write_to_c(self, file, indent=0, context=WriteContext()):
-        self.write_preceding_comments(file, indent, context)
+    # Get the initial (pre-name) part of the declaration. This is a separate function because
+    # mod_align_structure_field_names needs it
+    def get_prefix_and_type(self, context):
         declaration = self.field_type.to_c_string(context)
 
         if self.is_imgui_api:
@@ -1130,8 +1131,19 @@ class DOMFieldDeclaration(DOMElement):
         if self.is_static:
             declaration = "static " + declaration
 
+        return declaration
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        declaration = self.get_prefix_and_type(context)
+
         # Function pointers have the name/etc included
         if not isinstance(self.field_type, DOMFunctionPointerType):
+            # Pad declaration to align name if required
+            if len(declaration) < self.name_alignment:
+                declaration += " " * (self.name_alignment - len(declaration))
+
             first_name = True
             for i in range(0, len(self.names)):
                 if first_name:
@@ -1376,6 +1388,7 @@ class DOMFunctionDeclaration(DOMElement):
         #                                         (see mod_generate_default_argument_functions)
         self.is_manual_helper = False  # Set if this is a manually-added helper function (see
         # mod_add_helper_functions for more details)
+        self.function_name_alignment = 0  # Column to align the function name to (see mod_align_function_names)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1610,9 +1623,9 @@ class DOMFunctionDeclaration(DOMElement):
         clone.original_class = old_original_class
         return clone
 
-    # Write this element out as C code
-    def write_to_c(self, file, indent=0, context=WriteContext()):
-        self.write_preceding_comments(file, indent, context)
+    # Get the prefixes and return type for this function
+    # This is a separate function largely because mod_align_function_names needs it
+    def get_prefixes_and_return_type(self, context=WriteContext()):
         declaration = ""
         if self.is_imgui_api:
             if context.for_c:
@@ -1625,6 +1638,17 @@ class DOMFunctionDeclaration(DOMElement):
             declaration += "inline "
         if self.return_type is not None:
             declaration += self.return_type.to_c_string(context) + " "
+        return declaration
+
+    # Write this element out as C code
+    def write_to_c(self, file, indent=0, context=WriteContext()):
+        self.write_preceding_comments(file, indent, context)
+        declaration = self.get_prefixes_and_return_type(context)
+
+        # Pad declaration to align name
+        if len(declaration) < self.function_name_alignment:
+            declaration += " " * (self.function_name_alignment - len(declaration))
+
         if context.for_implementation:
             declaration += str(self.get_fully_qualified_name()) + "("
         else:
@@ -2283,6 +2307,7 @@ class DOMEnumElement(DOMElement):
         super().__init__()
         self.name = None
         self.value_tokens = None
+        self.value_alignment = 0  # Column to align values to (for aesthetic purposes)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -2339,7 +2364,11 @@ class DOMEnumElement(DOMElement):
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
         if self.value_tokens is not None:
-            write_c_line(file, indent, self.add_attached_comment_to_line(self.name + " = " +
+            # Generate padded version of name to align value
+            name_padded = self.name
+            if self.value_alignment > len(self.name):
+                name_padded = name_padded + (" " * (self.value_alignment - len(self.name)))
+            write_c_line(file, indent, self.add_attached_comment_to_line(name_padded + " = " +
                                                                          collapse_tokens_to_string(self.value_tokens) +
                                                                          ","))
         else:

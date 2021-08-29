@@ -37,6 +37,9 @@ from src.modifiers import mod_remove_includes
 from src.modifiers import mod_remove_heap_constructors_and_destructors
 from src.modifiers import mod_generate_default_argument_functions
 from src.modifiers import mod_align_comments
+from src.modifiers import mod_align_enum_values
+from src.modifiers import mod_align_function_names
+from src.modifiers import mod_align_structure_field_names
 from src.modifiers import mod_add_manual_helper_functions
 from src.modifiers import mod_add_function_comment
 from src.modifiers import mod_mark_internal_members
@@ -190,6 +193,9 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_remove_empty_conditionals.apply(dom_root)
     mod_merge_blank_lines.apply(dom_root)
     mod_remove_blank_lines.apply(dom_root)
+    mod_align_enum_values.apply(dom_root)
+    mod_align_function_names.apply(dom_root)
+    mod_align_structure_field_names.apply(dom_root)
     mod_align_comments.apply(dom_root)
 
     # Exclude some defines that aren't really useful from the metadata

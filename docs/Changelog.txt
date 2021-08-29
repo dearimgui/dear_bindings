@@ -8,6 +8,7 @@ Removed "#pragma once" removal (by default)
 Added a protective "extern C" around the majority of the header file, and removed it from the generated binding CPP
 Fixed blank lines emitting indenting
 Fixed invalid use of "static" in linkage specification [@rokups]
+Added alignment for enum/structure members and function names
 
 --- v0.03
 
