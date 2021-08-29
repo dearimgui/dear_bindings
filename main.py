@@ -136,8 +136,20 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                               "void ImVector_Destruct(void* vector); // Destruct an "
                                               "ImVector<> (of any type). Important: Frees the vector "
                                               "memory but does not call destructors on contained objects "
-                                              "(if they have them)"
+                                              "(if they have them)",
                                           ])
+    # ImStr conversion helper, only enabled if IMGUI_HAS_IMSTR is on
+    mod_add_manual_helper_functions.apply(dom_root,
+                                          [
+                                              "ImStr ImStr_FromCharStr(const char* b); // Build an ImStr "
+                                              "from a regular const char* (no data is copied, so you need to make "
+                                              "sure the original char* isn't altered as long as you are using the "
+                                              "ImStr)."
+                                          ],
+                                          # This weirdness is because we want this to compile cleanly even if
+                                          # IMGUI_HAS_IMSTR wasn't defined
+                                          ["defined(IMGUI_HAS_IMSTR)", "IMGUI_HAS_IMSTR"])
+
     # Add a note to ImFontGlyphRangesBuilder_BuildRanges() pointing people at the helpers
     mod_add_function_comment.apply(dom_root,
                                    "ImFontGlyphRangesBuilder::BuildRanges",
@@ -156,7 +168,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
     # We treat ImVec2, ImVec4 and ImColor as by-value types
-    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor'])
+    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor', 'ImStr'])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)

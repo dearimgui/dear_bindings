@@ -32,4 +32,14 @@ CIMGUI_API void cimgui::ImVector_Destruct(void* vector)
     }
 }
 
-
+#if defined(IMGUI_HAS_IMSTR)
+#if IMGUI_HAS_IMSTR
+CIMGUI_API cimgui::ImStr cimgui::ImStr_FromCharStr(const char* b)
+{
+    ImStr str;
+    str.Begin = b;
+    str.End = b ? b + strlen(b) : NULL;
+    return str;
+}
+#endif // IMGUI_HAS_IMSTR
+#endif // defined(IMGUI_HAS_IMSTR)

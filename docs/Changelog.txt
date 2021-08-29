@@ -9,6 +9,7 @@ Added a protective "extern C" around the majority of the header file, and remove
 Fixed blank lines emitting indenting
 Fixed invalid use of "static" in linkage specification [@rokups]
 Added alignment for enum/structure members and function names
+Added support for ImStr
 
 --- v0.03
 
