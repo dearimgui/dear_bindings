@@ -52,6 +52,12 @@ def generate_cast(from_type, to_type, imgui_classes_and_callbacks, nested_classe
                         cast_prefix = "ConvertFromCPP_" + underlying_type.name + "("
                     cast_suffix = ")"
 
+        # Special case to marshal const char* into ImStr
+
+        if (to_type_str == '::ImStr') and (from_type_str == 'const ::char*'):
+            cast_prefix = "MarshalToCPP_ImStr_FromCharStr("
+            cast_suffix = ")"
+
     return cast_prefix, cast_suffix
 
 

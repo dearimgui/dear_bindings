@@ -36,6 +36,14 @@ def create_function_declaration(text):
     return element
 
 
+# Create a code block DOM element from a string (e.g. "{ return 1.0f; }")
+def create_code_block(text):
+    stream = c_lexer.tokenize(text)
+    context = code_dom.ParseContext()
+    element = code_dom.DOMCodeBlock.parse(context, stream)
+    return element
+
+
 # Get all #if/#ifdef/etc blocks an element is contained in as a list in order from the outermost
 def get_preprocessor_conditionals(element):
     result = []

@@ -242,10 +242,20 @@ def emit_function(function):
 
     result["is_default_argument_helper"] = \
         function.is_default_argument_helper  # True for functions that are variants of existing functions but with
-    #                                          some of the arguments remove (to emulate C++ default argument behaviour)
+    #                                          some of the arguments removed (to emulate C++ default argument
+    #                                          behaviour). If you are writing bindings for a language that supports
+    #                                          default arguments then you probably want to ignore these.
     result["is_manual_helper"] = function.is_manual_helper  # True for functions that aren't in the C++ API originally
     #                                                         but have been added manually here to provide helpful
     #                                                         extra functionality
+    result["is_imstr_helper"] = function.is_imstr_helper  # True for functions that have been added to provide variants
+    #                                                       of ImStr-taking functions that accept const char* arguments
+    #                                                       instead (and thus should probably be ignored by bindings
+    #                                                       that handle ImStr)
+    result["has_imstr_helper"] = function.has_imstr_helper  # True for functions that accept ImStr as an argument but
+    #                                                         have had a helper generated that accepts const char*
+    #                                                         instead. If you are writing bindings that use const char*
+    #                                                         instead of ImStr then you probably want to ignore these.
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)

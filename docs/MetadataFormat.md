@@ -211,6 +211,8 @@ Functions provided by the API.
 
 Languages which support default function arguments can probably ignore any functions with `is_default_argument_helper` set to `true`, as those are additional functions added to support simulating default arguments in C.
 
+When using a version of ImGui with `ImStr` (string view) support, languages which use string views should probably ignore any functions with `is_imstr_helper` set, as these are generated functions that give an alternative interface using `const char*` instead of `ImStr`. Conversely, if you are using `const char*` for your strings, then you probably want to ignore and functions with `has_imstr_helper` set.
+
 ```json
 {
     "name": "ImGui_CreateContext",
@@ -232,6 +234,8 @@ Languages which support default function arguments can probably ignore any funct
 |arguments|A list of the function arguments|
 |is_default_argument_helper|Is this function a variant generated to simulate default arguments?|
 |is_manual_helper|Is this a manually added function that doesn't exist in the original C++ API but was added specially to the C API? (at present only `ImVector_Construct` and `ImVector_Destruct`)|
+|is_imstr_helper|Is this function a helper variant added that takes `const char*` instead of `ImStr` arguments?|
+|has_imstr_helper|Is this function one which takes `ImStr` arguments and has had a `const char*` helper variant generated?|
 
 ### Function arguments
 

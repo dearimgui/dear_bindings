@@ -34,9 +34,20 @@ CIMGUI_API void cimgui::ImVector_Destruct(void* vector)
 
 #if defined(IMGUI_HAS_IMSTR)
 #if IMGUI_HAS_IMSTR
+
+// User-facing helper to convert char* to ImStr
 CIMGUI_API cimgui::ImStr cimgui::ImStr_FromCharStr(const char* b)
 {
     ImStr str;
+    str.Begin = b;
+    str.End = b ? b + strlen(b) : NULL;
+    return str;
+}
+
+// Internal helper to convert char* directly to C++-style ImStr
+static inline ::ImStr MarshalToCPP_ImStr_FromCharStr(const char* b)
+{
+    ::ImStr str;
     str.Begin = b;
     str.End = b ? b + strlen(b) : NULL;
     return str;

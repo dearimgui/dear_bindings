@@ -36,6 +36,7 @@ from src.modifiers import mod_add_includes
 from src.modifiers import mod_remove_includes
 from src.modifiers import mod_remove_heap_constructors_and_destructors
 from src.modifiers import mod_generate_default_argument_functions
+from src.modifiers import mod_generate_imstr_helpers
 from src.modifiers import mod_align_comments
 from src.modifiers import mod_align_enum_values
 from src.modifiers import mod_align_function_names
@@ -173,6 +174,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_flatten_class_functions.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
+    mod_generate_imstr_helpers.apply(dom_root)
     mod_generate_default_argument_functions.apply(dom_root)
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={

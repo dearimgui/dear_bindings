@@ -10,6 +10,7 @@ Fixed blank lines emitting indenting
 Fixed invalid use of "static" in linkage specification [@rokups]
 Added alignment for enum/structure members and function names
 Added support for ImStr
+Added auto-generation of variant functions that take const char* instead of ImStr
 
 --- v0.03
 
