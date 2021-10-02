@@ -13,13 +13,13 @@ int main(int argc, char** argv)
     (void)argc;
     (void)argv;
     //IMGUI_CHECKVERSION();
-    ImGui_CreateContext();
+    ImGui_CreateContext(NULL);
     ImGuiIO* io = ImGui_GetIO();
 
     // Build atlas
     unsigned char* tex_pixels = NULL;
     int tex_w, tex_h;
-    ImFontAtlas_GetTexDataAsRGBA32(io->Fonts, &tex_pixels, &tex_w, &tex_h);
+    ImFontAtlas_GetTexDataAsRGBA32(io->Fonts, &tex_pixels, &tex_w, &tex_h, NULL);
 
     for (int n = 0; n < 20; n++)
     {
@@ -33,12 +33,12 @@ int main(int argc, char** argv)
         ImGui_Text("Hello, world!");
         ImGui_SliderFloat("float", &f, 0.0f, 1.0f);
         ImGui_Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
-        ImGui_ShowDemoWindow();
+        ImGui_ShowDemoWindow(NULL);
 
         ImGui_Render();
     }
 
     printf("DestroyContext()\n");
-    ImGui_DestroyContext();
+    ImGui_DestroyContext(NULL);
     return 0;
 }
