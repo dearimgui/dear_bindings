@@ -1275,6 +1275,9 @@ class DOMFunctionArgument(DOMElement):
         else:
             return self.name
 
+    def get_default_value(self):
+        return collapse_tokens_to_string(self.default_value_tokens)
+
     def to_c_string(self, context=WriteContext()):
         if self.is_varargs:
             return "..."

@@ -3,8 +3,23 @@ from src import code_dom
 
 # This modifier generates variants of any function which has default arguments that takes only the required ones
 # (for ease of programming, since C doesn't support default arguments)
-def apply(dom_root):
+# functions_to_ignore contains a list of functions that should not have variants generated
+# function_prefixes_to_ignore contains a list of function prefixes that should not have variants generated
+def apply(dom_root, functions_to_ignore=[], function_prefixes_to_ignore=[]):
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+        # Ignore based on exact name match
+        if function.name in functions_to_ignore:
+            continue
+
+        # Ignore based on prefix match
+        ignored_prefix = False
+        for prefix in function_prefixes_to_ignore:
+            if function.name.startswith(prefix):
+                ignored_prefix = True
+                continue
+        if ignored_prefix:
+            continue
+
         num_args = len(function.arguments)
         num_args_with_defaults = 0
         has_non_defaulted_imstr_args = False
@@ -26,6 +41,21 @@ def apply(dom_root):
         # variant because we generally expect C API users to be using the conversion helpers, and they are also the
         # primary target audience for the default argument helpers too).
         if function.has_imstr_helper and not has_non_defaulted_imstr_args:
+            continue
+
+        # If a function only has a zero-default flags argument, don't generate helpers for it
+        # (as passing an extra zero is trivial, and they clutter up the API)
+        if (num_args_with_defaults == 1) and \
+                ((function.arguments[num_args - 1].name == "flags") or
+                 (function.arguments[num_args - 1].name == "popup_flags")) and \
+                (function.arguments[num_args - 1].get_default_value() == '0'):
+            continue
+
+        # Similarly, ignore any functions that take a single "ImGuiCond cond = 0" default argument
+        # (as passing an extra zero is trivial, and they clutter up the API)
+        if (num_args_with_defaults == 1) and \
+                (function.arguments[num_args - 1].arg_type.get_fully_qualified_name() == "ImGuiCond") and \
+                (function.arguments[num_args - 1].get_default_value() == '0'):
             continue
 
         # Clone the function and set the defaulted arguments

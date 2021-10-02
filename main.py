@@ -175,7 +175,43 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
-    mod_generate_default_argument_functions.apply(dom_root)
+    mod_generate_default_argument_functions.apply(dom_root,
+                                                  # We ignore functions that don't get called often because in those
+                                                  # cases the default helper doesn't add much value but does clutter
+                                                  # up the header file
+                                                  functions_to_ignore=[
+                                                      'ImGui_LoadIniSettingsFromDisk',
+                                                      'ImGui_LoadIniSettingsFromMemory',
+                                                      'ImGui_SaveIniSettingsToMemory',
+                                                      'ImGui_SaveIniSettingsToMemory',
+                                                      'ImGui_SetAllocatorFunctions',
+                                                      'ImGui_CreateContext',
+                                                      'ImGui_DestroyContext',
+                                                      'ImGui_ShowDemoWindow',
+                                                      'ImGui_ShowMetricsWindow',
+                                                      'ImGui_ShowAboutWindow',
+                                                      'ImGui_ShowStyleEditor',
+                                                      'ImGui_StyleColorsDark',
+                                                      'ImGui_StyleColorsLight',
+                                                      'ImGui_StyleColorsClassic',
+                                                      'ImGuiInputTextCallbackData_InsertChars',
+                                                      'ImColor_SetHSV',
+                                                      'ImColor_HSV',
+                                                      'ImGui_PushTextWrapPos',
+                                                      'ImGui_LogToTTY',
+                                                      'ImGui_LogToFile',
+                                                      'ImGui_LogToClipboard',
+                                                      'ImGui_BeginDisabled',
+                                                      'ImGui_CaptureKeyboardFromApp',
+                                                      'ImGui_CaptureMouseFromApp',
+                                                      'ImGuiListClipper_Begin',
+                                                      'ImDrawList_PushClipRect',
+                                                      'ImFont_AddRemapChar'
+                                                  ],
+                                                  function_prefixes_to_ignore=[
+                                                      'ImGuiStorage_',
+                                                      'ImFontAtlas_'
+                                                  ])
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types

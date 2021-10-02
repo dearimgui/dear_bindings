@@ -11,6 +11,7 @@ Fixed invalid use of "static" in linkage specification [@rokups]
 Added alignment for enum/structure members and function names
 Added support for ImStr
 Added auto-generation of variant functions that take const char* instead of ImStr
+Suppressed generation of default argument variants for trivial cases and uncommon functions to reduce clutter
 
 --- v0.03
 
