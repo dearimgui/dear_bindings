@@ -42,7 +42,8 @@ jobs:
     - name: Generate
       run: |
          python3 main.py --output cimgui          imgui/imgui.h
-         python3 main.py --output cimgui_internal imgui/imgui_internal.h
+         # imgui_internal.h disabled for now as it generates errors
+         # python3 main.py --output cimgui_internal imgui/imgui_internal.h
 
     - name: Build
       run: |
