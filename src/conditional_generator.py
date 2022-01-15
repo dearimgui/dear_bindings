@@ -19,12 +19,18 @@ class ConditionalGenerator:
                 del wanted_conditionals[i]
                 break
 
+        # Convert any cases where the element is in an else block into an inverted conditional
+        for i in range(0, len(wanted_conditionals)):
+            if utils.is_in_else_clause(element, wanted_conditionals[i]):
+                wanted_conditionals[i] = wanted_conditionals[i].clone()
+                wanted_conditionals[i].is_negated = not wanted_conditionals[i].is_negated
+
         # Close any unwanted conditionals
         first_endif = True
         while (len(self.current_conditionals) > len(wanted_conditionals)) or \
                 ((len(self.current_conditionals) > 0) and
-                 (self.current_conditionals[len(self.current_conditionals) - 1] is not
-                  wanted_conditionals[len(self.current_conditionals) - 1])):
+                 (not self.current_conditionals[len(self.current_conditionals) - 1].condition_matches(
+                  wanted_conditionals[len(self.current_conditionals) - 1]))):
             if first_endif:
                 file.write("\n")
                 first_endif = False

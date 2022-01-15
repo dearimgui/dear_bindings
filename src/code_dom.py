@@ -647,6 +647,7 @@ class DOMPreprocessorIf(DOMElement):
                (self.is_negated != other.is_negated)
 
     # Returns true if the element given is part of our else block
+    # (see utils.is_in_else_clause for a version of this that works for non-direct-children)
     def is_element_in_else_block(self, element):
         if element in self.else_children:
             return True
@@ -668,7 +669,10 @@ class DOMPreprocessorIf(DOMElement):
             else:
                 return "#ifdef " + collapse_tokens_to_string(self.expression_tokens)
         else:
-            return "#if " + collapse_tokens_to_string(self.expression_tokens)
+            if self.is_negated:
+                return "#if !(" + collapse_tokens_to_string(self.expression_tokens) + ")"
+            else:
+                return "#if " + collapse_tokens_to_string(self.expression_tokens)
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):

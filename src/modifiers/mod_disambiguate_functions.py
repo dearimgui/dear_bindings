@@ -31,20 +31,7 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore):
             # mutually exclusive (i.e. they can never both be compiled in), then this isn't a name clash and can be
             # ignored
 
-            conditionals_a = utils.get_preprocessor_conditionals(functions[0])
-            conditionals_b = utils.get_preprocessor_conditionals(functions[1])
-
-            no_collision = False
-
-            for conditional_a in conditionals_a:
-                for conditional_b in conditionals_b:
-                    if conditional_a.condition_is_mutually_exclusive(conditional_b):
-                        no_collision = True
-                        break
-                if no_collision:
-                    break
-
-            if no_collision:
+            if utils.are_elements_mutually_exclusive(functions[0], functions[1]):
                 continue
 
         # Count the number of arguments that are identical across all overloads

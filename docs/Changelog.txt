@@ -12,6 +12,8 @@ Added alignment for enum/structure members and function names
 Added support for ImStr
 Added auto-generation of variant functions that take const char* instead of ImStr
 Suppressed generation of default argument variants for trivial cases and uncommon functions to reduce clutter
+Fixed incorrect disambiguation of function pairs that appear in the #if/#else blocks of the same preprocessor conditional
+Fixed incorrect generation of conditionals around code in #else blocks
 
 --- v0.03
 

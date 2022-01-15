@@ -55,6 +55,40 @@ def get_preprocessor_conditionals(element):
     return result
 
 
+# Returns true if the passed element is part of the else (i.e. negated) block of the conditional given
+def is_in_else_clause(element, conditional_element):
+    while element is not None:
+        if element.parent == conditional_element:
+            return conditional_element.is_element_in_else_block(element)
+        element = element.parent
+    return False
+
+
+# Check if two elements are mutually exclusive, in the sense that #ifdefs mean that they can never both
+# be active at the same time. This check isn't exhaustive, and can be confused by non-trivial #ifdef constructs,
+# but it's good enough for our purposes. It's conservative in that it may miss cases that are actually mutually
+# exclusive and return False, but it should never return True for elements that can in fact both get compiled
+# simultaneously.
+def are_elements_mutually_exclusive(element_a, element_b):
+    conditionals_a = get_preprocessor_conditionals(element_a)
+    conditionals_b = get_preprocessor_conditionals(element_b)
+
+    for conditional_a in conditionals_a:
+        conditional_a_negated = is_in_else_clause(element_a, conditional_a)
+        for conditional_b in conditionals_b:
+            conditional_b_negated = is_in_else_clause(element_b, conditional_b)
+            if conditional_a_negated == conditional_b_negated:
+                # If both elements are in the same block (normal/else) then check if the conditions are exclusive
+                if conditional_a.condition_is_mutually_exclusive(conditional_b):
+                    return True
+            else:
+                # If one element is in an else block and the other isn't, check if the conditions match
+                if conditional_a.condition_matches(conditional_b):
+                    return True
+
+    return False
+
+
 # Turn a name into something suitable to use in a C identifier
 def sanitise_name_for_identifier(name):
     return name \
