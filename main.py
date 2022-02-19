@@ -46,6 +46,7 @@ from src.modifiers import mod_add_function_comment
 from src.modifiers import mod_mark_internal_members
 from src.modifiers import mod_exclude_defines_from_metadata
 from src.modifiers import mod_wrap_with_extern_c
+from src.modifiers import mod_remove_constexpr
 from src.generators import gen_struct_converters
 from src.generators import gen_function_stubs
 from src.generators import gen_metadata
@@ -174,6 +175,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_flatten_class_functions.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
+    mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
     mod_generate_default_argument_functions.apply(dom_root,
                                                   # We ignore functions that don't get called often because in those

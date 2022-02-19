@@ -130,7 +130,8 @@ class DOMElement:
             return DOMEnum.parse(context, stream)
         elif tok.type == 'TEMPLATE':
             return DOMTemplate.parse(context, stream)
-        elif (tok.type == 'THING') or (tok.type == 'CONST') or (tok.type == 'SIGNED') or (tok.type == 'UNSIGNED') or \
+        elif (tok.type == 'THING') or (tok.type == 'CONST') or (tok.type == 'CONSTEXPR') or (tok.type == 'SIGNED') or \
+                (tok.type == 'UNSIGNED') or \
                 (tok.type == '~'):  # ~ is necessary because destructor names start with it
 
             # It might be an extern "C" statement
@@ -1379,6 +1380,7 @@ class DOMFunctionDeclaration(DOMElement):
         self.initialiser_list_tokens = None  # List of tokens making up the initialiser list if one exists
         self.body = None
         self.is_const = False
+        self.is_constexpr = False
         self.is_static = False
         self.is_inline = False
         self.is_operator = False
@@ -1410,7 +1412,7 @@ class DOMFunctionDeclaration(DOMElement):
 
         # Parse prefixes
         while True:
-            prefix_token = stream.peek_token_of_type(["THING"])
+            prefix_token = stream.peek_token_of_type(["THING", "CONSTEXPR"])
             if prefix_token is None:
                 break
 
@@ -1423,6 +1425,9 @@ class DOMFunctionDeclaration(DOMElement):
             elif prefix_token.value == 'static':
                 stream.get_token()  # Eat token
                 dom_element.is_static = True
+            elif prefix_token.value == 'constexpr':
+                stream.get_token()  # Eat token
+                dom_element.is_constexpr = True
             elif prefix_token.value == 'operator':
                 # Copy constructors can look like this "operator ImVec4() const;" and thus have "operator" as a prefix
                 stream.get_token()  # Eat token
@@ -1683,6 +1688,8 @@ class DOMFunctionDeclaration(DOMElement):
         declaration += ")"
         if self.is_const:
             declaration += " const"
+        if self.is_constexpr:
+            declaration += " constexpr"
         if not context.for_implementation:
             if self.im_fmtargs is not None:
                 declaration += " IM_FMTARGS(" + self.im_fmtargs + ")"
@@ -1864,8 +1871,8 @@ class DOMType(DOMElement):
         dom_element = DOMType()
         have_valid_type = False
         while True:
-            tok = stream.get_token_of_type(['THING', 'ASTERISK', 'AMPERSAND', 'CONST', 'SIGNED', 'UNSIGNED',
-                                            'LSQUARE', 'LTRIANGLE', 'COLON'])
+            tok = stream.get_token_of_type(['THING', 'ASTERISK', 'AMPERSAND', 'CONST', 'CONSTEXPR', 'SIGNED',
+                                            'UNSIGNED', 'LSQUARE', 'LTRIANGLE', 'COLON'])
             if tok is None:
                 if not have_valid_type:
                     stream.rewind(checkpoint)
@@ -1918,7 +1925,8 @@ class DOMType(DOMElement):
                     stream.rewind_one_token()
                     return dom_element
             else:
-                if (tok.type == 'CONST') or (tok.type == 'SIGNED') or (tok.type == 'UNSIGNED'):
+                if (tok.type == 'CONST') or (tok.type == 'CONSTEXPR') or (tok.type == 'SIGNED') or \
+                        (tok.type == 'UNSIGNED'):
                     # Type prefix
                     dom_element.tokens.append(tok)
                 elif tok.type == 'COLON':
@@ -1934,6 +1942,14 @@ class DOMType(DOMElement):
     def is_const(self):
         for tok in self.tokens:
             if tok.type == 'CONST':
+                return True
+        return False
+
+    # Returns true if this type is constexpr
+    # (very conservative - considers the type constexpr if constexpr appears anywhere in it)
+    def is_constexpr(self):
+        for tok in self.tokens:
+            if tok.type == 'CONSTEXPR':
                 return True
         return False
 
@@ -2175,9 +2191,9 @@ class DOMClassStructUnion(DOMElement):
                     continue
 
                 child_element = context.current_content_parser()
-                child_element.accessibility = current_accessibility
 
                 if child_element is not None:
+                    child_element.accessibility = current_accessibility
                     if not child_element.no_default_add:
                         dom_element.add_child(child_element, context)
                 else:

@@ -14,6 +14,7 @@ Added auto-generation of variant functions that take const char* instead of ImSt
 Suppressed generation of default argument variants for trivial cases and uncommon functions to reduce clutter
 Fixed incorrect disambiguation of function pairs that appear in the #if/#else blocks of the same preprocessor conditional
 Fixed incorrect generation of conditionals around code in #else blocks
+Added support for (read: removal of) constexpr
 
 --- v0.03
 

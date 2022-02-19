@@ -28,6 +28,7 @@ reserved_words = {
     'signed': 'SIGNED',
     'unsigned': 'UNSIGNED',
     'const': 'CONST',
+    'constexpr': 'CONSTEXPR',
     'namespace': 'NAMESPACE',
     'enum': 'ENUM',
     'template': 'TEMPLATE'
