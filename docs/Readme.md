@@ -9,6 +9,10 @@ It should be compatible with Dear ImGui v1.84 onwards (some earlier versions als
 
 The intention with Dear Bindings is to try and **produce a C header file which is as close as reasonably possible to what a human would generate**, and thus special attention has been given to preserving formatting, comments and the like such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
 
+# Latest Prebuilt Versions
+
+You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json) for both `master` and `docking` branch in our [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. For a given build, click "Artifacts" to find them.
+
 # Requirements
 
 * Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
