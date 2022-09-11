@@ -15,6 +15,7 @@ Suppressed generation of default argument variants for trivial cases and uncommo
 Fixed incorrect disambiguation of function pairs that appear in the #if/#else blocks of the same preprocessor conditional
 Fixed incorrect generation of conditionals around code in #else blocks
 Added support for (read: removal of) constexpr
+Fixed disambiguation of default argument functions resulting in Ex functions with names that don't match their argument list (#11)
 
 --- v0.03
 

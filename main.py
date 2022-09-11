@@ -177,6 +177,23 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     mod_remove_static_fields.apply(dom_root)
     mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
+    mod_disambiguate_functions.apply(dom_root,
+                                     name_suffix_remaps={
+                                         # Some more user-friendly suffixes for certain types
+                                         'const char*': 'Str',
+                                         'char*': 'Str',
+                                         'unsigned int': 'Uint',
+                                         'ImGuiID': 'ID',
+                                         'const void*': 'Ptr',
+                                         'void*': 'Ptr'},
+                                     # Functions that look like they have name clashes but actually don't
+                                     # thanks to preprocessor conditionals
+                                     functions_to_ignore=[
+                                         "cImFileOpen",
+                                         "cImFileClose",
+                                         "cImFileGetSize",
+                                         "cImFileRead",
+                                         "cImFileWrite"])
     mod_generate_default_argument_functions.apply(dom_root,
                                                   # We ignore functions that don't get called often because in those
                                                   # cases the default helper doesn't add much value but does clutter
@@ -214,23 +231,6 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                       'ImGuiStorage_',
                                                       'ImFontAtlas_'
                                                   ])
-    mod_disambiguate_functions.apply(dom_root,
-                                     name_suffix_remaps={
-                                         # Some more user-friendly suffixes for certain types
-                                         'const char*': 'Str',
-                                         'char*': 'Str',
-                                         'unsigned int': 'Uint',
-                                         'ImGuiID': 'ID',
-                                         'const void*': 'Ptr',
-                                         'void*': 'Ptr'},
-                                     # Functions that look like they have name clashes but actually don't
-                                     # thanks to preprocessor conditionals
-                                     functions_to_ignore=[
-                                         "cImFileOpen",
-                                         "cImFileClose",
-                                         "cImFileGetSize",
-                                         "cImFileRead",
-                                         "cImFileWrite"])
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)

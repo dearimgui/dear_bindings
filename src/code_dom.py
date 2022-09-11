@@ -1012,6 +1012,7 @@ class DOMFieldDeclaration(DOMElement):
         self.field_type = None
         self.names = []
         self.is_static = False
+        self.is_extern = False
         self.is_array = []  # One per name, because C
         self.width_specifiers = []  # One per name
         self.array_bounds_tokens = []  # One list of tokens per name
@@ -1037,6 +1038,9 @@ class DOMFieldDeclaration(DOMElement):
             elif prefix_token.value == 'static':
                 stream.get_token()  # Eat token
                 dom_element.is_static = True
+            elif prefix_token.value == 'extern':
+                stream.get_token()  # Eat token
+                dom_element.is_extern = True
             else:
                 break
 
@@ -1135,6 +1139,10 @@ class DOMFieldDeclaration(DOMElement):
 
         if self.is_static:
             declaration = "static " + declaration
+
+        # Emit extern if required, but not "extern CIMGUI_API" in C as that expands to "extern extern "C""
+        if self.is_extern and (not self.is_imgui_api or not context.for_c):
+            declaration = "extern " + declaration
 
         return declaration
 
@@ -1736,6 +1744,7 @@ class DOMFunctionPointerType(DOMElement):
         self.name = None
         self.return_type = None
         self.arguments = []
+        self.is_cdecl = False
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -1753,11 +1762,17 @@ class DOMFunctionPointerType(DOMElement):
             return None
         dom_element.return_type.parent = dom_element
 
-        # We expect a bracket and asterisk before the name
+        # We expect a bracket and asterisk before the name, possibly with a macro in between
 
         if stream.get_token_of_type(["LPAREN"]) is None:
             stream.rewind(checkpoint)
             return None
+
+        # This is a very special-case bodge to deal with one single instance that appears in imgui_internal.h
+        # (ImQsort). A more generic solution would be nice.
+        if stream.peek_token().value == 'IMGUI_CDECL':
+            stream.get_token()  # Eat this token
+            dom_element.is_cdecl = True
 
         if stream.get_token_of_type(["ASTERISK"]) is None:
             stream.rewind(checkpoint)
@@ -1829,7 +1844,8 @@ class DOMFunctionPointerType(DOMElement):
         return "FnPtr"
 
     def to_c_string(self, context=WriteContext()):
-        result = self.return_type.to_c_string(context) + " (*" + str(self.name) + ")("
+        cdecl_statement = " IMGUI_CDECL " if self.is_cdecl else ""
+        result = self.return_type.to_c_string(context) + " (*" + cdecl_statement + str(self.name) + ")("
         if len(self.arguments) > 0:
             first_arg = True
             for arg in self.arguments:
