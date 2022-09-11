@@ -8,49 +8,8 @@ from src import c_lexer
 import argparse
 import sys
 import traceback
-from src.modifiers import mod_remove_pragma_once
-from src.modifiers import mod_flatten_namespaces
-from src.modifiers import mod_attach_preceding_comments
-from src.modifiers import mod_remove_function_bodies
-from src.modifiers import mod_remove_operators
-from src.modifiers import mod_remove_structs
-from src.modifiers import mod_remove_functions
-from src.modifiers import mod_add_prefix_to_loose_functions
-from src.modifiers import mod_flatten_class_functions
-from src.modifiers import mod_flatten_nested_classes
-from src.modifiers import mod_flatten_templates
-from src.modifiers import mod_flatten_conditionals
-from src.modifiers import mod_disambiguate_functions
-from src.modifiers import mod_convert_references_to_pointers
-from src.modifiers import mod_remove_static_fields
-from src.modifiers import mod_remove_nested_typedefs
-from src.modifiers import mod_remove_all_functions_from_classes
-from src.modifiers import mod_merge_blank_lines
-from src.modifiers import mod_remove_blank_lines
-from src.modifiers import mod_remove_empty_conditionals
-from src.modifiers import mod_make_all_functions_use_imgui_api
-from src.modifiers import mod_rename_defines
-from src.modifiers import mod_forward_declare_structs
-from src.modifiers import mod_mark_by_value_structs
-from src.modifiers import mod_add_includes
-from src.modifiers import mod_remove_includes
-from src.modifiers import mod_remove_heap_constructors_and_destructors
-from src.modifiers import mod_generate_default_argument_functions
-from src.modifiers import mod_generate_imstr_helpers
-from src.modifiers import mod_align_comments
-from src.modifiers import mod_align_enum_values
-from src.modifiers import mod_align_function_names
-from src.modifiers import mod_align_structure_field_names
-from src.modifiers import mod_add_manual_helper_functions
-from src.modifiers import mod_add_function_comment
-from src.modifiers import mod_mark_internal_members
-from src.modifiers import mod_exclude_defines_from_metadata
-from src.modifiers import mod_wrap_with_extern_c
-from src.modifiers import mod_remove_constexpr
-from src.generators import gen_struct_converters
-from src.generators import gen_function_stubs
-from src.generators import gen_metadata
-
+from src.modifiers import *
+from src.generators import *
 
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file

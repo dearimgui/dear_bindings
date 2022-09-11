@@ -32,7 +32,7 @@ def add_preprocessor_conditionals(element, root):
         if conditional.is_include_guard:
             continue  # Don't include include guards
 
-        expression = code_dom.collapse_tokens_to_string(conditional.expression_tokens)
+        expression = code_dom.common.collapse_tokens_to_string(conditional.expression_tokens)
 
         if conditional.is_ifdef and conditional.is_negated and (expression == "IMGUI_DISABLE"):
             # Semi-hack - don't clutter up the metadata with "#ifndef IMGUI_DISABLE" as it's kinda redundant
@@ -109,7 +109,7 @@ def emit_enum_element(enum):
 
     result["name"] = enum.name
     if enum.value_tokens is not None:
-        result["value"] = code_dom.collapse_tokens_to_string(enum.value_tokens)
+        result["value"] = code_dom.common.collapse_tokens_to_string(enum.value_tokens)
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
@@ -166,7 +166,7 @@ def emit_field(field):
         name_root["name"] = field.names[i]
         name_root["is_array"] = field.is_array[i]
         if field.is_array[i]:
-            name_root["array_bounds"] = code_dom.collapse_tokens_to_string(field.array_bounds_tokens[i])
+            name_root["array_bounds"] = code_dom.common.collapse_tokens_to_string(field.array_bounds_tokens[i])
 
         if field.width_specifiers[i] is not None:
             name_root["width"] = str(field.width_specifiers[i])
@@ -217,7 +217,7 @@ def emit_function_argument(argument):
     if argument.is_array:
         result["array_bounds"] = str(argument.array_bounds)
     if argument.default_value_tokens is not None:
-        result["default_value"] = code_dom.collapse_tokens_to_string(argument.default_value_tokens)
+        result["default_value"] = code_dom.common.collapse_tokens_to_string(argument.default_value_tokens)
 
     return result
 

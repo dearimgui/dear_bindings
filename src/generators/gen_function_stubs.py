@@ -1,7 +1,7 @@
 from src import code_dom
 from src import utils
 from src import conditional_generator
-from src.code_dom import write_c_line
+from src.code_dom.common import write_c_line
 
 
 # Generate a cast between two types (if required)

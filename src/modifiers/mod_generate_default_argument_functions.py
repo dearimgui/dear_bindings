@@ -79,7 +79,7 @@ def apply(dom_root, functions_to_ignore=[], function_prefixes_to_ignore=[]):
             arg = function.arguments[i]
             if arg.name:
                 comment_text += arg.name + " = "
-            comment_text += code_dom.collapse_tokens_to_string(arg.default_value_tokens)
+            comment_text += code_dom.common.collapse_tokens_to_string(arg.default_value_tokens)
             first = False
 
         # Attach that comment and remove any others

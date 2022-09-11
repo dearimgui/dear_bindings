@@ -17,7 +17,8 @@ def apply(dom_root, include_filenames):
     if insert_point is not None:
         # Skip down past any whitespace and other comments
         next_line = insert_point.parent.get_next_child(insert_point)
-        while isinstance(next_line, code_dom.DOMComment) or isinstance(next_line, code_dom.DOMBlankLines):
+        while isinstance(next_line, code_dom.DOMComment) or \
+                isinstance(next_line, code_dom.DOMBlankLines):
             insert_point = next_line
             next_line = insert_point.parent.get_next_child(insert_point)
 

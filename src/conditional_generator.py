@@ -1,6 +1,6 @@
 from src import code_dom
 from src import utils
-from src.code_dom import write_c_line
+from src.code_dom.common import write_c_line
 
 
 # This provides functionality to efficiently generate sets of preprocessor conditionals that match the state
