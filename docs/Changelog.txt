@@ -16,6 +16,7 @@ Fixed incorrect disambiguation of function pairs that appear in the #if/#else bl
 Fixed incorrect generation of conditionals around code in #else blocks
 Added support for (read: removal of) constexpr
 Fixed disambiguation of default argument functions resulting in Ex functions with names that don't match their argument list (#11)
+Reduced number of Ex functions (when trailing arguments are trivial to fill, e.g. flags = 0, an Ex functions is not waranted). (#10)
 Split code_dom into multiple files for tidiness and refactored the modules a bit
 
 --- v0.03

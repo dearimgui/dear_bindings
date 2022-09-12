@@ -195,6 +195,7 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                       'ImGui_BeginListBox',
                                                       'ImGui_ListBox',
                                                       'ImGui_MenuItemBoolPtr',
+                                                      'ImGui_BeginPopupModal',
                                                       'ImGui_OpenPopupOnItemClick',
                                                       'ImGui_TableGetColumnName',
                                                       'ImGui_TableGetColumnFlags',
