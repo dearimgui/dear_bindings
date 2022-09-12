@@ -2,6 +2,10 @@
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (ben@shironekolabs.com)
 
+# Typical use is:
+#   python main.py --output cimgui ../imgui/imgui.h
+#   python main.py --output cimgui_internal ../imgui/imgui_interal.h   (FIXME: result won't compile yet)
+
 import os
 from src import code_dom
 from src import c_lexer
@@ -158,31 +162,33 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                   # cases the default helper doesn't add much value but does clutter
                                                   # up the header file
                                                   functions_to_ignore=[
-                                                      'ImGui_LoadIniSettingsFromDisk',
-                                                      'ImGui_LoadIniSettingsFromMemory',
-                                                      'ImGui_SaveIniSettingsToMemory',
-                                                      'ImGui_SaveIniSettingsToMemory',
-                                                      'ImGui_SetAllocatorFunctions',
+                                                      # Main
                                                       'ImGui_CreateContext',
                                                       'ImGui_DestroyContext',
+                                                      # Demo, Debug, Information
                                                       'ImGui_ShowDemoWindow',
                                                       'ImGui_ShowMetricsWindow',
                                                       'ImGui_ShowDebugLogWindow',
                                                       'ImGui_ShowStackToolWindow',
                                                       'ImGui_ShowAboutWindow',
                                                       'ImGui_ShowStyleEditor',
+                                                      # Styles
                                                       'ImGui_StyleColorsDark',
                                                       'ImGui_StyleColorsLight',
                                                       'ImGui_StyleColorsClassic',
+                                                      # Windows
                                                       'ImGui_Begin',
                                                       'ImGui_BeginChild',
                                                       'ImGui_BeginChildID',
                                                       'ImGui_SetNextWindowSizeConstraints',
+                                                      # Scrolling
                                                       'ImGui_SetScrollHereX',
                                                       'ImGui_SetScrollHereY',
                                                       'ImGui_SetScrollFromPosX',
                                                       'ImGui_SetScrollFromPosY',
+                                                      # Parameters stacks
                                                       'ImGui_PushTextWrapPos',
+                                                      # Widgets
                                                       'ImGui_ProgressBar',
                                                       'ImGui_ColorPicker4',
                                                       'ImGui_TreePushPtr', # Ensure why core lib has this default to NULL?
@@ -196,15 +202,24 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                       'ImGui_GetColumnWidth',
                                                       'ImGui_GetColumnOffset',
                                                       'ImGui_BeginTabItem',
+                                                      # Misc
                                                       'ImGui_LogToTTY',
                                                       'ImGui_LogToFile',
                                                       'ImGui_LogToClipboard',
                                                       'ImGui_BeginDisabled',
+                                                      # Inputs
                                                       'ImGui_IsMousePosValid',
                                                       'ImGui_IsMouseDragging',
                                                       'ImGui_GetMouseDragDelta',
                                                       'ImGui_CaptureKeyboardFromApp',
                                                       'ImGui_CaptureMouseFromApp',
+                                                      # Settings
+                                                      'ImGui_LoadIniSettingsFromDisk',
+                                                      'ImGui_LoadIniSettingsFromMemory',
+                                                      'ImGui_SaveIniSettingsToMemory',
+                                                      'ImGui_SaveIniSettingsToMemory',
+                                                      # Memory Allcators
+                                                      'ImGui_SetAllocatorFunctions',
                                                       # Other types
                                                       'ImGuiIO_SetKeyEventNativeDataEx',
                                                       'ImGuiTextFilter_Draw',
@@ -214,7 +229,8 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
                                                       'ImColor_SetHSV',
                                                       'ImColor_HSV',
                                                       'ImGuiListClipper_Begin',
-                                                      # ImDrawList: all 'int num_segments = 0' made explicit
+                                                      # ImDrawList
+                                                      # - all 'int num_segments = 0' made explicit
                                                       'ImDrawList_AddCircleFilled',
                                                       'ImDrawList_AddBezierCubic',
                                                       'ImDrawList_AddBezierQuadratic',
