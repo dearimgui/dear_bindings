@@ -320,7 +320,7 @@ if __name__ == '__main__':
 
     # Generate expected header template name from the source filename
     # Note that "header" in the name here means "file header" not "C header file", slightly confusingly
-    template = os.path.join(args.templatedir, os.path.splitext(os.path.basename(args.src))[0] + "-header.cpp")
+    template = os.path.join(args.templatedir, os.path.splitext(os.path.basename(args.src))[0] + "-header-template.cpp")
 
     if not os.path.isfile(template):
         print("Implementation template file " + template + " could not be found (note that template file names are "
