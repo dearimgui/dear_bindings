@@ -114,9 +114,9 @@ class DOMElement:
     # Attach preceding comments
     def attach_preceding_comments(self, comments):
         for comment in comments:
-            self.pre_comments.append(comment)
             if comment.parent:
                 comment.parent.remove_child(comment)
+            self.pre_comments.append(comment)
             comment.parent = self
             comment.is_preceding_comment = True
 

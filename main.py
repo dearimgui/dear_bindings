@@ -288,6 +288,13 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
                                                   function_prefixes_to_ignore=[
                                                       'ImGuiStorage_',
                                                       'ImFontAtlas_'
+                                                  ],
+                                                  trivial_argument_types=[
+                                                      'ImGuiCond'
+                                                  ],
+                                                  trivial_argument_names=[
+                                                      'flags',
+                                                      'popup_flags'
                                                   ])
 
     # Make all functions use CIMGUI_API
