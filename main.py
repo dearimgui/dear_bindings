@@ -15,10 +15,42 @@ import traceback
 from src.modifiers import *
 from src.generators import *
 
+
+# Insert a single header template file, complaining if it does not exist
+# Replaces any expansions in the expansions dictionary with the given result
+def insert_single_template(dest_file, template_file, expansions):
+    if not os.path.isfile(template_file):
+        print("Template file " + template_file + " could not be found (note that template file names are "
+                                                 "expected to match source file names, so if you have "
+                                                 "renamed imgui.h you will need to rename the template as "
+                                                 "well). The common template file is included regardless of source "
+                                                 "file name.")
+        sys.exit(2)
+
+    with open(template_file, "r") as src_file:
+        for line in src_file.readlines():
+            for before, after in expansions.items():
+                line = line.replace(before, after)
+            dest_file.write(line)
+
+
+# Insert the contents of the appropriate header template file(s)
+def insert_header_templates(dest_file, template_dir, src_file_name, dest_file_ext, expansions):
+    # Include the common template file
+    insert_single_template(dest_file,
+                           os.path.join(template_dir, "common-header-template" + dest_file_ext),
+                           expansions)
+
+    # Include the specific template for the file we are generating
+    insert_single_template(dest_file,
+                           os.path.join(template_dir, src_file_name + "-header-template" + dest_file_ext),
+                           expansions)
+
+
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
 # containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(src_file, dest_file_no_ext, implementation_header):
+def convert_header(src_file, dest_file_no_ext, template_dir):
     print("Parsing " + src_file)
 
     with open(src_file, "r") as f:
@@ -293,17 +325,34 @@ def convert_header(src_file, dest_file_no_ext, implementation_header):
     # custom suffix instead
     custom_varargs_list_suffixes = {'appendf': 'v'}
 
+    # Get just the name portion of the source file, to use as the template name
+    src_file_name_only = os.path.splitext(os.path.basename(src_file))[0]
+
     print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
+    dest_file_name_only = os.path.basename(dest_file_no_ext)
+
+    # If our output name ends with _internal, then generate a version of it without that on the assumption that
+    # this is probably imgui_internal.h and thus we need to know what imgui.h is (likely) called as well.
+    if dest_file_name_only.endswith('_internal'):
+        dest_file_name_only_no_internal = dest_file_name_only[:-9]
+    else:
+        dest_file_name_only_no_internal = dest_file_name_only
+
+    # Expansions to be used when processing templates, to insert variables as required
+    expansions = {"%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
+                  "%OUTPUT_HEADER_NAME_NO_INTERNAL%": dest_file_name_only_no_internal + ".h"}
+
     with open(dest_file_no_ext + ".h", "w") as file:
+        insert_header_templates(file, template_dir, src_file_name_only, ".h", expansions)
+
         write_context = code_dom.WriteContext()
         write_context.for_c = True
         dom_root.write_to_c(file, context=write_context)
 
     # Generate implementations
     with open(dest_file_no_ext + ".cpp", "w") as file:
-        with open(implementation_header, "r") as src_file:
-            file.writelines(src_file.readlines())
+        insert_header_templates(file, template_dir, src_file_name_only, ".cpp", expansions)
 
         gen_struct_converters.generate(dom_root, file, indent=0)
 
@@ -335,20 +384,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # Generate expected header template name from the source filename
-    # Note that "header" in the name here means "file header" not "C header file", slightly confusingly
-    template = os.path.join(args.templatedir, os.path.splitext(os.path.basename(args.src))[0] + "-header-template.cpp")
-
-    if not os.path.isfile(template):
-        print("Implementation template file " + template + " could not be found (note that template file names are "
-                                                           "expected to match source file names, so if you have "
-                                                           "renamed imgui.h you will need to rename the template as "
-                                                           "well)")
-        sys.exit(2)
-
     # Perform conversion
     try:
-        convert_header(args.src, args.output, template)
+        convert_header(args.src, args.output, args.templatedir)
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
         traceback.print_exc()

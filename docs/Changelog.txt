@@ -18,6 +18,7 @@ Added support for (read: removal of) constexpr
 Fixed disambiguation of default argument functions resulting in Ex functions with names that don't match their argument list (#11)
 Reduced number of Ex functions (when trailing arguments are trivial to fill, e.g. flags = 0, an Ex functions is not waranted). (#10)
 Split code_dom into multiple files for tidiness and refactored the modules a bit
+Improved the header template system somewhat and added a header to all files (#18, #22)
 
 --- v0.03
 
