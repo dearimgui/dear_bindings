@@ -4,7 +4,14 @@ import sys
 
 
 # This modifier finds any overloaded functions with identical names and disambiguates them
-def apply(dom_root, name_suffix_remaps, functions_to_ignore):
+# name_suffix_remaps gives a dictionary remapping type names for types that have awkward or unwanted names
+# functions_to_ignore gives a list of functions that are known not to need disambiguation (but look like they do)
+# functions_to_rename_everything gives a list of functions where even the "basic" versions should be renamed
+# (normally the most simple version of the function does not get a name change)
+# type_priorities provides integer priorities for argument types, used in the event of a tie between argument counts
+# to decide which function should not get renamed (highest priority, calculated as the sum of priorities for all
+# arguments, wins).
+def apply(dom_root, name_suffix_remaps, functions_to_ignore, functions_to_rename_everything, type_priorities):
     # Find all functions with name collisions
 
     functions_by_name = {}  # Contains lists of functions
@@ -50,13 +57,23 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore):
                 break
             num_common_args += 1
 
-        # Find the function in the set with the smallest argument count
+        # Find the function in the set with the smallest argument count, using the sum of the priority of the arguments
+        # as a tie-breaker if required
         lowest_arg_count = sys.maxsize
+        lowest_arg_priority = -1
         lowest_arg_function = None
         for function in functions:
-            if len(function.arguments) < lowest_arg_count:
-                lowest_arg_count = len(function.arguments)
-                lowest_arg_function = function
+            if len(function.arguments) <= lowest_arg_count:
+                function_priority = 0
+                for arg in function.arguments:
+                    arg_type = arg.arg_type.to_c_string()
+                    if arg_type in type_priorities:
+                        function_priority += type_priorities[arg_type]
+
+                if (len(function.arguments) < lowest_arg_count) or (function_priority > lowest_arg_priority):
+                    lowest_arg_count = len(function.arguments)
+                    lowest_arg_priority = function_priority
+                    lowest_arg_function = function
 
         # Add suffixes based on non-common arguments
 
@@ -68,13 +85,15 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore):
             suffixes_by_function[function] = function_suffixes
 
             # Do not alter the name of the function with the fewest arguments
-            if function == lowest_arg_function:
+            # (unless this is a function where we want to rename everything)
+            if (function == lowest_arg_function) and (function.name not in functions_to_rename_everything):
                 continue
 
             for i in range(num_common_args, len(function.arguments)):
                 if not function.arguments[i].is_varargs:  # Don't try and append a suffix for ... arguments
                     # Check to see if the full type name is in the remap list, and if so remap it
                     full_name = function.arguments[i].arg_type.to_c_string()
+
                     if full_name in name_suffix_remaps:
                         suffix_name = name_suffix_remaps[full_name]
                     else:

@@ -178,6 +178,7 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
                                          'const char*': 'Str',
                                          'char*': 'Str',
                                          'unsigned int': 'Uint',
+                                         'unsigned int*': 'UintPtr',
                                          'ImGuiID': 'ID',
                                          'const void*': 'Ptr',
                                          'void*': 'Ptr'},
@@ -188,7 +189,12 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
                                          "cImFileClose",
                                          "cImFileGetSize",
                                          "cImFileRead",
-                                         "cImFileWrite"])
+                                         "cImFileWrite"],
+                                     functions_to_rename_everything=[
+                                         "ImGui_CheckboxFlags"  # This makes more sense as IntPtr/UIntPtr variants
+                                     ],
+                                     type_priorities={
+                                     })
     mod_generate_default_argument_functions.apply(dom_root,
                                                   # We ignore functions that don't get called often because in those
                                                   # cases the default helper doesn't add much value but does clutter
@@ -296,6 +302,21 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
                                                       'flags',
                                                       'popup_flags'
                                                   ])
+
+    # Do some special-case renaming of functions
+    mod_rename_functions.apply(dom_root, {
+        # We want the ImGuiCol version of GetColorU32 to be the primary one, but we can't use type_priorities on
+        # mod_disambiguate_functions to achieve that because it also has more arguments and thus naturally gets passed
+        # over. Rather than introducing yet another layer of knobs to try and control _that_, we just do some
+        # after-the-fact renaming here.
+        'ImGui_GetColorU32': 'ImGui_GetColorU32ImVec4',
+        'ImGui_GetColorU32ImGuiCol': 'ImGui_GetColorU32',
+        'ImGui_GetColorU32ImGuiColEx': 'ImGui_GetColorU32Ex',
+        # ImGui_IsRectVisible is kinda inobvious as it stands, since the two overrides take the exact same type but
+        # interpret it differently. Hence do some renaming to make it clearer.
+        'ImGui_IsRectVisible': 'ImGui_IsRectVisibleBySize',
+        'ImGui_IsRectVisibleImVec2': 'ImGui_IsRectVisible'
+    })
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
