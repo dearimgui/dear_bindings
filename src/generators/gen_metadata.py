@@ -124,6 +124,8 @@ def emit_enum(enum):
 
     result["name"] = enum.name
     result["original_fully_qualified_name"] = enum.get_original_fully_qualified_name()
+    if enum.storage_type is not None:
+        result["storage_type"] = emit_type(enum.storage_type)
 
     elements_root = []
     result["elements"] = elements_root
@@ -308,7 +310,7 @@ def generate(dom_root, file):
     metadata_root["enums"] = enums_root
 
     for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
-        if not enum.exclude_from_metadata:
+        if not enum.exclude_from_metadata and not enum.is_forward_declaration:
             enums_root.append(emit_enum(enum))
 
     # Emit typedefs

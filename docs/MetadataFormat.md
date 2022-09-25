@@ -40,6 +40,9 @@ Defines represent `#define` values.
 {
     "name": "ImGuiTableRowFlags_",
     "original_fully_qualified_name": "ImGuiTableRowFlags_",
+    "storage_type": {
+        "declaration": "int"
+    },  
     "elements": [
         {
             "name": "ImGuiTableRowFlags_None",
@@ -57,6 +60,7 @@ Defines represent `#define` values.
 |---|-----------|
 |name|The name of the enum|
 |original_fully_qualified_name|The name of the enum as it appeared in the original C++ API|
+|storage_type|The storage type of the enum (if specified)|
 |elements|A list of elements|
 |elements.name|The name of the element|
 |elements.value|The value of the element (may be a calculation)|

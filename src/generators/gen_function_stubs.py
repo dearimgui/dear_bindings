@@ -7,7 +7,7 @@ from src.code_dom.common import write_c_line
 # Generate a cast between two types (if required)
 # Generate a cast from C type to C++ type if to_cpp is true, the opposite if false
 # Returns a prefix/suffix pair
-def generate_cast(from_type, to_type, imgui_classes_and_callbacks, nested_classes, to_cpp):
+def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp):
 
     cast_prefix = ""
     cast_suffix = ""
@@ -33,8 +33,22 @@ def generate_cast(from_type, to_type, imgui_classes_and_callbacks, nested_classe
                 to_type_str = to_type_str.replace(leaf_name, full_name[2:])
 
         if munged_from_type_str != munged_to_type_str:
-            cast_prefix = "reinterpret_cast<" + to_type_str + ">("
-            cast_suffix = ")"
+            is_enum = False
+
+            # Slightly dodgy check for enum-ness - this will fail if the typename is decorated but in that case
+            # the cast will likely also be wrong so let's fix that if/when it ever actually happens
+            name_without_root_prefix = from_type_str[2:]  # Get the typename without the :: namespace root prefix
+            if name_without_root_prefix in imgui_custom_types:
+                if isinstance(imgui_custom_types[name_without_root_prefix], code_dom.DOMEnum):
+                    is_enum = True
+
+            if is_enum:
+                # Enums need to use static_cast
+                cast_prefix = "static_cast<" + to_type_str + ">("
+                cast_suffix = ")"
+            else:
+                cast_prefix = "reinterpret_cast<" + to_type_str + ">("
+                cast_suffix = ")"
 
         # Check for by-value types (note that we do *not* want to use original_for_type here, but rather the modified
         # type for the check)
@@ -43,8 +57,8 @@ def generate_cast(from_type, to_type, imgui_classes_and_callbacks, nested_classe
 
         if len(type_to_check.tokens) >= 1:
             type_name = type_to_check.tokens[len(type_to_check.tokens) - 1].value
-            if type_name in imgui_classes_and_callbacks:
-                underlying_type = imgui_classes_and_callbacks[type_name]
+            if type_name in imgui_custom_types:
+                underlying_type = imgui_custom_types[type_name]
                 if isinstance(underlying_type, code_dom.DOMClassStructUnion) and underlying_type.is_by_value:
                     if to_cpp:
                         cast_prefix = "ConvertToCPP_" + underlying_type.name + "("
@@ -69,23 +83,31 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
     write_context.for_c = True
     write_context.for_implementation = True
 
-    # Build a list of all the classes/structs ImGui defines, so we know which things need casting/name-fudging
+    # Build a list of all the classes/structs/enums ImGui defines, so we know which things need casting/name-fudging
     # (we also put function pointers in here as they need the same treatment, hence the "callbacks" bit)
-    imgui_classes_and_callbacks = {}
+    imgui_custom_types = {}
 
     for struct in dom_root.list_all_children_of_type(code_dom.DOMClassStructUnion):
         if struct.name is not None:
-            imgui_classes_and_callbacks[struct.name] = struct
-            imgui_classes_and_callbacks["cimgui::" + struct.name] = struct  # Also add the qualified version
+            imgui_custom_types[struct.name] = struct
+            imgui_custom_types["cimgui::" + struct.name] = struct  # Also add the qualified version
             # And the original names
             if struct.unmodified_element is not None:
-                imgui_classes_and_callbacks[struct.unmodified_element.name] = struct
+                imgui_custom_types[struct.unmodified_element.name] = struct
+
+    for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
+        if not enum.is_forward_declaration:
+            imgui_custom_types[enum.name] = enum
+            imgui_custom_types["cimgui::" + enum.name] = enum  # Also add the qualified version
+            # And the original names
+            if enum.unmodified_element is not None:
+                imgui_custom_types[enum.unmodified_element.name] = enum
 
     # Also include function pointer definitions, as we basically need to treat them like class/structs for casting
     # purposes
     for typedef in dom_root.list_all_children_of_type(code_dom.DOMTypedef):
         if isinstance(typedef.type, code_dom.DOMFunctionPointerType):
-            imgui_classes_and_callbacks[typedef.name] = typedef
+            imgui_custom_types[typedef.name] = typedef
 
     # Build a list of any classes which were nested in C++-land, as we need to convert them to fully-qualified form
     # anywhere they appear in types
@@ -144,7 +166,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         function.name = "cimgui::" + function.name
         for type_data in function.list_all_children_of_type(code_dom.DOMType):
             for tok in type_data.tokens:
-                if tok.value in imgui_classes_and_callbacks:
+                if tok.value in imgui_custom_types:
                     tok.value = "cimgui::" + tok.value
 
         # We need to remove the "self" argument, partially because we don't want it and partially because if we
@@ -179,8 +201,8 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
             if original_arg.is_array and not arg.is_implicit_default:
                 if len(original_arg.arg_type.tokens) >= 1:
                     type_name = original_arg.arg_type.tokens[len(original_arg.arg_type.tokens) - 1].value
-                    if type_name in imgui_classes_and_callbacks:
-                        underlying_type = imgui_classes_and_callbacks[type_name]
+                    if type_name in imgui_custom_types:
+                        underlying_type = imgui_custom_types[type_name]
                         if isinstance(underlying_type, code_dom.DOMClassStructUnion) and underlying_type.is_by_value:
                             # This is an array of a by-value struct, so we need to convert it
                             # Emit a local array of the converted type
@@ -195,7 +217,6 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
                                          "ConvertToCPP_" + underlying_type.name + "(" + arg.name + "[i]);")
 
                             converted_arg_name_overrides[arg.name] = converted_array_name
-
 
         # Write body containing thunk call
 
@@ -221,13 +242,13 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
 
             return_cast_prefix, return_cast_suffix = generate_cast(new_type,
                                                                    function.return_type,
-                                                                   imgui_classes_and_callbacks,
+                                                                   imgui_custom_types,
                                                                    nested_classes,
                                                                    to_cpp=False)
         else:
             return_cast_prefix, return_cast_suffix = generate_cast(original_function.return_type,
                                                                    function.return_type,
-                                                                   imgui_classes_and_callbacks,
+                                                                   imgui_custom_types,
                                                                    nested_classes,
                                                                    to_cpp=False)
         thunk_call += return_cast_prefix
@@ -285,7 +306,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
 
             # Generate a cast if required
             cast_prefix, cast_suffix = generate_cast(arg.arg_type, original_arg.arg_type,
-                                                     imgui_classes_and_callbacks, nested_classes, to_cpp=True)
+                                                     imgui_custom_types, nested_classes, to_cpp=True)
 
             if not first_arg:
                 thunk_call += ", "

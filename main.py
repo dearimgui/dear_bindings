@@ -172,6 +172,7 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
     mod_remove_static_fields.apply(dom_root)
     mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
+    mod_remove_enum_forward_declarations.apply(dom_root)
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types

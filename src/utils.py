@@ -36,6 +36,19 @@ def create_function_declaration(text):
     return element
 
 
+# Create a typedef DOM element from a string
+def create_typedef(text):
+    stream = c_lexer.tokenize(text)
+    context = code_dom.ParseContext()
+    element = code_dom.DOMTypedef.parse(context, stream)
+    # There may be a comment following the declaration, so check for it and attach if there is
+    attached_comment = code_dom.DOMComment.parse(context, stream)
+    if attached_comment is not None:
+        element.attached_comment = attached_comment
+        element.attached_comment.is_attached_comment = True
+        element.attached_comment.parent = element
+    return element
+
 # Create a code block DOM element from a string (e.g. "{ return 1.0f; }")
 def create_code_block(text):
     stream = c_lexer.tokenize(text)
@@ -108,3 +121,23 @@ def append_comment_text(element, message):
         comment.is_attached_comment = True
         comment.parent = element
         element.attached_comment = comment
+
+
+# Migrate comments from one element to another - useful when replacing an element with another one
+def migrate_comments(from_element, to_element):
+    # Move preceding comments
+    comments_to_move = from_element.pre_comments.copy()  # Copy to avoid altering the list as we iterate
+    to_element.attach_preceding_comments(comments_to_move)
+
+    # Move attached comment
+    if from_element.attached_comment is not None:
+        if to_element.attached_comment is not None:
+            # This isn't actually hard to fix - it just requires appending one comment's text onto the other,
+            # but for 99% of use-cases it will never happen (as I imagine this will mostly be used when swapping
+            # an old element for a newly-created one, and thus the new element will not have any comments), so for
+            # now let's just treat it as an error.
+            raise Exception("Comment migration would overwrite existing comment")
+
+        to_element.attached_comment = from_element.attached_comment
+        to_element.attached_comment.parent = to_element
+        from_element.attached_comment = None

@@ -8,6 +8,10 @@ class DOMEnum(code_dom.element.DOMElement):
         super().__init__()
         self.name = None
         self.is_enum_class = False
+        self.is_forward_declaration = False
+        self.emit_as_anonymous_for_c = False  # If this is true, then the enum will be emitted as anonymous in C
+        #                                       (used for forward declared enums that have been converted to typedefs)
+        self.storage_type = None  # The storage type (int/byte/etc) of the enum, if specified
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -23,9 +27,13 @@ class DOMEnum(code_dom.element.DOMElement):
 
         dom_element.tokens = [tok, name_tok]
 
+        if stream.get_token_of_type(['COLON']) is not None:
+            # If followed by a : then there is an explicit storage type declaration
+            dom_element.storage_type = code_dom.DOMType.parse(context, stream)
+
         dom_element.name = name_tok.value
 
-        # We need a custom content parser from enums
+        # We need a custom content parser for enums
         old_content_parser = context.current_content_parser
         context.current_content_parser = lambda: DOMEnum.parse_content(context, stream)
 
@@ -44,6 +52,9 @@ class DOMEnum(code_dom.element.DOMElement):
                 else:
                     stream.rewind(checkpoint)
                     return None
+        else:
+            # If there was no opening brace then this was a forward declaration
+            dom_element.is_forward_declaration = True
 
         context.current_content_parser = old_content_parser
 
@@ -90,12 +101,48 @@ class DOMEnum(code_dom.element.DOMElement):
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
+
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, self.add_attached_comment_to_line("enum " + self.name))
-        write_c_line(file, indent, "{")
-        for child in self.children:
-            child.write_to_c(file, indent + 1, context)
-        write_c_line(file, indent, "};")
+
+        if context.for_c:
+            # C doesn't support storage types nor forward-declaration of enums
+            if self.name is not None and not self.emit_as_anonymous_for_c:
+                # Named enums should be typedefs
+                write_c_line(file, indent, self.add_attached_comment_to_line("typedef enum "))
+            else:
+                # Anonymous enums should not be typedefs
+                write_c_line(file, indent, self.add_attached_comment_to_line("enum "))
+            write_c_line(file, indent, "{")
+
+            # Write enum elements
+            for child in self.children:
+                child.write_to_c(file, indent + 1, context)
+
+            if self.name is not None and not self.emit_as_anonymous_for_c:
+                write_c_line(file, indent, "} " + self.name + ";")
+            else:
+                write_c_line(file, indent, "};")
+        else:
+            storage_type_declaration = ""
+
+            if self.storage_type is not None:
+                storage_type_declaration = " : " + self.storage_type.to_c_string(context)
+
+            terminator = ""
+
+            if self.is_forward_declaration:
+                terminator = ";"
+
+            write_c_line(file, indent, self.add_attached_comment_to_line("enum " +
+                                                                         self.name +
+                                                                         storage_type_declaration +
+                                                                         terminator))
+
+            if not self.is_forward_declaration:
+                write_c_line(file, indent, "{")
+                for child in self.children:
+                    child.write_to_c(file, indent + 1, context)
+                write_c_line(file, indent, "};")
 
     def __str__(self):
         return "Enum: " + self.name

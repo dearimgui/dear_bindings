@@ -17,6 +17,7 @@ from . import mod_remove_nested_typedefs
 from . import mod_remove_all_functions_from_classes
 from . import mod_merge_blank_lines
 from . import mod_remove_blank_lines
+from . import mod_remove_enum_forward_declarations
 from . import mod_remove_empty_conditionals
 from . import mod_make_all_functions_use_imgui_api
 from . import mod_rename_defines
