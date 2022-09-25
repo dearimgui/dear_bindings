@@ -24,6 +24,7 @@ Changed order of Ex functions relative to the original (#23)
 Added support for forcing disambiguation to disambiguate all variants of a function (#11)
 Added support to tell disambiguation to prioritise certain argument types (#11)
 Added function renaming and used it to tidy up ImGui_GetColorU32 and ImGui_IsRectVisible (#11, #25)
+Added support for forward declaration of enums and enum storage types
 
 --- v0.03
 
