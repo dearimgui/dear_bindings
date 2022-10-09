@@ -305,18 +305,19 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             declaration += str(self.get_fully_qualified_name()) + "("
         else:
             declaration += str(self.name) + "("
+        argument_declaration = ""
         if len(self.arguments) > 0:
             first_arg = True
             for arg in self.arguments:
                 if arg.is_implicit_default:
                     continue  # Skip anything that is implicitly defaulted
                 if not first_arg:
-                    declaration += ", "
-                declaration += arg.to_c_string(context)
+                    argument_declaration += ", "
+                argument_declaration += arg.to_c_string(context)
                 first_arg = False
-        else:
-            if context.for_c:
-                declaration += "void"  # Explicit void for C
+        if context.for_c and argument_declaration == "":
+            argument_declaration += "void"  # Explicit void for C
+        declaration += argument_declaration
         declaration += ")"
         if self.is_const:
             declaration += " const"
