@@ -255,7 +255,7 @@ set to `true`, as those are additional functions added to support simulating def
 When using a version of ImGui with `ImStr` (string view) support, languages which use string views should probably
 ignore any functions with `is_imstr_helper` set, as these are generated functions that give an alternative interface
 using `const char*` instead of `ImStr`. Conversely, if you are using `const char*` for your strings, then you probably
-want to ignore and functions with `has_imstr_helper` set.
+want to ignore any functions with `has_imstr_helper` set.
 
 ```json
 {
