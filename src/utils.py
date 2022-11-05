@@ -15,11 +15,16 @@ def create_token(text):
     return token
 
 
-# Create a set of tokens for a type from a string
-def create_tokens_for_type(text):
+# Create a type from a string
+def create_type(text):
     stream = c_lexer.tokenize(text)
     context = code_dom.ParseContext()
-    return code_dom.DOMType.parse(context, stream, allow_function_pointer=True).tokens
+    return code_dom.DOMType.parse(context, stream, allow_function_pointer=True)
+
+
+# Create a set of tokens for a type from a string
+def create_tokens_for_type(text):
+    return create_type(text).tokens
 
 
 # Create a function declaration DOM element from a string
@@ -48,6 +53,7 @@ def create_typedef(text):
         element.attached_comment.is_attached_comment = True
         element.attached_comment.parent = element
     return element
+
 
 # Create a code block DOM element from a string (e.g. "{ return 1.0f; }")
 def create_code_block(text):

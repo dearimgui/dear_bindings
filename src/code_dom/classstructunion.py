@@ -6,7 +6,8 @@ from src import code_dom
 class DOMClassStructUnion(code_dom.element.DOMElement):
     def __init__(self):
         super().__init__()
-        self.name = None  # Can be none for anonymous things
+        self.name = None  # Can be none for anonymous things if they haven't been given a temporary name
+        self.is_anonymous = True
         self.is_forward_declaration = True
         self.is_by_value = False  # Is this to be passed by value? (set during modification)
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
@@ -23,6 +24,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         name_tok = stream.get_token_of_type(['THING'])
         if name_tok is not None:
             dom_element.name = name_tok.value
+            dom_element.is_anonymous = False
 
             # Deal with things like "struct IMGUI_API ImRect"
             if name_tok.value == 'IMGUI_API':
@@ -51,7 +53,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
                     dom_element.base_classes.append((next_accessibility, tok.value))
                     next_accessibility = "private"
 
-        # print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "Anonymous"))
+        # print("Struct/Class/Union: " + dom_element.structure_type + " : " + (dom_element.name or "<anonymous>"))
 
         current_accessibility = "public" if (dom_element.structure_type != 'CLASS') else "private"
 
@@ -85,7 +87,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         return dom_element
 
     def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
-        name = self.name or "anonymous"
+        name = self.name or "<anonymous>"
         if leaf_name != "":
             name += "::" + leaf_name
         if self.parent is not None:
@@ -99,7 +101,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
 
         declaration = ""
 
-        if context.for_c and (self.name is not None):
+        if context.for_c and not self.is_anonymous:
             declaration += "typedef "
 
         if self.structure_type == "STRUCT":
@@ -111,7 +113,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         else:
             raise Exception("Unsupported struct/class/union type")
 
-        if self.name is not None:
+        if not self.is_anonymous:
             declaration += " " + self.name
             # We need the struct name to be different from the typedef name to prevent compiler complaints about
             # forward declarations not matching
@@ -130,12 +132,12 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
             write_c_line(file, indent, "{")
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
-            if context.for_c and (self.name is not None):
+            if context.for_c and not self.is_anonymous:
                 write_c_line(file, indent, "} " + self.name + ";")
             else:
                 write_c_line(file, indent, "};")
         else:
-            if context.for_c and (self.name is not None):
+            if context.for_c and not self.is_anonymous:
                 write_c_line(file, indent, self.add_attached_comment_to_line(declaration + " " + self.name + ";"))
             else:
                 write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))

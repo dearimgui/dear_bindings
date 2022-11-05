@@ -10,6 +10,7 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
         self.names = []
         self.is_static = False
         self.is_extern = False
+        self.is_anonymous = False  # True if the field is anonymous (an implicit field for a nested type declaration)
         self.is_array = []  # One per name, because C
         self.width_specifiers = []  # One per name
         self.array_bounds_tokens = []  # One list of tokens per name

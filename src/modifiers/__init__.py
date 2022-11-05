@@ -39,3 +39,4 @@ from . import mod_mark_internal_members
 from . import mod_exclude_defines_from_metadata
 from . import mod_wrap_with_extern_c
 from . import mod_remove_constexpr
+from . import mod_assign_anonymous_type_names

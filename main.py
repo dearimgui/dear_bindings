@@ -96,6 +96,7 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
 
     mod_attach_preceding_comments.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
+    mod_assign_anonymous_type_names.apply(dom_root)
     # Remove ImGuiOnceUponAFrame for now as it needs custom fiddling to make it usable from C
     # Remove ImNewDummy/ImNewWrapper as it's a helper for C++ new (and C dislikes empty structs)
     mod_remove_structs.apply(dom_root, ["ImGuiOnceUponAFrame",

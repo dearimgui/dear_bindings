@@ -173,6 +173,8 @@ def emit_field(field):
         if field.width_specifiers[i] is not None:
             name_root["width"] = str(field.width_specifiers[i])
 
+    result["is_anonymous"] = field.is_anonymous
+
     # Emit the type
     result["type"] = emit_type(field.field_type)
 
@@ -192,12 +194,36 @@ def emit_struct(struct):
     result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
     result["forward_declaration"] = struct.is_forward_declaration
+    result["is_anonymous"] = struct.is_anonymous
 
     fields_root = []
     result["fields"] = fields_root
 
-    for field in struct.list_all_children_of_type(code_dom.DOMFieldDeclaration):
-        fields_root.append(emit_field(field))
+    # It is important that we preserve ordering here (so we can't, for example, emit all fields first and then nested
+    # structs, as those structs could be implicit field declarations)
+    for child in struct.children:
+        # Regular fields
+        if isinstance(child, code_dom.DOMFieldDeclaration):
+            fields_root.append(emit_field(child))
+
+        # Nested structs
+        if isinstance(child, code_dom.DOMClassStructUnion):
+            # If the struct is anonymous, then it needs a dummy field emitted for it
+            # This is technically slightly wrong, as you could have a named struct that is also an implicit field
+            # declaration, but the parser doesn't currently support that case (and it isn't exactly common practice
+            # in C++ AFAIK), so for now we assume that only anonymous structs fit this pattern.
+            if child.is_anonymous:
+                dummy_field = code_dom.DOMFieldDeclaration()
+                dummy_field.names = [child.name]
+                dummy_field.is_array = [False]
+                dummy_field.width_specifiers = [None]
+                dummy_field.is_anonymous = child.is_anonymous  # Technically wrong, but see above
+                # We intentionally don't use utils.create_type() here because if this is an anonymous struct our
+                # synthetic name will (deliberately) contain characters that aren't valid in a C++ typename
+                dummy_type = code_dom.DOMType()
+                dummy_type.tokens = [utils.create_token(child.name)]
+                dummy_field.field_type = dummy_type
+                fields_root.append(emit_field(dummy_field))
 
     add_comments(struct, result)
     add_preprocessor_conditionals(struct, result)
