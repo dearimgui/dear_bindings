@@ -1,10 +1,18 @@
 # Dear Bindings Version 0.04 WIP
 # Generates C-language headers for Dear ImGui
-# Developed by Ben Carter (ben@shironekolabs.com)
+# Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
-# Typical use is:
-#   python main.py --output cimgui ../imgui/imgui.h
-#   python main.py --output cimgui_internal ../imgui/imgui_interal.h   (FIXME: result won't compile yet)
+# Example command-line:
+#   python dear_bindings.py --output cimgui ../imgui/imgui.h
+#   python dear_bindings.py --output cimgui_internal ../imgui/imgui_internal.h   (FIXME: result won't compile yet)
+
+# Example Input:
+#   imgui.h     : a C++ header file (aiming to also support imgui_internal.h, implot.h etc.: support is not complete yet).
+
+# Example output:
+#   cimgui.h    : a C header file for compilation by a modern C compiler, including full comments from original header file.
+#   cimgui.cpp  : a CPP implementation file which can to be linked into a C program.
+#   cimgui.json : full metadata to reconstruct bindings for other programming languages, including full comments.
 
 import os
 from src import code_dom
@@ -399,18 +407,25 @@ if __name__ == '__main__':
     # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a
     # file containing the initial header block for the implementation (provided in the templates/ directory).
 
-    parser = argparse.ArgumentParser(description='Parse Dear ImGui headers, convert to C and output metadata',
-                                     epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
-                                            'parameter errors')
+    print("Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.")
+
+    parser = argparse.ArgumentParser(
+                        add_help=True,
+                        epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
+                               'parameter errors')
     parser.add_argument('src',
                         help='Path to source header file to process (generally imgui.h)')
-    parser.add_argument('--output', '-o',
+    parser.add_argument('-o', '--output',
                         required=True,
-                        help='Path to output file(s). This should have no extension, as <output>.h, <output>.cpp and '
-                             '<output>.json will be written.')
-    parser.add_argument('--templatedir', '-t',
+                        help='Path to output files (generally cimgui). This should have no extension, '
+                             'as <output>.h, <output>.cpp and <output>.json will be written.')
+    parser.add_argument('-t', '--templatedir',
                         default="./src/templates",
                         help='Path to the implementation template directory (default: ./src/templates)')
+
+    if len(sys.argv)==1:
+        parser.print_help(sys.stderr)
+        sys.exit(0)
 
     args = parser.parse_args()
 

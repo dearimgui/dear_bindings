@@ -20,10 +20,10 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 # Usage
 
-Assuming you have `imgui.h` in the project directory, and would like to generate `cimgui.h`, `cimgui.cpp` and `cimgui.json`:
+Assuming you have `imgui.h` in a sibling directory, and would like to generate `cimgui.h`, `cimgui.cpp` and `cimgui.json`:
 
 ```
-python main.py -o cimgui imgui.h
+python dear_bindings.py -o cimgui ../imgui/imgui.h
 ```
 
 Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a project to generate a C API (`cimgui.h` defines the API, whilst `cimgui.cpp` implements the binding to the underlying C++ code).
@@ -31,25 +31,21 @@ Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a pr
 Other command line arguments:
 
 ```
-usage: main.py [-h] --output OUTPUT [--templatedir TEMPLATEDIR] src
-
-Parse Dear ImGui headers, convert to C and output metadata
+Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.
+usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR] src
 
 positional arguments:
   src                   Path to source header file to process (generally imgui.h)
 
 optional arguments:
-  -h, --help            show this help message and exit
-  --output OUTPUT, -o OUTPUT
-                        Path to output file(s). This should have no extension,
-                        as <output>.h, <output>.cpp and <output>.json will be
-                        written.
-  --templatedir TEMPLATEDIR, -t TEMPLATEDIR
-                        Path to the implementation template directory
-                        (default: ./src/templates)
+  -h/--help             Show this help message and exit
+  -o/--output OUTPUT
+                        Path to output files (generally cimgui). This should have no extension, as <output>.h,
+                        <output>.cpp and <output>.json will be written.
+  -t/--templatedir TEMPLATEDIR
+                        Path to the implementation template directory (default: ./src/templates)
 
-Result code 0 is returned on success, 1 on conversion failure and 2 on
-parameter errors
+Result code 0 is returned on success, 1 on conversion failure and 2 on parameter errors.
 ```
 
 # Generated metadata
