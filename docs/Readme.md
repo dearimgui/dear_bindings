@@ -146,7 +146,7 @@ ImGuiOnceUponAFrame, ImNewDummy, ImNewWrapper, ImGui::Value
 License
 -------
 
-Dear Bindings is copyright (c) 2021 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2022 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](LICENSE.txt) for full details.
 
 Contact
 -------
