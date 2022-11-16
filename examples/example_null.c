@@ -2,11 +2,9 @@
 // (compile and link imgui, create context, run headless with NO INPUTS, NO GRAPHICS OUTPUT)
 // This is useful to test building, but you cannot interact with anything here!
 #include <stdio.h>
-// FIXME: Remove when #12 is fixed.
-#ifndef ImDrawIdx
-typedef unsigned short ImDrawIdx;
-#endif // #ifndef ImDrawIdx
+
 #include "cimgui.h"
+//#include "cimgui_internal.h" // FIXME: Unsupported for now.
 
 int main(int argc, char** argv)
 {
