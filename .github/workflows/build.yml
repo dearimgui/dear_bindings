@@ -63,7 +63,7 @@ jobs:
     - name: Run
       run: ./example_null
 
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: dear_bindings_${{ matrix.branch }}
         path: |
