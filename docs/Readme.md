@@ -1,7 +1,7 @@
 Dear Bindings
 -------------
 
-Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top.
+Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top. 
 
 At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users. 
 
@@ -17,6 +17,18 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 * Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
 * [ply](https://www.dabeaz.com/ply/) (Python Lex-Yacc, v3.11 tested)
+
+# Differences with cimgui
+
+Dear Bindings was designed as a potential replacement to the [cimgui](https://github.com/cimgui/cimgui) project.
+
+| dear_bindings | cimgui |
+|----|----|
+| Written in Python | Written in Lua |
+| Preserve comments and alignment | -- |
+| Use more polished rules to name functions, resolve overloads and offer simplified and \*Ex alternatives. | -- |
+| Currently cannot generates bindings for imgui_internal.h. | Can generate bindings for imgui_internal.h (but output is in the same header, making it difficult to tell if you are using a public or internal function). |
+| Currently not mature, more likely to have issues | Has been used for years. |
 
 # Usage
 
