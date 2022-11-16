@@ -116,11 +116,16 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
                                         "ImSpan",
                                         "ImSpanAllocator",
                                         "ImPool",
-                                        "ImChunkStream"])
+                                        "ImChunkStream",
+                                        "ImGuiTextIndex"])
     # Remove all functions from ImVector, as they're not really useful
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
+    # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
+    mod_remove_functions.apply(dom_root, ["ImQsort"])
+    # FIXME: Remove incorrectly parsed constructor due to "explicit" keyword.
+    mod_remove_functions.apply(dom_root, ["ImVec2ih::ImVec2ih"])
     # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
     mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
                                           "ImGui::ScaleValueFromRatioT",
