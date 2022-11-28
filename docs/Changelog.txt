@@ -27,6 +27,7 @@ Added function renaming and used it to tidy up ImGui_GetColorU32 and ImGui_IsRec
 Added support for forward declaration of enums and enum storage types
 Fixed issue where (void) to declarations of C functions with no arguments was omitted in some cases (#26) [@oskarnp]
 Fixed issue where the JSON representation of anonymous unions was incorrect (thanks to [@oskarnp] for the heads-up)
+Fixed regression where JSON output didn't include conditional struct fields (thanks to [@paralaxsd]) (#28)
 
 --- v0.03
 

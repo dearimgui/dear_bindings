@@ -185,29 +185,18 @@ def emit_field(field):
     return result
 
 
-# Emit data for a single struct
-def emit_struct(struct):
-    result = {}
-
-    result["name"] = struct.name
-    result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
-    result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
-    result["by_value"] = struct.is_by_value
-    result["forward_declaration"] = struct.is_forward_declaration
-    result["is_anonymous"] = struct.is_anonymous
-
-    fields_root = []
-    result["fields"] = fields_root
-
+# Walk into a container (initially a struct) and emit field declarations for any fields found
+# Avoid recursing into nested structs (as those don't contribute fields to their container)
+def emit_struct_field_list(container, fields_root):
     # It is important that we preserve ordering here (so we can't, for example, emit all fields first and then nested
     # structs, as those structs could be implicit field declarations)
-    for child in struct.children:
-        # Regular fields
+    for child in container.children:
         if isinstance(child, code_dom.DOMFieldDeclaration):
+            # Regular fields
             fields_root.append(emit_field(child))
+        elif isinstance(child, code_dom.DOMClassStructUnion):
+            # Nested structs
 
-        # Nested structs
-        if isinstance(child, code_dom.DOMClassStructUnion):
             # If the struct is anonymous, then it needs a dummy field emitted for it
             # This is technically slightly wrong, as you could have a named struct that is also an implicit field
             # declaration, but the parser doesn't currently support that case (and it isn't exactly common practice
@@ -224,6 +213,27 @@ def emit_struct(struct):
                 dummy_type.tokens = [utils.create_token(child.name)]
                 dummy_field.field_type = dummy_type
                 fields_root.append(emit_field(dummy_field))
+        else:
+            # If we find anything else, recurse into it to look for fields (as it may be a preprocessor declaration
+            # or similar)
+            emit_struct_field_list(child, fields_root)
+
+
+# Emit data for a single struct
+def emit_struct(struct):
+    result = {}
+
+    result["name"] = struct.name
+    result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
+    result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
+    result["by_value"] = struct.is_by_value
+    result["forward_declaration"] = struct.is_forward_declaration
+    result["is_anonymous"] = struct.is_anonymous
+
+    fields_root = []
+    result["fields"] = fields_root
+
+    emit_struct_field_list(struct, fields_root)
 
     add_comments(struct, result)
     add_preprocessor_conditionals(struct, result)
