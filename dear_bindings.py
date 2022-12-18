@@ -414,6 +414,8 @@ if __name__ == '__main__':
 
     print("Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.")
 
+    default_template_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "src", "templates")
+
     parser = argparse.ArgumentParser(
                         add_help=True,
                         epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
@@ -425,7 +427,7 @@ if __name__ == '__main__':
                         help='Path to output files (generally cimgui). This should have no extension, '
                              'as <output>.h, <output>.cpp and <output>.json will be written.')
     parser.add_argument('-t', '--templatedir',
-                        default="./src/templates",
+                        default=default_template_dir,
                         help='Path to the implementation template directory (default: ./src/templates)')
 
     if len(sys.argv)==1:
