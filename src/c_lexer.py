@@ -1,4 +1,5 @@
 import ply.lex as lex
+import re
 from src import token_stream
 
 # This implements a simple lexer for C
@@ -137,27 +138,27 @@ def t_ANY_BOOL_LITERAL(t):
 # Match #pragma
 # This is a special-case because there can be all sorts of random stuff after #pragma and we want to eat it all
 def t_PRAGMA(t):
-    r'(?m)^\#pragma.+?(?=(\/\/|\/\*|$))'
+    r'^\#pragma.+?(?=(\/\/|\/\*|$))'
     return t
 
 
 # Match #error
 # This is a special-case because there can be all sorts of random stuff after #error and we want to eat it all
 def t_PPERROR(t):
-    r'(?m)^\#error.+?(?=(\/\/|\/\*|$))'
+    r'^\#error.+?(?=(\/\/|\/\*|$))'
     return t
 
 
 # Match #define
 # This is a special-case because there can be all sorts of random stuff after #define and we want to eat it all
 def t_PPDEFINE(t):
-    r'(?m)^\#define.+?(?=(\/\/|\/\*|$))'
+    r'^\#define.+?(?=(\/\/|\/\*|$))'
     return t
 
 
 # Match any preprocessor command
 def t_PREPROCESSOR_COMMAND(t):
-    r'(?m)^\#[A-Za-z_][0-9A-Za-z_]*'
+    r'^\#[A-Za-z_][0-9A-Za-z_]*'
     t.type = preprocessor_commands.get(t.value, 'PREPROCESSOR_COMMAND')
     t.lexer.begin('pp') # The rest of the line will be parsed in the preprocessor state
     return t
@@ -228,6 +229,6 @@ def t_pp_error(t):
 
 # Lex a given source (string) and return a token stream for it
 def tokenize(source):
-    lexer = lex.lex()
+    lexer = lex.lex(reflags=int(re.VERBOSE | re.MULTILINE))
     lexer.input(source)
     return token_stream.TokenStream(lexer)
