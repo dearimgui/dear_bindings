@@ -22,6 +22,7 @@ import sys
 import traceback
 from src.modifiers import *
 from src.generators import *
+from src.type_comprehension import *
 
 
 # Insert a single header template file, complaining if it does not exist
@@ -58,7 +59,7 @@ def insert_header_templates(dest_file, template_dir, src_file_name, dest_file_ex
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
 # containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(src_file, dest_file_no_ext, template_dir):
+def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvaluearguments):
     print("Parsing " + src_file)
 
     with open(src_file, "r") as f:
@@ -170,6 +171,8 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
     mod_remove_operators.apply(dom_root)
     mod_remove_heap_constructors_and_destructors.apply(dom_root)
     mod_convert_references_to_pointers.apply(dom_root)
+    if nostructbyvaluearguments:
+        mod_convert_by_value_struct_args_to_pointers.apply(dom_root)
     # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
     # if anyone tries to use it
     mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
@@ -362,6 +365,7 @@ def convert_header(src_file, dest_file_no_ext, template_dir):
 
     dom_root.validate_hierarchy()
 
+    # Test code
     # dom_root.dump()
 
     # Cases where the varargs list version of a function does not simply have a V added to the name and needs a
@@ -414,6 +418,9 @@ if __name__ == '__main__':
 
     print("Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.")
 
+    # Debug code
+    #type_comprehender.get_type_description("void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd)").dump(0)
+
     default_template_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "src", "templates")
 
     parser = argparse.ArgumentParser(
@@ -429,8 +436,11 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--templatedir',
                         default=default_template_dir,
                         help='Path to the implementation template directory (default: ./src/templates)')
+    parser.add_argument('--nopassingstructsbyvalue',
+                        action='store_true',
+                        help='Convert any by-value struct arguments to pointers (for other language bindings)')
 
-    if len(sys.argv)==1:
+    if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(0)
 
@@ -438,7 +448,7 @@ if __name__ == '__main__':
 
     # Perform conversion
     try:
-        convert_header(args.src, args.output, args.templatedir)
+        convert_header(args.src, args.output, args.templatedir, args.nopassingstructsbyvalue)
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
         traceback.print_exc()

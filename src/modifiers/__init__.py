@@ -11,6 +11,7 @@ from . import mod_flatten_nested_classes
 from . import mod_flatten_templates
 from . import mod_flatten_conditionals
 from . import mod_disambiguate_functions
+from . import mod_convert_by_value_struct_args_to_pointers
 from . import mod_convert_references_to_pointers
 from . import mod_remove_static_fields
 from . import mod_remove_nested_typedefs

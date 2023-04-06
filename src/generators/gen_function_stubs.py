@@ -42,12 +42,18 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
                 if isinstance(imgui_custom_types[name_without_root_prefix], code_dom.DOMEnum):
                     is_enum = True
 
+            # If the "convert by-value struct arguments to pointers" option is enabled, then we may need to handle
+            # cases where we need to introduce a dereference here to get from the pointer representation to a value
+            additional_dereferences = '*' * (munged_from_type_str.count('*') - munged_to_type_str.count('*'))
+
             if is_enum:
                 # Enums need to use static_cast
-                cast_prefix = "static_cast<" + to_type_str + ">("
+                cast_prefix = additional_dereferences + "static_cast<" + to_type_str + \
+                              additional_dereferences + ">("
                 cast_suffix = ")"
             else:
-                cast_prefix = "reinterpret_cast<" + to_type_str + ">("
+                cast_prefix = additional_dereferences + "reinterpret_cast<" + to_type_str + \
+                              additional_dereferences + ">("
                 cast_suffix = ")"
 
         # Check for by-value types (note that we do *not* want to use original_for_type here, but rather the modified

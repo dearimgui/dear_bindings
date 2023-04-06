@@ -116,7 +116,7 @@ t_LOGICALAND = r'\&\&'
 t_LOGICALOR = r'\|\|'
 # C++ reserved keywords
 t_KEYWORD = r'\b(alignas|alignof|asm|auto|break|case|catch|char|constexpr|'\
-            r'const_cast|continue|decltype|default|delete|do|doubledynamic_cast|else|enum|explicit|export|extern|'\
+            r'const_cast|continue|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|'\
             r'float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|operator|private|protected|'\
             r'public|register|reinterpret_cast|return|short|sizeof|static|static_assert|static_cast|'\
             r'switch|template|this|thread_local|throw|try|typedef|typeid|typename|union|using|virtual|void|'\

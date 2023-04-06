@@ -1,4 +1,9 @@
 
+--- Experimental type comprehension branch
+
+Added type comprehension system
+Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
+
 --- v0.04 WIP
 
 Put quotes back on string define values in the metadata
