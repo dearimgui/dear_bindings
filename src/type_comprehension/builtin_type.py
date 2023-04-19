@@ -19,6 +19,7 @@ class BuiltinType(Enum):
     float = 12
     double = 13
     long_double = 14
+    bool = 15
 
 
 # Represents a built-in C type
@@ -54,6 +55,8 @@ class TCBuiltInType(type_comprehension.element.TCElement):
             self.type = BuiltinType.double
         elif c_name == 'long double':
             self.type = BuiltinType.long_double
+        elif c_name == 'bool':
+            self.type = BuiltinType.bool
         else:
             self.type = BuiltinType.unknown
 
