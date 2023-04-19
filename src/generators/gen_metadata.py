@@ -84,7 +84,7 @@ def emit_type_comprehension_storage_classes(container, storage_classes):
 
 # Emit a type comprehension type
 def emit_type_comprehension_type(tc_type):
-    result = {"type": "Type"}
+    result = {"kind": "Type"}
 
     if tc_type.name is not None:
         result["name"] = tc_type.name
@@ -98,7 +98,7 @@ def emit_type_comprehension_type(tc_type):
 
 # Emit a type comprehension pointer
 def emit_type_comprehension_pointer(pointer):
-    result = {"type": "Pointer"}
+    result = {"kind": "Pointer"}
 
     result["inner_type"] = emit_type_comprehension_element(pointer.target)
 
@@ -109,7 +109,7 @@ def emit_type_comprehension_pointer(pointer):
 
 # Emit a type comprehension array
 def emit_type_comprehension_array(array):
-    result = {"type": "Array"}
+    result = {"kind": "Array"}
 
     if array.bounds is not None:
         result["bounds"] = str(array.bounds)
@@ -122,7 +122,7 @@ def emit_type_comprehension_array(array):
 
 # Emit a type comprehension function
 def emit_type_comprehension_function(function):
-    result = {"type": "Function"}
+    result = {"kind": "Function"}
 
     result["return_type"] = emit_type_comprehension_element(function.return_type)
 
@@ -137,7 +137,7 @@ def emit_type_comprehension_function(function):
 
 # Emit a type comprehension builtin type
 def emit_type_comprehension_builtin_type(tc_type):
-    result = {"type": "Builtin"}
+    result = {"kind": "Builtin"}
 
     result["builtin_type"] = str(tc_type.type)[len("BuiltinType."):]
 
@@ -148,7 +148,7 @@ def emit_type_comprehension_builtin_type(tc_type):
 
 # Emit a type comprehension user type
 def emit_type_comprehension_user_type(tc_type):
-    result = {"type": "User"}
+    result = {"kind": "User"}
 
     result["name"] = str(tc_type.name)
 
@@ -336,7 +336,7 @@ def emit_struct(struct):
 
     result["name"] = struct.name
     result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
-    result["type"] = struct.structure_type.lower()  # Lowercase this for consistency with C
+    result["kind"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
     result["forward_declaration"] = struct.is_forward_declaration
     result["is_anonymous"] = struct.is_anonymous

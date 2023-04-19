@@ -3,6 +3,8 @@
 
 Added type comprehension system
 Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
+**BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
+"struct"/"class"/"union") to "kind" to avoid confusion with the actual type.
 
 --- v0.04 WIP
 
