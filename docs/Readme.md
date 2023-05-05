@@ -59,33 +59,6 @@ This is an experimental branch that adds two features:
 
 This is fairly untested but it seems to work.
 
-**Known bugs:**
-
-An awkward side-effect of how Dear Bindings handles array fields and parameters is that the "array-ness" of the field/parameter is currently a property of the object itself and not its type. This means that  rather than a field `int[] foo` having the type `int[]`, it instead has the type `int` and the field itself has `is_array` set. As a more concrete example `int KeyMap[ImGuiKey_COUNT]` becomes this:
-
-```json
-"names": [
-    {
-        "name": "KeyMap",
-        "is_array": true,
-        "array_bounds": "ImGuiKey_COUNT"
-    }
-],
-"is_anonymous": false,
-"type": {
-    "declaration": "int",
-    "description": {
-        "type": "Builtin",
-        "builtin_type": "int"
-    }
-}
-```
-
-...as can be seen, the type itself is just `int`, but `KeyMap` itself is marked as being an array.
-
-This is something I'd like to fix but it's not entirely clear to me right now what the best way to do that without  breaking backwards compatibility with older JSON formats is (and whilst a command-line switch for the format might work,  I fear the changes would likely be extensive enough to make supporting both styles simultaneously challenging).
-
-
 Original readme
 ---------------
 
