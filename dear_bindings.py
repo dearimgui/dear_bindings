@@ -134,6 +134,7 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
                                           "ImGui::CheckboxFlagsT"])
+
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
     # Add helper functions to create/destroy ImVectors

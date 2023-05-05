@@ -5,6 +5,16 @@ Added type comprehension system
 Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
 **BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
 "struct"/"class"/"union") to "kind" to avoid confusion with the actual type.
+**BREAKING CHANGE** Removed the "names" field from field definitions in the JSON, and instead emit one field
+for each distinct name defined in the original source (so "float x,y" is no longer represented in the JSON as a single
+field with two names, but two separate fields). This simplifies the JSON by removing the concept of fields with
+multiple names and makes field and argument definitions more consistent.
+Renamed anonymous structures in the JSON from "<AnonymousN>" to "__anonymous_typeN" so as to avoid generating names
+that  are not valid identifiers (which was the original goal, but in practice that seemed to cause more problems than
+it solved).
+Anonymous types now get a description correctly emitted in the JSON at the point of use like other types.
+**BREAKING CHANGE** Type declarations for arrays in the JSON now include the array bounds (in addition to having
+is_array set to True)
 
 --- v0.04 WIP
 

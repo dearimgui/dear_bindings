@@ -32,6 +32,28 @@ def extract_word(instr, current):
     return result, current
 
 
+# Extract characters until a given terminator character is reached, then return
+# the extracted characters along with the new current position in the string
+def extract_until_char(instr, current, terminator):
+    result = ''
+
+    # Skip whitespace
+    while current < len(instr):
+        if is_whitespace(instr[current]):
+            current += 1
+        else:
+            break
+
+    while current < len(instr):
+        c = instr[current]
+        if c != terminator:
+            result += c
+            current += 1
+        else:
+            break
+    return result, current
+
+
 # Add a type to the end of the current type chain
 def chain_type(current_type, new_type):
     if current_type is not None:
@@ -180,10 +202,8 @@ def get_type_description(type_str):
             elif c == '[':
                 # Array bounds
                 right_parse_point += 1
-                (array_bound, right_parse_point) = extract_word(type_str, right_parse_point)
-                if type_str[right_parse_point] != ']':
-                    raise Exception("Parse error expected end of array bounds but found " + type_str[right_parse_point])
-                right_parse_point += 1
+                (array_bound, right_parse_point) = extract_until_char(type_str, right_parse_point, ']')
+                right_parse_point += 1  # Skip ]
 
                 if len(array_bound) > 0:
                     # print("Array with bound " + array_bound)
@@ -235,7 +255,7 @@ def get_type_description(type_str):
                 right_parse_point += 1
                 break
             else:
-                raise Exception("Parse error - unexpected " + c)
+                raise Exception("Parse error - unexpected " + c + " in '" + type_str + "'")
 
         # Storage classes don't propagate through brackets, so reset them here
         buffered_storage_classes = []
@@ -273,7 +293,7 @@ def get_type_description(type_str):
                 left_parse_point -= 1
                 break
             else:
-                raise Exception("Parse error - unexpected " + c)
+                raise Exception("Parse error - unexpected " + c + " in '" + type_str + "'")
 
     # If we had any "unused" storage class modifiers at the end, they apply to the underlying type
 
