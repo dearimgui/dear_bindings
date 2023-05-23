@@ -24,4 +24,5 @@ def apply(dom_root):
                     # This is a struct argument, so insert a pointer token
                     pointer_token = utils.create_token('*')
                     pointer_token.type = 'ASTERISK'
+                    pointer_token.nullable = False  # Because it started as a value type, it can't be null
                     type_element.tokens = [type_element.tokens[0], pointer_token]

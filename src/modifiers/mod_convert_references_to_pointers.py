@@ -23,3 +23,5 @@ def apply(dom_root):
                 tok.value = '*'
                 # Note that we adjusted this so the function stub generator knows it started as a reference
                 tok.was_reference = True
+                # Also note that it cannot be null
+                tok.nullable = False

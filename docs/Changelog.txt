@@ -15,6 +15,9 @@ it solved).
 Anonymous types now get a description correctly emitted in the JSON at the point of use like other types.
 **BREAKING CHANGE** Type declarations for arrays in the JSON now include the array bounds (in addition to having
 is_array set to True)
+Added an "is_nullable" annotation to pointers in type descriptions which indicates if the pointer is "allowed" to be
+null. If no value is present this means Dear Bindings doesn't know (and code should assume it can be null). At present
+this only affects pointers which were converted from references, as in that case we know the value should never be null.
 
 --- v0.04 WIP
 

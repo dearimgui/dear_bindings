@@ -139,17 +139,29 @@ class DOMType(code_dom.element.DOMElement):
             elif self.unmodified_element is not None:
                 return self.unmodified_element.to_c_string(context)
 
+        tokens_to_emit = self.tokens
+
+        if context.mark_non_nullable_pointers:
+            # Change any non-nullable pointers to ^s
+            fudged_tokens = []
+            for tok in tokens_to_emit:
+                new_tok = copy.deepcopy(tok)
+                if (new_tok.value == '*') and (hasattr(new_tok, 'nullable')) and (not new_tok.nullable):
+                    new_tok.value = "^"
+                fudged_tokens.append(new_tok)
+            tokens_to_emit = fudged_tokens
+
         if context.include_leading_colons:
             # Add leading colons to anything that looks like a user type
             fudged_tokens = []
-            for tok in self.tokens:
+            for tok in tokens_to_emit:
                 new_tok = copy.deepcopy(tok)
                 if new_tok.type == 'THING':
                     new_tok.value = "::" + new_tok.value
                 fudged_tokens.append(new_tok)
-            return collapse_tokens_to_string(fudged_tokens)
-        else:
-            return collapse_tokens_to_string(self.tokens)
+            tokens_to_emit = fudged_tokens
+
+        return collapse_tokens_to_string(tokens_to_emit)
 
     def __str__(self):
         result = "Type: " + collapse_tokens_to_string(self.tokens)
