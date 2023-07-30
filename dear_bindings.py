@@ -59,7 +59,7 @@ def insert_header_templates(dest_file, template_dir, src_file_name, dest_file_ex
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
 # containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvaluearguments):
+def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvaluearguments, is_backend):
     print("Parsing " + src_file)
 
     with open(src_file, "r") as f:
@@ -97,11 +97,20 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
     # Apply modifiers
 
     # Add headers we need and remove those we don't
-    mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
-    mod_remove_includes.apply(dom_root, ["<float.h>",
-                                         "<stdarg.h>",
-                                         "<stddef.h>",
-                                         "<string.h>"])
+    if not is_backend:
+        mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
+        mod_remove_includes.apply(dom_root, ["<float.h>",
+                                             "<stdarg.h>",
+                                             "<stddef.h>",
+                                             "<string.h>"])
+
+    if is_backend:
+        # Backends need to reference cimgui.h, not imgui.h
+        mod_change_includes.apply(dom_root, {"\"imgui.h\"": "\"cimgui.h\""})
+
+        # Backends need a forward-declaration for ImDrawData so that the code generator understands
+        # that it is an ImGui type and needs conversion
+        mod_add_forward_declarations.apply(dom_root, ["struct ImDrawData;"])
 
     mod_attach_preceding_comments.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
@@ -137,31 +146,32 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
 
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
-    # Add helper functions to create/destroy ImVectors
-    # Implementation code for these can be found in templates/imgui-header.cpp
-    mod_add_manual_helper_functions.apply(dom_root,
-                                          [
-                                              "void ImVector_Construct(void* vector); // Construct a "
-                                              "zero-size ImVector<> (of any type). This is primarily "
-                                              "useful when calling "
-                                              "ImFontGlyphRangesBuilder_BuildRanges()",
+    if not is_backend:
+        # Add helper functions to create/destroy ImVectors
+        # Implementation code for these can be found in templates/imgui-header.cpp
+        mod_add_manual_helper_functions.apply(dom_root,
+                                              [
+                                                  "void ImVector_Construct(void* vector); // Construct a "
+                                                  "zero-size ImVector<> (of any type). This is primarily "
+                                                  "useful when calling "
+                                                  "ImFontGlyphRangesBuilder_BuildRanges()",
 
-                                              "void ImVector_Destruct(void* vector); // Destruct an "
-                                              "ImVector<> (of any type). Important: Frees the vector "
-                                              "memory but does not call destructors on contained objects "
-                                              "(if they have them)",
-                                          ])
-    # ImStr conversion helper, only enabled if IMGUI_HAS_IMSTR is on
-    mod_add_manual_helper_functions.apply(dom_root,
-                                          [
-                                              "ImStr ImStr_FromCharStr(const char* b); // Build an ImStr "
-                                              "from a regular const char* (no data is copied, so you need to make "
-                                              "sure the original char* isn't altered as long as you are using the "
-                                              "ImStr)."
-                                          ],
-                                          # This weirdness is because we want this to compile cleanly even if
-                                          # IMGUI_HAS_IMSTR wasn't defined
-                                          ["defined(IMGUI_HAS_IMSTR)", "IMGUI_HAS_IMSTR"])
+                                                  "void ImVector_Destruct(void* vector); // Destruct an "
+                                                  "ImVector<> (of any type). Important: Frees the vector "
+                                                  "memory but does not call destructors on contained objects "
+                                                  "(if they have them)",
+                                              ])
+        # ImStr conversion helper, only enabled if IMGUI_HAS_IMSTR is on
+        mod_add_manual_helper_functions.apply(dom_root,
+                                              [
+                                                  "ImStr ImStr_FromCharStr(const char* b); // Build an ImStr "
+                                                  "from a regular const char* (no data is copied, so you need to make "
+                                                  "sure the original char* isn't altered as long as you are using the "
+                                                  "ImStr)."
+                                              ],
+                                              # This weirdness is because we want this to compile cleanly even if
+                                              # IMGUI_HAS_IMSTR wasn't defined
+                                              ["defined(IMGUI_HAS_IMSTR)", "IMGUI_HAS_IMSTR"])
 
     # Add a note to ImFontGlyphRangesBuilder_BuildRanges() pointing people at the helpers
     mod_add_function_comment.apply(dom_root,
@@ -440,6 +450,9 @@ if __name__ == '__main__':
     parser.add_argument('--nopassingstructsbyvalue',
                         action='store_true',
                         help='Convert any by-value struct arguments to pointers (for other language bindings)')
+    parser.add_argument('--backend',
+                        action='store_true',
+                        help='Indicates that the header being processed is a backend header (experimental)')
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -449,7 +462,7 @@ if __name__ == '__main__':
 
     # Perform conversion
     try:
-        convert_header(args.src, args.output, args.templatedir, args.nopassingstructsbyvalue)
+        convert_header(args.src, args.output, args.templatedir, args.nopassingstructsbyvalue, args.backend)
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
         traceback.print_exc()

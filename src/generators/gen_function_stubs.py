@@ -156,7 +156,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         if self_class_type is not None and not function.is_constructor:
             has_self = True
             # The function's own is_const will be false as it has been transformed into a non-const stub, but the
-            # self argument will be const in that case it was originally const
+            # self argument will be const in the case it was originally const
             is_const_function = function.arguments[0].arg_type.tokens[0].value == 'const'
 
         # Check if varargs is involved

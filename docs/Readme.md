@@ -1,63 +1,21 @@
 Dear Bindings
 -------------
 
-Experimental type comprehension branch
+Experimental backend conversion branch
 --------------------------------------
 
-This is an experimental branch that adds two features:
+This is an experimental branch that adds the ability to convert backend headers.
+It is based on the type comprehension branch and thus contains all features from that as well.
 
-1) Specifying `--nopassingstructsbyvalue` as a parameter causes all instances where structs are passed as parameters to be changed to pass a pointer instead (for binding to languages where C's struct-by-value rules are problematic).
+To convert a backend header, use `--backend` on the command line - for example:
 
-2) JSON metadata now has an extra `description` field for types, which contains a hierarchical breakdown of the type, looking something like this in the case of `void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd)`:
-
-```json
-"description": {
-    "type": "Type",
-    "name": "ImDrawCallback",
-    "inner_type": {
-        "type": "Pointer",
-        "inner_type": {
-            "type": "Function",
-            "return_type": {
-                "type": "Builtin",
-                "builtin_type": "void"
-            },
-            "parameters": [
-                {
-                    "type": "Type",
-                    "name": "parent_list",
-                    "inner_type": {
-                        "type": "Pointer",
-                        "inner_type": {
-                            "type": "User",
-                            "name": "ImDrawList",
-                            "storage_classes": [
-                                "const"
-                            ]
-                        }
-                    }
-                },
-                {
-                    "type": "Type",
-                    "name": "cmd",
-                    "inner_type": {
-                        "type": "Pointer",
-                        "inner_type": {
-                            "type": "User",
-                            "name": "ImDrawCmd",
-                            "storage_classes": [
-                                "const"
-                            ]
-                        }
-                    }
-                }
-            ]
-        }
-    }
-}
+```commandline
+python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
 ```
 
-This is fairly untested but it seems to work.
+This has had _very_ minimal testing as yet (basically, all backends except OSX/Metal convert cleanly, and the SDL and OpenGL3 backends seem to compile - that's about all I can say), but the results look reasonable.
+
+I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one). 
 
 Original readme
 ---------------

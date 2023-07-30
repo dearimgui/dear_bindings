@@ -26,6 +26,7 @@ from . import mod_rename_functions
 from . import mod_forward_declare_structs
 from . import mod_mark_by_value_structs
 from . import mod_add_includes
+from . import mod_change_includes
 from . import mod_remove_includes
 from . import mod_remove_heap_constructors_and_destructors
 from . import mod_generate_default_argument_functions
@@ -41,3 +42,4 @@ from . import mod_exclude_defines_from_metadata
 from . import mod_wrap_with_extern_c
 from . import mod_remove_constexpr
 from . import mod_assign_anonymous_type_names
+from . import mod_add_forward_declarations

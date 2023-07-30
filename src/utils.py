@@ -22,6 +22,13 @@ def create_type(text):
     return code_dom.DOMType.parse(context, stream, allow_function_pointer=True)
 
 
+# Create a class/struct/union from a string
+def create_classstructunion(text):
+    stream = c_lexer.tokenize(text)
+    context = code_dom.ParseContext()
+    return code_dom.DOMClassStructUnion.parse(context, stream)
+
+
 # Create a set of tokens for a type from a string
 def create_tokens_for_type(text):
     return create_type(text).tokens
