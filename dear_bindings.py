@@ -100,8 +100,6 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
     if not is_backend:
         mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
         mod_remove_includes.apply(dom_root, ["<float.h>",
-                                             "<stdarg.h>",
-                                             "<stddef.h>",
                                              "<string.h>"])
 
     if is_backend:

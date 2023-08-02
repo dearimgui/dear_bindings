@@ -2,7 +2,6 @@
 #include "imgui_internal.h"
 
 #include <stdio.h>
-#include <stdarg.h>
 
 // Wrap this in a namespace to keep it separate from the C++ API
 namespace cimgui

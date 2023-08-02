@@ -5,7 +5,6 @@
 #define CIMGUI_API extern "C"
 
 #include <stdio.h>
-#include <stdarg.h>
 
 // Wrap this in a namespace to keep it separate from the C++ API
 namespace cimgui

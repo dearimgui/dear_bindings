@@ -44,7 +44,7 @@ class DOMExternC(code_dom.element.DOMElement):
                 break
 
             if not has_braces:
-                break  # Only parse one element if there we no braces
+                break  # Only parse one element if there were no braces
 
         if not has_braces:
             stream.get_token_of_type(['SEMICOLON'])  # Eat the trailing semicolon
@@ -57,7 +57,15 @@ class DOMExternC(code_dom.element.DOMElement):
         if self.is_cpp_guarded:
             write_c_line(file, indent, '#ifdef __cplusplus')
         write_c_line(file, indent, self.add_attached_comment_to_line('extern "C"'))
-        if len(self.children) == 1:
+
+        # We only emit a single-line extern if this is a typedef/structure definition or function
+        # This is important because it avoids an awkward bug where if an extern wraps something like a
+        # preprocessor directive it thinks it is single-line but actually from the compiler's perspective isn't
+        # (since single-line is purely here for aesthetic reasons, we take the conservative route and only allow
+        # it for cases that are clearly safe).
+        if (len(self.children) == 1) and (isinstance(self.children[0], code_dom.DOMTypedef) or
+                                          isinstance(self.children[0], code_dom.DOMClassStructUnion) or
+                                          isinstance(self.children[0], code_dom.DOMFunctionDeclaration)):
             # Single-line(-ish) version
             if self.is_cpp_guarded:
                 write_c_line(file, indent, '#endif')

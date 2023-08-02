@@ -1,12 +1,16 @@
 
 --- Backends branch
 
-Added experimental support for converting backends
+Added experimental support for converting backends.
+Added stdarg.h include (for va_list), and stddef.h (for size_t) back into the header.
+Added templates for SDL2/3 backends and removed the old SDL ones.
+Fixed a bug affecting backend generation where if an extern "C" block was immediately followed by a preprocessor
+directive, it incorrectly omitted the brackets from the extern thinking that it was a single statement.
 
 --- Experimental type comprehension branch
 
-Added type comprehension system
-Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
+Added type comprehension system.
+Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers.
 **BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
 "struct"/"class"/"union") to "kind" to avoid confusion with the actual type.
 **BREAKING CHANGE** Removed the "names" field from field definitions in the JSON, and instead emit one field
