@@ -54,7 +54,13 @@ def apply(dom_root):
                 self_arg = code_dom.DOMFunctionArgument()
                 self_arg.arg_type = code_dom.DOMType()
                 self_arg.arg_type.parent = self_arg
-                self_arg.arg_type.tokens = [utils.create_token(struct.name), utils.create_token("*")]
+
+                # Create a non-nullable pointer token for self
+                pointer_token = utils.create_token('*')
+                pointer_token.type = 'ASTERISK'
+                pointer_token.nullable = False
+
+                self_arg.arg_type.tokens = [utils.create_token(struct.name), pointer_token]
 
                 # Make self const if the original function was const
                 if function.is_const:
@@ -62,6 +68,7 @@ def apply(dom_root):
 
                 self_arg.name = "self"
                 self_arg.parent = function
+                self_arg.is_instance_pointer = True
                 function.arguments.insert(0, self_arg)
 
             # Remove const-ness as that has no meaning when the function is moved outside

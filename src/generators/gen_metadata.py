@@ -230,7 +230,11 @@ def emit_enum_element(enum):
 
     result["name"] = enum.name
     if enum.value_tokens is not None:
-        result["value"] = code_dom.common.collapse_tokens_to_string(enum.value_tokens)
+        result["value_expression"] = enum.get_value_expression_as_string()
+    if enum.value is not None:
+        result["value"] = enum.value
+    if enum.is_count:
+        result["is_count"] = True
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
@@ -376,6 +380,8 @@ def emit_function_argument(argument):
         result["array_bounds"] = str(argument.array_bounds)
     if argument.default_value_tokens is not None:
         result["default_value"] = code_dom.common.collapse_tokens_to_string(argument.default_value_tokens)
+    if argument.is_instance_pointer:
+        result["is_instance_pointer"] = True
 
     return result
 
@@ -414,6 +420,10 @@ def emit_function(function):
     #                                                         have had a helper generated that accepts const char*
     #                                                         instead. If you are writing bindings that use const char*
     #                                                         instead of ImStr then you probably want to ignore these.
+
+    # Note the original name of the class this came from
+    if function.original_class is not None:
+        result["original_class"] = function.original_class.name
 
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)

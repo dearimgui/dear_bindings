@@ -43,3 +43,5 @@ from . import mod_wrap_with_extern_c
 from . import mod_remove_constexpr
 from . import mod_assign_anonymous_type_names
 from . import mod_add_forward_declarations
+from . import mod_calculate_enum_values
+from . import mod_mark_special_enum_values

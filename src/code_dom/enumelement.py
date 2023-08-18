@@ -9,6 +9,8 @@ class DOMEnumElement(code_dom.element.DOMElement):
         self.name = None
         self.value_tokens = None
         self.value_alignment = 0  # Column to align values to (for aesthetic purposes)
+        self.value = None  # Evaluated actual value (if known)
+        self.is_count = False  # Is this a "count" value? (some languages may want to hide these)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -60,6 +62,14 @@ class DOMEnumElement(code_dom.element.DOMElement):
             return self.parent.get_fully_qualified_name(self.name, include_leading_colons)
         else:
             return self.name
+
+    # Get the value (in expression form) as a string
+    # Returns an empty string if no value expression was present
+    def get_value_expression_as_string(self):
+        if self.value_tokens is None:
+            return ""
+        else:
+            return collapse_tokens_to_string(self.value_tokens)
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):

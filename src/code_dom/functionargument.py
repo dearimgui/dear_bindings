@@ -14,6 +14,7 @@ class DOMFunctionArgument(code_dom.element.DOMElement):
         self.array_bounds = None
         self.is_implicit_default = False  # Set if this argument should not be exposed, but always treated as default
         #                                   (see mod_generate_default_argument_functions)
+        self.is_instance_pointer = False  # Set if this is the instance pointer argument (i.e. "this"/"self")
 
     # Parse tokens from the token stream given
     @staticmethod
