@@ -251,6 +251,8 @@ def emit_enum(enum):
     result["original_fully_qualified_name"] = enum.get_original_fully_qualified_name()
     if enum.storage_type is not None:
         result["storage_type"] = emit_type(enum.storage_type)
+    if enum.is_flags_enum:
+        result["is_flags_enum"] = True
 
     elements_root = []
     result["elements"] = elements_root

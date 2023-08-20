@@ -45,3 +45,4 @@ from . import mod_assign_anonymous_type_names
 from . import mod_add_forward_declarations
 from . import mod_calculate_enum_values
 from . import mod_mark_special_enum_values
+from . import mod_mark_flags_enums

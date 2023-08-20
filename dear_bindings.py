@@ -200,7 +200,10 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
     mod_generate_imstr_helpers.apply(dom_root)
     mod_remove_enum_forward_declarations.apply(dom_root)
     mod_calculate_enum_values.apply(dom_root)
+    # Treat enum values ending with _ as internal, and _COUNT as being count values
     mod_mark_special_enum_values.apply(dom_root, internal_suffixes=["_"], count_suffixes=["_COUNT"])
+    # Mark enums that end with Flags (or Flags_ for the internal ones) as being flag enums
+    mod_mark_flags_enums.apply(dom_root, ["Flags", "Flags_"])
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types

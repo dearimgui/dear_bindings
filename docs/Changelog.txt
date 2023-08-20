@@ -16,6 +16,8 @@ previously in "value"). The "value" field is calculated for all enum values, eve
 implicit "last element +1" case).
 Enum values ending with an underscore ("_") are now flagged with "is_internal" in the JSON output.
 Enum values that represent total item counts (ending with "_COUNT") are now flagged with "is_count" in the JSON output.
+Added "is_flags_enum" to the JSON output, which indicates if an enum should be treated as a bitfield rather than a
+series of ordinal values.
 
 --- Experimental type comprehension branch
 

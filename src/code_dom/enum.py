@@ -12,6 +12,7 @@ class DOMEnum(code_dom.element.DOMElement):
         self.emit_as_anonymous_for_c = False  # If this is true, then the enum will be emitted as anonymous in C
         #                                       (used for forward declared enums that have been converted to typedefs)
         self.storage_type = None  # The storage type (int/byte/etc) of the enum, if specified
+        self.is_flags_enum = False  # Is this a flags (i.e. bitfield) type enum?
 
     # Parse tokens from the token stream given
     @staticmethod
