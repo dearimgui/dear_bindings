@@ -150,6 +150,23 @@ class DOMElement:
         for child in self.children:
             child.dump(indent + 1)
 
+    # Get the original filename of this element
+    def get_source_filename(self):
+        # By default we walk up the tree until we find an element that knows the filename
+        if self.parent is not None:
+            return self.parent.get_source_filename()
+        else:
+            return None
+
+    # Gets the original source line number for this element, or None if it is not known (generally
+    # synthetic elements will have no line number)
+    def get_source_line(self):
+        # Look for the first token with a value line number
+        for token in self.tokens:
+            if hasattr(token, 'lineno'):
+                return token.lineno
+        return None
+
     # Gets the fully-qualified name (C++-style) of this element (including namespaces/etc)
     # If include_leading_colons is true then the name will be returned in a genuinely "fully-qualified" fashion -
     # i.e. "::MyClass::Something"

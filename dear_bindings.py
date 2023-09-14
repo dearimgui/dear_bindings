@@ -79,11 +79,11 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
 
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
-    dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream))
+    dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream, os.path.split(src_file)[1]))
 
-    # Assign a filename based on the output file
-    _, dom_root.filename = os.path.split(dest_file_no_ext)
-    dom_root.filename += ".h"  # Presume the primary output file is the .h
+    # Assign a destination filename based on the output file
+    _, dom_root.dest_filename = os.path.split(dest_file_no_ext)
+    dom_root.dest_filename += ".h"  # Presume the primary output file is the .h
 
     dom_root.validate_hierarchy()
     #  dom_root.dump()

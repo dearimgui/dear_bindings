@@ -39,6 +39,10 @@ Added an "is_nullable" annotation to pointers in type descriptions which indicat
 null. If no value is present this means Dear Bindings doesn't know (and code should assume it can be null). At present
 this only affects pointers which were converted from references, as in that case we know the value should never be null.
 
+--- source_information test
+
+Added source information giving the original file and line number of each element to the JSON output
+
 --- v0.04 WIP
 
 Put quotes back on string define values in the metadata
