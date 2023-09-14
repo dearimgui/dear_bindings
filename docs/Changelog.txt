@@ -1,4 +1,8 @@
 
+--- source_information test
+
+Added source information giving the original file and line number of each element to the JSON output
+
 --- v0.04 WIP
 
 Put quotes back on string define values in the metadata

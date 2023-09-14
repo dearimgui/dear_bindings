@@ -26,6 +26,8 @@ class DOMEnumElement(code_dom.element.DOMElement):
             stream.rewind(checkpoint)
             return None
 
+        dom_element.tokens.append(name_tok)
+
         dom_element.name = name_tok.value
 
         if stream.get_token_of_type(['EQUAL']) is not None:

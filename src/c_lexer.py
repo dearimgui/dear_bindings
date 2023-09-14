@@ -90,7 +90,6 @@ tokens = [
 literals = ['!', '/', '\\', '~', '+', '-', '^', '=', '%', '|', '.', '<', '>', '(', ')', '[', ']', '{', '}', '?']
 
 t_ANY_LINE_COMMENT = r'\/\/.*'  # // Comment
-t_ANY_BLOCK_COMMENT = r'/\*([\s\S]*?)\*/'  # /* Comment */
 t_ANY_STRING_LITERAL = r'".*?"'  # Any string literal
 t_ANY_CHARACTER_LITERAL = r'\'\\?.\''  # Any single-character literal
 t_ANY_DECIMAL_LITERAL = r'[+-]?[0-9][0-9]*[Uu]?[Ll]?[Ll]?'  # A non-prefixed decimal number, with an optional suffix
@@ -122,6 +121,12 @@ t_KEYWORD = r'\b(alignas|alignof|asm|auto|break|case|catch|char|constexpr|'\
             r'switch|template|this|thread_local|throw|try|typedef|typeid|typename|union|using|virtual|void|'\
             r'volatile|wchar_t|while)\b'
 
+# Block comment /* Comment */ (function to allow fixing line numbers)
+def t_ANY_BLOCK_COMMENT(t):
+    r'/\*([\s\S]*?)\*/'
+    # This fixes line numbering not counting newlines inside block comments
+    t.lexer.lineno += t.value.count('\n')
+    return t
 
 # Ellipses (function for priority)
 def t_ELLIPSES(t):

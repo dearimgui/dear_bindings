@@ -70,6 +70,21 @@ def add_internal_flag(element, root):
         root["is_internal"] = True
 
 
+# Add source file/line information, if known
+def add_source_file_and_line(element, root):
+    source_file = element.get_source_filename()
+    source_line = element.get_source_line()
+
+    if (source_file is not None) or (source_line is not None):
+        source_info = {}
+        root["source_location"] = source_info
+
+        if source_file is not None:
+            source_info["filename"] = source_file
+        if source_line is not None:
+            source_info["line"] = source_line
+
+
 # Emit data for a single function pointer type
 def emit_function_pointer_type(function_ptr):
     result = {}
@@ -114,6 +129,7 @@ def emit_enum_element(enum):
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
     add_internal_flag(enum, result)
+    add_source_file_and_line(enum, result)
 
     return result
 
@@ -136,6 +152,7 @@ def emit_enum(enum):
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
     add_internal_flag(enum, result)
+    add_source_file_and_line(enum, result)
 
     return result
 
@@ -149,6 +166,7 @@ def emit_typedef(typedef):
     add_comments(typedef, result)
     add_preprocessor_conditionals(typedef, result)
     add_internal_flag(typedef, result)
+    add_source_file_and_line(typedef, result)
 
     return result
 
@@ -181,6 +199,7 @@ def emit_field(field):
     add_comments(field, result)
     add_preprocessor_conditionals(field, result)
     add_internal_flag(field, result)
+    add_source_file_and_line(field, result)
 
     return result
 
@@ -238,6 +257,7 @@ def emit_struct(struct):
     add_comments(struct, result)
     add_preprocessor_conditionals(struct, result)
     add_internal_flag(struct, result)
+    add_source_file_and_line(struct, result)
 
     return result
 
@@ -298,6 +318,7 @@ def emit_function(function):
     add_comments(function, result)
     add_preprocessor_conditionals(function, result)
     add_internal_flag(function, result)
+    add_source_file_and_line(function, result)
 
     return result
 
@@ -316,6 +337,7 @@ def emit_define(define):
     add_comments(define, result)
     add_preprocessor_conditionals(define, result)
     add_internal_flag(define, result)
+    add_source_file_and_line(define, result)
 
     return result
 

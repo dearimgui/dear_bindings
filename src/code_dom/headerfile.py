@@ -6,12 +6,14 @@ from src import code_dom
 class DOMHeaderFile(code_dom.element.DOMElement):
     def __init__(self):
         super().__init__()
-        self.filename = None  # The filename this header came from (or will be saved as)
+        self.source_filename = None  # The filename this header came from
 
     # Parse tokens from the token stream given
     @staticmethod
-    def parse(context, stream):
+    def parse(context, stream, source_filename):
         dom_element = DOMHeaderFile()
+
+        dom_element.source_filename = source_filename
 
         # Set up the default context parser
         old_content_parser = context.current_content_parser
@@ -42,8 +44,12 @@ class DOMHeaderFile(code_dom.element.DOMElement):
         for child in self.children:
             child.write_to_c(file, indent=indent, context=context)
 
+    # Get the original filename
+    def get_source_filename(self):
+        return self.source_filename
+
     def __str__(self):
-        if self.filename is not None:
-            return "Header file: " + self.filename
+        if self.source_filename is not None:
+            return "Header file: " + self.source_filename
         else:
             return "Header file"

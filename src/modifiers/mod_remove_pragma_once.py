@@ -11,7 +11,7 @@ def apply(dom_root):
             pragma.parent.remove_child(pragma)
 
             # Generate a (hopefully!) suitable name for our guard define from the header filename
-            guard_name = os.path.basename(dom_root.filename).upper().replace('.', '_')
+            guard_name = os.path.basename(dom_root.dest_filename).upper().replace('.', '_')
 
             # Add #ifndef check
             ifguard = code_dom.DOMPreprocessorIf()
