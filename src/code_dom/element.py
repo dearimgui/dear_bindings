@@ -161,7 +161,7 @@ class DOMElement:
     # Gets the original source line number for this element, or None if it is not known (generally
     # synthetic elements will have no line number)
     def get_source_line(self):
-        # Look for the first token with a value line number
+        # Look for the first token with a line number
         for token in self.tokens:
             if hasattr(token, 'lineno'):
                 return token.lineno
