@@ -1,49 +1,43 @@
 
---- Backends branch
+--- v0.05
 
-Added experimental support for converting backends.
-Added stdarg.h include (for va_list), and stddef.h (for size_t) back into the header.
-Added templates for SDL2/3 backends and removed the old SDL ones.
-Fixed a bug affecting backend generation where if an extern "C" block was immediately followed by a preprocessor
-directive, it incorrectly omitted the brackets from the extern thinking that it was a single statement.
-Flagged self arguments as non-nullable.
-Added "original_class" member to JSON output for functions to indicate which class the function originally belonged to.
-Added "is_instance_pointer" to JSON output for function arguments to indicate that the argument is the class instance
-pointer (this/self).
-**POSSIBLY BREAKING CHANGE** In the JSON output, the "value" field of enum values is now the calculated (integer) value
-of the enum value, whilst "value_expression" contains the raw expression provided in the header file (which was
-previously in "value"). The "value" field is calculated for all enum values, even those with no expression (i.e. the
-implicit "last element +1" case).
-Enum values ending with an underscore ("_") are now flagged with "is_internal" in the JSON output.
-Enum values that represent total item counts (ending with "_COUNT") are now flagged with "is_count" in the JSON output.
-Added "is_flags_enum" to the JSON output, which indicates if an enum should be treated as a bitfield rather than a
-series of ordinal values.
+* Added source information giving the original file and line number of each element to the JSON output (#39)
+* Added type comprehension system, which generates a breakdown of type information in the JSON output
+* Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers
+* **BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
+  "struct"/"class"/"union") to "kind" to avoid confusion with the actual type
+* **BREAKING CHANGE** Removed the "names" field from field definitions in the JSON, and instead emit one field
+  for each distinct name defined in the original source (so "float x,y" is no longer represented in the JSON as a single
+  field with two names, but two separate fields). This simplifies the JSON by removing the concept of fields with
+  multiple names and makes field and argument definitions more consistent.
+* Renamed anonymous structures in the JSON from "<AnonymousN>" to "__anonymous_typeN" so as to avoid generating names
+  that are not valid identifiers (which was the original goal, but in practice that seemed to cause more problems than
+  it solved).
+* Anonymous types now get a description correctly emitted in the JSON at the point of use like other types.
+* **BREAKING CHANGE** Type declarations for arrays in the JSON now include the array bounds (in addition to having
+  is_array set to True)
+* Added an "is_nullable" annotation to pointers in type descriptions which indicates if the pointer is "allowed" to be
+  null. If no value is present this means Dear Bindings doesn't know (and code should assume it can be null). At present
+  this only affects pointers which were converted from references, as in that case we know the value should never be null.
+* Added experimental support for converting backends.
+* Added stdarg.h include (for va_list), and stddef.h (for size_t) back into the header.
+* Added templates for SDL2/3 backends and removed the old SDL ones.
+* Fixed a bug affecting backend generation where if an extern "C" block was immediately followed by a preprocessor
+  directive, it incorrectly omitted the brackets from the extern thinking that it was a single statement.
+* Flagged self arguments as non-nullable.
+* Added "original_class" member to JSON output for functions to indicate which class the function originally belonged to.
+* Added "is_instance_pointer" to JSON output for function arguments to indicate that the argument is the class instance
+  pointer (this/self).
+* **POSSIBLY BREAKING CHANGE** In the JSON output, the "value" field of enum values is now the calculated (integer) value
+  of the enum value, whilst "value_expression" contains the raw expression provided in the header file (which was
+  previously in "value"). The "value" field is calculated for all enum values, even those with no expression (i.e. the
+  implicit "last element +1" case).
+* Enum values ending with an underscore ("_") are now flagged with "is_internal" in the JSON output.
+* Enum values that represent total item counts (ending with "_COUNT") are now flagged with "is_count" in the JSON output.
+* Added "is_flags_enum" to the JSON output, which indicates if an enum should be treated as a bitfield rather than a
+  series of ordinal values.
 
---- Experimental type comprehension branch
-
-Added type comprehension system.
-Added --nopassingstructsbyvalue flag to force struct parameters to be passed as pointers.
-**BREAKING CHANGE** Renamed the "type" field of classes/structs/unions in the JSON output (the one that contained
-"struct"/"class"/"union") to "kind" to avoid confusion with the actual type.
-**BREAKING CHANGE** Removed the "names" field from field definitions in the JSON, and instead emit one field
-for each distinct name defined in the original source (so "float x,y" is no longer represented in the JSON as a single
-field with two names, but two separate fields). This simplifies the JSON by removing the concept of fields with
-multiple names and makes field and argument definitions more consistent.
-Renamed anonymous structures in the JSON from "<AnonymousN>" to "__anonymous_typeN" so as to avoid generating names
-that are not valid identifiers (which was the original goal, but in practice that seemed to cause more problems than
-it solved).
-Anonymous types now get a description correctly emitted in the JSON at the point of use like other types.
-**BREAKING CHANGE** Type declarations for arrays in the JSON now include the array bounds (in addition to having
-is_array set to True)
-Added an "is_nullable" annotation to pointers in type descriptions which indicates if the pointer is "allowed" to be
-null. If no value is present this means Dear Bindings doesn't know (and code should assume it can be null). At present
-this only affects pointers which were converted from references, as in that case we know the value should never be null.
-
---- source_information test
-
-Added source information giving the original file and line number of each element to the JSON output
-
---- v0.04 WIP
+--- v0.04
 
 Put quotes back on string define values in the metadata
 Fixed incorrect codegen for synthetic #define elements

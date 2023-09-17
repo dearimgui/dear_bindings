@@ -322,10 +322,10 @@ def emit_field(container, field):
         # Emit the type
         field_data["type"] = emit_type(field.field_type, declaration_suffix)
 
-	    add_comments(field, result)
-	    add_preprocessor_conditionals(field, result)
-	    add_internal_flag(field, result)
-	    add_source_file_and_line(field, result)
+        add_comments(field, field_data)
+        add_preprocessor_conditionals(field, field_data)
+        add_internal_flag(field, field_data)
+        add_source_file_and_line(field, field_data)
 
         container.append(field_data)
 

@@ -1,25 +1,6 @@
 Dear Bindings
 -------------
 
-Experimental backend conversion branch
---------------------------------------
-
-This is an experimental branch that adds the ability to convert backend headers.
-It is based on the type comprehension branch and thus contains all features from that as well.
-
-To convert a backend header, use `--backend` on the command line - for example:
-
-```commandline
-python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
-```
-
-This has had _very_ minimal testing as yet (basically, all backends except OSX/Metal convert cleanly, and the SDL and OpenGL3 backends seem to compile - that's about all I can say), but the results look reasonable.
-
-I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one). 
-
-Original readme
----------------
-
 Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top. 
 
 At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users. 
@@ -36,6 +17,14 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 * Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
 * [ply](https://www.dabeaz.com/ply/) (Python Lex-Yacc, v3.11 tested)
+
+# Recent changes
+
+* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends 
+  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details  
+* v0.04 introduced a number of bugfixes and other tweaks
+
+You can see a full list of recent changes [here](Changelog.txt).
 
 # Differences with cimgui
 
@@ -62,21 +51,31 @@ Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a pr
 Other command line arguments:
 
 ```
-Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.
-usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR] src
+usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR]
+                        [--nopassingstructsbyvalue] [--backend]
+                        src
 
 positional arguments:
-  src                   Path to source header file to process (generally imgui.h)
+  src                   Path to source header file to process (generally
+                        imgui.h)
 
-optional arguments:
-  -h/--help             Show this help message and exit
-  -o/--output OUTPUT
-                        Path to output files (generally cimgui). This should have no extension, as <output>.h,
-                        <output>.cpp and <output>.json will be written.
-  -t/--templatedir TEMPLATEDIR
-                        Path to the implementation template directory (default: ./src/templates)
+options:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Path to output files (generally cimgui). This should
+                        have no extension, as <output>.h, <output>.cpp and
+                        <output>.json will be written.
+  -t TEMPLATEDIR, --templatedir TEMPLATEDIR
+                        Path to the implementation template directory
+                        (default: ./src/templates)
+  --nopassingstructsbyvalue
+                        Convert any by-value struct arguments to pointers (for
+                        other language bindings)
+  --backend             Indicates that the header being processed is a backend
+                        header (experimental)
 
-Result code 0 is returned on success, 1 on conversion failure and 2 on parameter errors.
+Result code 0 is returned on success, 1 on conversion failure and 2 on
+parameter errors
 ```
 
 # Generated metadata
@@ -174,10 +173,23 @@ These minor features are removed, mostly because they either rely on C++ languag
 ImGuiOnceUponAFrame, ImNewDummy, ImNewWrapper, ImGui::Value
 ```
 
+### Converting backends (experimental)
+
+An experimental feature has been added to generate binding for the various backends.
+To convert a backend header, use `--backend` on the command line - for example:
+
+```commandline
+python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
+```
+
+This has had _very_ minimal testing as yet (basically, all backends except OSX/Metal convert cleanly, and the SDL and OpenGL3 backends seem to compile), but the results look reasonable. Feedback on how well this works would be most appreciated.
+
+I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one). 
+
 License
 -------
 
-Dear Bindings is copyright (c) 2021-2022 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2023 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
 
 Contact
 -------
