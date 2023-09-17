@@ -1,4 +1,11 @@
 
+--- v0.06
+
+* In ImGui v1.90.0 WIP the callback variants of "ListBox()" and "ComboBox()" have a new function pointer type, but the
+  old type is still available as an overload. Disambiguating based solely on function pointer type is problematic, so
+  instead Dear Bindings renames the "old" versions of those two functions as "ImGui_ListBoxObsolete()" and
+  "ImGui_ComboBoxObsolete()" respectively.
+
 --- v0.05
 
 * Added source information giving the original file and line number of each element to the JSON output (#39)

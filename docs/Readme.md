@@ -20,6 +20,7 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 # Recent changes
 
+* v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively. 
 * v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends 
   * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details  
 * v0.04 introduced a number of bugfixes and other tweaks

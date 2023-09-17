@@ -23,6 +23,7 @@ from . import mod_remove_empty_conditionals
 from . import mod_make_all_functions_use_imgui_api
 from . import mod_rename_defines
 from . import mod_rename_functions
+from . import mod_rename_function_by_signature
 from . import mod_forward_declare_structs
 from . import mod_mark_by_value_structs
 from . import mod_add_includes

@@ -204,6 +204,21 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
     mod_mark_special_enum_values.apply(dom_root, internal_suffixes=["_"], count_suffixes=["_COUNT"])
     # Mark enums that end with Flags (or Flags_ for the internal ones) as being flag enums
     mod_mark_flags_enums.apply(dom_root, ["Flags", "Flags_"])
+
+    # These two are special cases because there are now (deprecated) overloads that differ from the main functions
+    # only in the type of the callback function. The normal disambiguation system can't handle that, so instead we
+    # manually rename the older versions of those functions here.
+    mod_rename_function_by_signature.apply(dom_root,
+        'ImGui_Combo',  # Function name
+        'old_callback',  # Argument to look for to identify this function
+        'ImGui_ComboObsolete'  # New name
+    )
+    mod_rename_function_by_signature.apply(dom_root,
+        'ImGui_ListBox',  # Function name
+        'old_callback',  # Argument to look for to identify this function
+        'ImGui_ListBoxObsolete'  # New name
+    )
+
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types
