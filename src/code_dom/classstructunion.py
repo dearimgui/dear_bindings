@@ -21,6 +21,10 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         tok = stream.get_token_of_type(['STRUCT', 'CLASS', 'UNION'])
         dom_element.structure_type = tok.type
 
+        # We don't really use the token list in this element, but line number detection reads it so add just the
+        # initial token so it has somewhere to get information from
+        dom_element.tokens.append(tok)
+
         name_tok = stream.get_token_of_type(['THING'])
         if name_tok is not None:
             dom_element.name = name_tok.value

@@ -2,6 +2,7 @@
 --- v0.07 WIP
 
 * Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
+* Fixed structs not having associated line numbers in the JSON output (#39)
 
 --- v0.06
 
