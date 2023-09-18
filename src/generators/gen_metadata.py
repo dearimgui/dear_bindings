@@ -394,12 +394,12 @@ def emit_function_argument(argument):
     if argument.arg_type is not None:
         declaration_suffix = ""
         if argument.is_array:
-            declaration_suffix = "[" + str(argument.array_bounds) + "]"
+            declaration_suffix = "[" + str(argument.array_bounds or "") + "]"
         result["type"] = emit_type(argument.arg_type, declaration_suffix)
     result["is_array"] = argument.is_array
     result["is_varargs"] = argument.is_varargs
     if argument.is_array:
-        result["array_bounds"] = str(argument.array_bounds)
+        result["array_bounds"] = str(argument.array_bounds or "")
     if argument.default_value_tokens is not None:
         result["default_value"] = code_dom.common.collapse_tokens_to_string(argument.default_value_tokens)
     if argument.is_instance_pointer:

@@ -1,4 +1,8 @@
 
+--- v0.07 WIP
+
+* Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
+
 --- v0.06
 
 * In ImGui v1.90.0 WIP the callback variants of "ListBox()" and "ComboBox()" have a new function pointer type, but the

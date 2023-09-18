@@ -212,6 +212,10 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
                         if isinstance(underlying_type, code_dom.DOMClassStructUnion) and underlying_type.is_by_value:
                             # This is an array of a by-value struct, so we need to convert it
                             # Emit a local array of the converted type
+
+                            if arg.array_bounds is None:
+                                raise Exception("Cannot convert an array of indeterminate size")
+
                             converted_array_name = arg.name + "_converted_array"
                             write_c_line(file, indent,
                                          underlying_type.get_original_fully_qualified_name(include_leading_colons=True)
