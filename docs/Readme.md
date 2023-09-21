@@ -187,6 +187,11 @@ This has had _very_ minimal testing as yet (basically, all backends except OSX/M
 
 I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one). 
 
+Software using Dear Bindings
+----------------------------
+
+See our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) wiki page.
+
 License
 -------
 
