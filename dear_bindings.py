@@ -123,7 +123,7 @@ def convert_header(
     # Add headers we need and remove those we don't
     if not is_backend:
         mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
-        mod_add_includes.apply(dom_root, ["<stdint.h>"])  # We need cstdint to get int32_t
+        mod_add_includes.apply(dom_root, ["<stdint.h>"])  # We need stdint.h to get int32_t
         mod_remove_includes.apply(dom_root, ["<float.h>",
                                              "<string.h>"])
 
@@ -393,7 +393,7 @@ def convert_header(
     })
 
     if generate_exploded_varargs_functions:
-        mod_add_exploded_variadic_functions.apply(dom_root, 7)
+        mod_add_exploded_variadic_functions.apply(dom_root, 7) # 7 arguments feels reasonable? Yes.
 
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,

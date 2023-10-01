@@ -4,7 +4,6 @@ from src import utils
 def apply(dom_root, varargs_count_limit):
     any_modifications_applied = False
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
-        
         has_varargs = False
 
         for arg in function.arguments:
