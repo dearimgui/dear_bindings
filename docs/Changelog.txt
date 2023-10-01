@@ -4,6 +4,10 @@
 * Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
 * Fixed structs not having associated line numbers in the JSON output (#39)
 * Added --imgui-include-dir option to allow the path to ImGui include files to be specified
+* Made imconfig.h get parsed by default to check for extra options, and added --config-include to allow custom config
+  files (of the type you would use the IMGUI_USER_CONFIG define to supply) to be included as well. This option reads
+  and uses such files but does not emit their contents to the .h file (on the assumption that they are getting included
+  there by regular means). It does however emit that information to the JSON output.
 
 --- v0.06
 
