@@ -59,7 +59,7 @@ def insert_header_templates(dest_file, template_dir, src_file_name, dest_file_ex
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
 # containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvaluearguments, is_backend):
+def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvaluearguments, is_backend, imgui_include_dir):
     print("Parsing " + src_file)
 
     with open(src_file, "r") as f:
@@ -416,7 +416,8 @@ def convert_header(src_file, dest_file_no_ext, template_dir, nostructbyvalueargu
         dest_file_name_only_no_internal = dest_file_name_only
 
     # Expansions to be used when processing templates, to insert variables as required
-    expansions = {"%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
+    expansions = {"%IMGUI_INCLUDE_DIR%": imgui_include_dir,
+                  "%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
                   "%OUTPUT_HEADER_NAME_NO_INTERNAL%": dest_file_name_only_no_internal + ".h"}
 
     with open(dest_file_no_ext + ".h", "w") as file:
@@ -471,6 +472,10 @@ if __name__ == '__main__':
     parser.add_argument('--backend',
                         action='store_true',
                         help='Indicates that the header being processed is a backend header (experimental)')
+    parser.add_argument('--imgui-include-dir',
+                        default='',
+                        help="Path to ImGui headers to use in emitted include files. Should include a trailing slash "
+                             "(eg \"Imgui/\"). (default: blank)")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -480,7 +485,8 @@ if __name__ == '__main__':
 
     # Perform conversion
     try:
-        convert_header(args.src, args.output, args.templatedir, args.nopassingstructsbyvalue, args.backend)
+        convert_header(args.src, args.output, args.templatedir, args.nopassingstructsbyvalue, args.backend,
+                       args.imgui_include_dir)
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
         traceback.print_exc()

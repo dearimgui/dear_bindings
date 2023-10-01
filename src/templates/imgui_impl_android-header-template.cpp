@@ -1,5 +1,5 @@
-#include "imgui.h"
-#include "imgui_impl_android.h"
+#include "%IMGUI_INCLUDE_DIR%imgui.h"
+#include "%IMGUI_INCLUDE_DIR%imgui_impl_android.h"
 
 #include <stdio.h>
 
