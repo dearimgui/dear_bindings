@@ -8,6 +8,8 @@
   files (of the type you would use the IMGUI_USER_CONFIG define to supply) to be included as well. This option reads
   and uses such files but does not emit their contents to the .h file (on the assumption that they are getting included
   there by regular means). It does however emit that information to the JSON output.
+* Standardised the rule that "metadata elements are omitted if not known" and removed cases where they were omitted
+  when not their default values. (#42)
 
 --- v0.06
 

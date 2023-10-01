@@ -1,7 +1,18 @@
 Dear Bindings Metadata Format
 -----------------------------
 
-The `cimgui.json` file contains JSON metadata about the generated bindings. The format looks like this:
+The `cimgui.json` file contains JSON metadata about the generated bindings.
+Note that unlike the generated `.h` and `.cpp` files, the JSON metadata contains information from any associated
+configuration files (e.g. `imconfig.h`) as well. This is because the `.h` file will include those directly,
+but a consumer of the JSON data probably wants to know about any settings made in them without the burden of parsing
+them manually.
+
+As a general rule-of-thumb, if an element described here is missing from the JSON metadata then that means it is
+either not applicable to the object in question, or the generator doesn't have enough information to derive the
+correct value (for example, `is_nullable` is omitted when a determination cannot be made about the nullability of
+the pointer in question).
+
+The JSON format looks like this:
 
 ### Top level
 

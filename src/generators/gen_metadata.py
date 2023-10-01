@@ -67,8 +67,7 @@ def add_internal_flag(element, root):
     # Note that this is more of a hint than a prohibition, and it may well be desirable for users to have access to
     # elements marked with this flag (but ideally marked in some way so they are aware that the functionality isn't
     # part of the primary API)
-    if element.is_internal:
-        root["is_internal"] = True
+    root["is_internal"] = element.is_internal
 
 
 # Add source file/line information, if known
@@ -248,8 +247,7 @@ def emit_enum_element(enum):
         result["value_expression"] = enum.get_value_expression_as_string()
     if enum.value is not None:
         result["value"] = enum.value
-    if enum.is_count:
-        result["is_count"] = True
+    result["is_count"] = enum.is_count
 
     add_comments(enum, result)
     add_preprocessor_conditionals(enum, result)
@@ -267,8 +265,7 @@ def emit_enum(enum):
     result["original_fully_qualified_name"] = enum.get_original_fully_qualified_name()
     if enum.storage_type is not None:
         result["storage_type"] = emit_type(enum.storage_type)
-    if enum.is_flags_enum:
-        result["is_flags_enum"] = True
+    result["is_flags_enum"] = True
 
     elements_root = []
     result["elements"] = elements_root
@@ -402,8 +399,7 @@ def emit_function_argument(argument):
         result["array_bounds"] = str(argument.array_bounds or "")
     if argument.default_value_tokens is not None:
         result["default_value"] = code_dom.common.collapse_tokens_to_string(argument.default_value_tokens)
-    if argument.is_instance_pointer:
-        result["is_instance_pointer"] = True
+    result["is_instance_pointer"] = argument.is_instance_pointer
 
     return result
 

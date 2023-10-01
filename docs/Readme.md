@@ -74,6 +74,14 @@ options:
                         other language bindings)
   --backend             Indicates that the header being processed is a backend
                         header (experimental)
+  --imgui-include-dir IMGUI_INCLUDE_DIR
+                        Path to ImGui headers to use in emitted include files.
+                        Should include a trailing slash (eg "Imgui/").
+                        (default: blank)
+  --config-include CONFIG_INCLUDE
+                        Path to additional .h file to read configuration
+                        defines from (i.e. the file you set IMGUI_USER_CONFIG
+                        to, if any).
 
 Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors

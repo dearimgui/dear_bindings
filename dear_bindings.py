@@ -492,8 +492,8 @@ if __name__ == '__main__':
                         help="Path to ImGui headers to use in emitted include files. Should include a trailing slash "
                              "(eg \"Imgui/\"). (default: blank)")
     parser.add_argument('--config-include',
-                        help="Path to additional .h file to read configuration defines from (i.e. the file you set"
-                             "IMGUI_USER_CONFIG to, if any.")
+                        help="Path to additional .h file to read configuration defines from (i.e. the file you set "
+                             "IMGUI_USER_CONFIG to, if any).")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
