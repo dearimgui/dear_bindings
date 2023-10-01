@@ -34,7 +34,7 @@ def apply(dom_root, functions_to_ignore=[]):
         fmt_arg.is_implicit_default = True
 
         unformatted_string_arg = code_dom.functionargument.DOMFunctionArgument()
-        unformatted_string_arg.name = "unformatted_text"
+        unformatted_string_arg.name = "text"
         unformatted_string_arg.parent = new_function
         unformatted_string_arg.arg_type = utils.create_type("const char*")
         unformatted_string_arg.arg_type.parent = unformatted_string_arg
