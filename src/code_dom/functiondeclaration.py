@@ -35,6 +35,9 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         #                                (see mod_generate_imstr_helpers for more details)
 
         self.function_name_alignment = 0  # Column to align the function name to (see mod_align_function_names)
+        self.exploded_varargs_count = 0   # Non-zero if this this an exploded varargs variant of a variadic function
+        self.is_unformatted_helper = False # Set if this is a variant of a function accepting a format string with
+        #                                  format string forced to '%s' and a single string argument
 
     # Parse tokens from the token stream given
     @staticmethod

@@ -1,3 +1,4 @@
+import itertools
 from src import code_dom
 from src import utils
 from src import conditional_generator
@@ -181,7 +182,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         if has_self:
             fudged_function_arguments = fudged_function_arguments[1:]
 
-        if len(fudged_function_arguments) != len(original_function.arguments):
+        if len(fudged_function_arguments) != len(original_function.arguments) and function.exploded_varargs_count == 0:
             raise Exception("Argument list mismatch with original function")
 
         # Write function declaration
@@ -203,7 +204,14 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         converted_arg_name_overrides = {}  # Map of arguments whose names we have changed through conversion,
         #                                    indexed by the original name
 
-        for (arg, original_arg) in zip(fudged_function_arguments, original_function.arguments):
+        arg_to_original_arg_list = list(zip(fudged_function_arguments, original_function.arguments))
+        if function.exploded_varargs_count != 0:
+            arg_to_original_arg_list = list(itertools.zip_longest(
+                fudged_function_arguments,
+                original_function.arguments,
+                fillvalue=original_function.arguments[-1]
+            ))
+        for (arg, original_arg) in arg_to_original_arg_list:
             if original_arg.is_array and not arg.is_implicit_default:
                 if len(original_arg.arg_type.tokens) >= 1:
                     type_name = original_arg.arg_type.tokens[len(original_arg.arg_type.tokens) - 1].value
@@ -301,8 +309,8 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         thunk_call += function_call_name + "("
 
         first_arg = True
-        for (arg, original_arg) in zip(fudged_function_arguments, original_function.arguments):
-            if arg.is_implicit_default:
+        for (arg, original_arg) in arg_to_original_arg_list:
+            if arg.is_implicit_default and arg.stub_call_value is None:
                 continue  # Skip implicit default arguments
 
             # Generate a set of dereference operators to convert any pointer that was originally a reference and
@@ -327,7 +335,10 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
                     # If the name got remapped due to conversion, that also means we don't need any casting
                     thunk_call += dereferences + converted_arg_name_overrides[arg.name]
                 else:
-                    thunk_call += cast_prefix + dereferences + arg.name + cast_suffix
+                    argument_call = arg.name
+                    if arg.stub_call_value is not None:
+                        argument_call = arg.stub_call_value
+                    thunk_call += cast_prefix + dereferences + argument_call + cast_suffix
             first_arg = False
 
         thunk_call += ")" + return_cast_suffix + ";"

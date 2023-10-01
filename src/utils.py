@@ -26,6 +26,7 @@ def create_type(text):
 def create_classstructunion(text):
     stream = c_lexer.tokenize(text)
     context = code_dom.ParseContext()
+    context.current_content_parser = lambda: code_dom.DOMHeaderFile.parse_content(context, stream)
     return code_dom.DOMClassStructUnion.parse(context, stream)
 
 
