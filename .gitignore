@@ -1,4 +1,5 @@
 ﻿.idea
+.vscode
 __pycache__
 TestCode
 venv
