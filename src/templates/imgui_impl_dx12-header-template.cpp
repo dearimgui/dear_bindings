@@ -1,5 +1,5 @@
-#include "imgui.h"
-#include "imgui_impl_dx12.h"
+#include "%IMGUI_INCLUDE_DIR%imgui.h"
+#include "%IMGUI_INCLUDE_DIR%imgui_impl_dx12.h"
 
 #include <stdio.h>
 

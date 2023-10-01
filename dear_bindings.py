@@ -56,19 +56,7 @@ def insert_header_templates(dest_file, template_dir, src_file_name, dest_file_ex
                            expansions)
 
 
-# Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
-# dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
-# containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(
-        src_file, 
-        dest_file_no_ext, 
-        template_dir, 
-        no_struct_by_value_arguments, 
-        no_generate_default_arg_functions, 
-        generate_exploded_varargs_functions,
-        generate_unformatted_functions,
-        is_backend
-    ):
+def parse_single_header(src_file, context):
     print("Parsing " + src_file)
 
     with open(src_file, "r") as f:
@@ -86,13 +74,40 @@ def convert_header(
             print(tok)
         return
 
+    return code_dom.DOMHeaderFile.parse(context, stream, os.path.split(src_file)[1])
+
+
+# Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
+# dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
+# containing the initial header block for the implementation (provided in the templates/ directory).
+def convert_header(
+        src_file,
+        config_include_files,
+        dest_file_no_ext,
+        template_dir,
+        no_struct_by_value_arguments,
+        no_generate_default_arg_functions,
+        generate_exploded_varargs_functions,
+        generate_unformatted_functions,
+        is_backend,
+        imgui_include_dir
+    ):
+
+    # Set up context and DOM root
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
-    dom_root.add_child(code_dom.DOMHeaderFile.parse(context, stream, os.path.split(src_file)[1]))
+
+    # Parse any configuration include files and add them to the DOM
+    for include_file in config_include_files:
+        dom_root.add_child(parse_single_header(include_file, context))
+
+    # Parse and add the main header
+    main_src_root = parse_single_header(src_file, context)
+    dom_root.add_child(main_src_root)
 
     # Assign a destination filename based on the output file
-    _, dom_root.dest_filename = os.path.split(dest_file_no_ext)
-    dom_root.dest_filename += ".h"  # Presume the primary output file is the .h
+    _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
+    main_src_root.dest_filename += ".h"  # Presume the primary output file is the .h
 
     dom_root.validate_hierarchy()
     #  dom_root.dump()
@@ -392,7 +407,7 @@ def convert_header(
     mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
 
     mod_forward_declare_structs.apply(dom_root)
-    mod_wrap_with_extern_c.apply(dom_root)
+    mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers
     # For now we leave #pragma once intact on the assumption that modern compilers all support it, but if necessary
     # it can be replaced with a traditional #include guard by uncommenting the line below. If you find yourself needing
     # this functionality in a significant way please let me know!
@@ -438,7 +453,8 @@ def convert_header(
         dest_file_name_only_no_internal = dest_file_name_only
 
     # Expansions to be used when processing templates, to insert variables as required
-    expansions = {"%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
+    expansions = {"%IMGUI_INCLUDE_DIR%": imgui_include_dir,
+                  "%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
                   "%OUTPUT_HEADER_NAME_NO_INTERNAL%": dest_file_name_only_no_internal + ".h"}
 
     with open(dest_file_no_ext + ".h", "w") as file:
@@ -446,19 +462,20 @@ def convert_header(
 
         write_context = code_dom.WriteContext()
         write_context.for_c = True
-        dom_root.write_to_c(file, context=write_context)
+        main_src_root.write_to_c(file, context=write_context)
 
     # Generate implementations
     with open(dest_file_no_ext + ".cpp", "w") as file:
         insert_header_templates(file, template_dir, src_file_name_only, ".cpp", expansions)
 
-        gen_struct_converters.generate(dom_root, file, indent=0)
+        gen_struct_converters.generate(main_src_root, file, indent=0)
 
-        gen_function_stubs.generate(dom_root, file, indent=0,
+        gen_function_stubs.generate(main_src_root, file, indent=0,
                                     custom_varargs_list_suffixes=custom_varargs_list_suffixes)
 
     # Generate metadata
     with open(dest_file_no_ext + ".json", "w") as file:
+        # We intentionally generate JSON starting from the root here so that we include defines from imconfig.h
         gen_metadata.generate(dom_root, file)
 
 
@@ -502,6 +519,13 @@ if __name__ == '__main__':
     parser.add_argument('--backend',
                         action='store_true',
                         help='Indicates that the header being processed is a backend header (experimental)')
+    parser.add_argument('--imgui-include-dir',
+                        default='',
+                        help="Path to ImGui headers to use in emitted include files. Should include a trailing slash "
+                             "(eg \"Imgui/\"). (default: blank)")
+    parser.add_argument('--config-include',
+                        help="Path to additional .h file to read configuration defines from (i.e. the file you set "
+                             "IMGUI_USER_CONFIG to, if any).")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -509,17 +533,28 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    config_include_files = []
+
+    # Add imconfig.h to the include list to get any #defines set in that
+    config_include_files.append(os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+
+    # Add any user-supplied config file as well
+    if args.config_include is not None:
+        config_include_files.append(os.path.realpath(args.config_include))
+
     # Perform conversion
     try:
         convert_header(
-            args.src, 
-            args.output, 
-            args.templatedir, 
+            os.path.realpath(args.src),
+            config_include_files,
+            args.output,
+            args.templatedir,
             args.nopassingstructsbyvalue,
-            args.nogeneratedefaultargfunctions, 
+            args.nogeneratedefaultargfunctions,
             args.generateexplodedvarargsfunctions,
             args.generateunformattedfunctions,
-            args.backend
+            args.backend,
+            args.imgui_include_dir
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         raise
