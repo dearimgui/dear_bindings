@@ -473,7 +473,11 @@ def convert_header(
         "IM_COL32_WHITE",
         "IM_COL32_BLACK",
         "IM_COL32_BLACK_TRANS",
-        "ImDrawCallback_ResetRenderState",
+        "ImDrawCallback_ResetRenderState"
+    ])
+
+    mod_remove_typedefs.apply(dom_root, [
+        "ImBitArrayForNamedKeys", # template with two parameters, not supported
     ])
 
     dom_root.validate_hierarchy()
