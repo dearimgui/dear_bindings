@@ -41,12 +41,11 @@ def apply(dom_root, varargs_count_limit):
     if any_modifications_applied:
         vararg_wrapper_type_insert_point = dom_root.children[0]  # Default to adding at the top of the file if we can't find anywhere else
 
-        # Look for the right section to add these to - if we can, we want to put them in the same place as other includes
+        # Look for the right section to add these to - if we can, we want to put them in the same place as other custom types
         for comment in dom_root.list_all_children_of_type(code_dom.DOMComment):
-            # FIXME: is there a better way and place to insert this?
-            if comment.comment_text == "// Forward declarations":
-                vararg_wrapper_type_insert_point = comment.parent
-                break
+            if "[SECTION] Forward declarations" in comment.comment_text:
+                vararg_wrapper_type_insert_point = comment
+                # No early-out here because we actually want the /last/ instance of this comment
 
         vararg_wrapper_type = utils.create_classstructunion("""
                                                             union ImGuiPrintableVarArg
