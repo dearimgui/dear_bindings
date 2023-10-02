@@ -49,3 +49,4 @@ from . import mod_mark_special_enum_values
 from . import mod_mark_flags_enums
 from . import mod_add_exploded_variadic_functions
 from . import mod_add_unformatted_functions
+from . import mod_move_types

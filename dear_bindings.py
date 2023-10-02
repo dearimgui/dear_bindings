@@ -17,6 +17,7 @@
 import os
 from src import code_dom
 from src import c_lexer
+from src import utils
 import argparse
 import sys
 import traceback
@@ -109,6 +110,10 @@ def convert_header(
     _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
     main_src_root.dest_filename += ".h"  # Presume the primary output file is the .h
 
+    # Check if we'll do some special treatment for imgui_internal.h
+    dest_file_name_only = os.path.basename(dest_file_no_ext)
+    is_probably_imgui_internal = dest_file_name_only.endswith('_internal')
+
     dom_root.validate_hierarchy()
     #  dom_root.dump()
 
@@ -146,13 +151,12 @@ def convert_header(
                                         # Templated stuff in imgui_internal.h
                                         "ImBitArray",
                                         "ImBitVector",
-                                        "ImSpan",
                                         "ImSpanAllocator",
                                         "ImPool",
                                         "ImChunkStream",
                                         "ImGuiTextIndex"])
-    # Remove all functions from ImVector, as they're not really useful
-    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+    # Remove all functions from ImVector and ImSpan, as they're not really useful
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan"])
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -215,8 +219,15 @@ def convert_header(
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
-    # We treat ImVec2, ImVec4 and ImColor as by-value types
-    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor', 'ImStr'])
+    # We treat certain types as by-value types
+    mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
+        'ImVec2',
+        'ImVec4',
+        'ImColor',
+        'ImStr',
+        'ImRect',
+        'ImGuiListClipperRange'
+    ])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
@@ -398,9 +409,45 @@ def convert_header(
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,
                                             functions_to_ignore=[
-                                                "ImGui_Text",
-                                                "ImGuiTextBuffer_appendf"
+                                                'ImGui_Text',
+                                                'ImGuiTextBuffer_appendf'
                                             ])
+        
+    if is_probably_imgui_internal:
+        mod_move_types.apply(dom_root,
+                             main_src_root,
+                             [
+                                 'ImVector_ImGuiColorMod',
+                                 'ImVector_ImGuiDockNodeSettings',
+                                 'ImVector_ImGuiDockRequest',
+                                 'ImVector_ImGuiGroupData',
+                                 'ImVector_ImGuiID',
+                                 'ImVector_ImGuiInputEvent',
+                                 'ImVector_ImGuiItemFlags',
+                                 'ImVector_ImGuiKeyRoutingData',
+                                 'ImVector_ImGuiListClipperRange',
+                                 'ImVector_ImGuiNavTreeNodeData',
+                                 'ImVector_ImGuiOldColumnData',
+                                 'ImVector_ImGuiOldColumns',
+                                 'ImVector_ImGuiTabItem',
+                                 'ImVector_ImGuiPopupData',
+                                 'ImVector_ImGuiStackLevelInfo',
+                                 'ImVector_ImGuiStyleMod',
+                                 'ImVector_ImGuiWindowPtr',
+                                 'ImVector_ImGuiWindowStackData',
+                                 'ImVector_ImGuiViewportPPtr',
+                                 'ImVector_unsigned_char',
+                                 'ImVector_ImGuiListClipperData',
+                                 'ImVector_ImGuiTableTempData',
+                                 'ImVector_ImGuiShrinkWidthItem',
+                                 'ImVector_ImGuiSettingsHandler',
+                                 'ImVector_ImGuiContextHook',
+                                 'ImVector_const_charPtr',
+                                 'ImVector_ImGuiPtrOrIndex',
+                                 'ImVector_ImGuiTableInstanceData',
+                                 'ImVector_ImGuiTableColumnSortSpecs',
+                             ]
+        )
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
@@ -443,11 +490,9 @@ def convert_header(
 
     print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
-    dest_file_name_only = os.path.basename(dest_file_no_ext)
-
     # If our output name ends with _internal, then generate a version of it without that on the assumption that
     # this is probably imgui_internal.h and thus we need to know what imgui.h is (likely) called as well.
-    if dest_file_name_only.endswith('_internal'):
+    if is_probably_imgui_internal:
         dest_file_name_only_no_internal = dest_file_name_only[:-9]
     else:
         dest_file_name_only_no_internal = dest_file_name_only
@@ -468,9 +513,13 @@ def convert_header(
     with open(dest_file_no_ext + ".cpp", "w") as file:
         insert_header_templates(file, template_dir, src_file_name_only, ".cpp", expansions)
 
-        gen_struct_converters.generate(main_src_root, file, indent=0)
+        gen_struct_converters.generate(dom_root, file, indent=0)
 
-        gen_function_stubs.generate(main_src_root, file, indent=0,
+        # Extract custom types from everything we parsed,
+        # but generate only for the main header
+        imgui_custom_types = utils.get_imgui_custom_types(dom_root)
+        gen_function_stubs.generate(main_src_root, file, imgui_custom_types,
+                                    indent=0,
                                     custom_varargs_list_suffixes=custom_varargs_list_suffixes)
 
     # Generate metadata
