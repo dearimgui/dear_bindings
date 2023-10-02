@@ -124,14 +124,14 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
             if context.for_c:
                 declaration += "_t"
 
-        # Add base classes
-        if self.base_classes is not None:
-            is_first = True
-            for accessibility, class_name in self.base_classes:
-                declaration += " : " if is_first else ", "
-                declaration += accessibility + " " + class_name
-
         if not self.is_forward_declaration:
+            # Add base classes
+            if self.base_classes is not None:
+                is_first = True
+                for accessibility, class_name in self.base_classes:
+                    declaration += " : " if is_first else ", "
+                    declaration += accessibility + " " + class_name
+
             write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
             write_c_line(file, indent, "{")
             for child in self.children:
