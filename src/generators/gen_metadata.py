@@ -439,6 +439,13 @@ def emit_function(function):
     #                                                         instead. If you are writing bindings that use const char*
     #                                                         instead of ImStr then you probably want to ignore these.
 
+    result["exploded_varargs_count"] = function.exploded_varargs_count # Non-zero for variants of variadic functions with varargs
+    #                                                                    'exploded' into a number of non-variadic functions
+    #                                                                    with explicit wrapped arguments.
+    result["is_unformatted_helper"] = function.is_unformatted_helper # True for functions that are variants of format string
+    #                                                                  accepting functions with format set to '%s' and
+    #                                                                  a single string argument.
+
     # Note the original name of the class this came from
     if function.original_class is not None:
         result["original_class"] = function.original_class.name

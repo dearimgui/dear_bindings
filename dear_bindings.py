@@ -512,7 +512,8 @@ if __name__ == '__main__':
                         help='Do not generate function variants with implied default values')
     parser.add_argument('--generateexplodedvarargsfunctions',
                         action='store_true',
-                        help='Generate variants of variadic function with an explicit arguments list')
+                        help='Generate variants of variadic function with an explicit arguments list '
+                             '(for bindings to languages without variadic function support)')
     parser.add_argument('--generateunformattedfunctions',
                         action='store_true',
                         help='Generate unformatted variants of format string supporting functions')
