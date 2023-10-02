@@ -19,5 +19,7 @@
     #define EXTERN extern
 #endif
 
+#ifndef CIMGUI_API
 #define CIMGUI_API EXTERN API
+#endif
 
