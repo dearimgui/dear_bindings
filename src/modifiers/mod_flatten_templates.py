@@ -19,6 +19,10 @@ def extract_template_parameter(template_name, tokens):
                 instantiation_parameter = ""
                 for k in range(i + 2, end_index):
                     instantiation_parameter += tokens[k].value
+                    # Make 'const char*' format nicely
+                    if k < end_index - 1 and tokens[k + 1].value != "*":
+                        instantiation_parameter += " "
+
                 return instantiation_parameter, i + 2, end_index
     return None, -1, -1
 
@@ -63,8 +67,8 @@ def apply(dom_root, custom_type_fudges={}):
                 if instantiation_parameter not in instantiation_parameters:
                     instantiation_parameters.append(instantiation_parameter)
 
-                    # print("Template " + template_name + " referenced in " + str(type_element) + " with parameter " +
-                    #      instantiation_parameter)
+                    #print("Template " + template_name + " referenced in " + str(type_element) + " with parameter " +
+                    #     instantiation_parameter)
 
                     # Figure out what the implementation parameter is and record that
                     implementation_parameter = None
