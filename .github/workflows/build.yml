@@ -39,11 +39,13 @@ jobs:
       run: |
         sudo pip3 install ply
 
-    - name: Generate
+    - name: Generate cimgui
       run: |
-         python3 dear_bindings.py --output cimgui          imgui/imgui.h --generateexplodedvarargsfunctions --generateunformattedfunctions
-         # imgui_internal.h disabled for now as it generates errors
-         # python3 dear_bindings.py --output cimgui_internal imgui/imgui_internal.h
+         python3 dear_bindings.py --output cimgui --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h 
+
+    - name: Generate cimgui_internal
+      run: |
+         python3 dear_bindings.py --output cimgui_internal --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h
 
     - name: Build
       run: |
@@ -53,6 +55,7 @@ jobs:
           -Iimgui -I.                           \
           -x c examples/example_null.c          \
           -x c++ cimgui.cpp                     \
+          -x c++ cimgui_internal.cpp            \
           imgui/imgui.cpp                       \
           imgui/imgui_demo.cpp                  \
           imgui/imgui_draw.cpp                  \
