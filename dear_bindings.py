@@ -404,7 +404,7 @@ def convert_header(
     })
 
     if generate_exploded_varargs_functions:
-        mod_add_exploded_variadic_functions.apply(dom_root, 7) # 7 arguments feels reasonable? Yes.
+        mod_add_exploded_variadic_functions.apply(dom_root, 7, not is_probably_imgui_internal) # 7 arguments feels reasonable? Yes.
 
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,

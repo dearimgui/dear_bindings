@@ -1,7 +1,7 @@
 from src import code_dom
 from src import utils
 
-def apply(dom_root, varargs_count_limit):
+def apply(dom_root, varargs_count_limit, add_wrapper_type):
     any_modifications_applied = False
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
         has_varargs = False
@@ -38,7 +38,7 @@ def apply(dom_root, varargs_count_limit):
 
             function.parent.insert_after_child(function, [new_function])
     
-    if any_modifications_applied:
+    if any_modifications_applied and add_wrapper_type:
         vararg_wrapper_type_insert_point = dom_root.children[0]  # Default to adding at the top of the file if we can't find anywhere else
 
         # Look for the right section to add these to - if we can, we want to put them in the same place as other custom types
