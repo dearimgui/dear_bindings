@@ -83,7 +83,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
                     if not child_element.no_default_add:
                         dom_element.add_child(child_element, context)
                 else:
-                    print("Unrecognised element: " + str(vars(tok)))
+                    print("Unrecognised element: " + str(vars(tok)) + " in DOMClassStructUnion " + dom_element.name)
                     break
 
         stream.get_token_of_type(['SEMICOLON'])  # Eat the trailing semicolon
