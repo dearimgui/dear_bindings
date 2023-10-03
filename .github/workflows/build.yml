@@ -24,6 +24,9 @@ jobs:
         compiler:
           - gcc
           - clang
+        flag_nogeneratedefaultargfunctions:
+          - nogeneratedefaultargfunctions
+          - withgeneratedefaultargfunctions
 
     steps:
     # Checkout both repositories
@@ -40,13 +43,17 @@ jobs:
         sudo pip3 install ply
 
     - name: Generate cimgui
-      run: |
-         python3 dear_bindings.py --output cimgui --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h
-
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output cimgui {0} --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
     - name: Generate cimgui_internal
-      run: |
-         python3 dear_bindings.py --output cimgui_internal --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h
-
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output cimgui_internal {0} --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
     - name: Build
       run: |
         ${{ matrix.compiler }}                  \
