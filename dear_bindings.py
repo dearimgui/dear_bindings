@@ -152,11 +152,12 @@ def convert_header(
                                         "ImBitArray",
                                         "ImBitVector",
                                         "ImSpanAllocator",
-                                        "ImPool",
                                         "ImChunkStream",
                                         "ImGuiTextIndex"])
     # Remove all functions from ImVector and ImSpan, as they're not really useful
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan"])
+    # Remove all functions from ImPool, since we can't handle nested template functions yet
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -218,7 +219,10 @@ def convert_header(
     mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
-    mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+    # Each iteration handles templates one more nesting level deep
+    for _ in range(0, 2):
+        mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+
     # We treat certain types as by-value types
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
         'ImVec2',
@@ -430,7 +434,9 @@ def convert_header(
         mod_move_types.apply(dom_root,
                              main_src_root,
                              [
+                                 'ImVector_const_charPtr',
                                  'ImVector_ImGuiColorMod',
+                                 'ImVector_ImGuiContextHook',
                                  'ImVector_ImGuiDockNodeSettings',
                                  'ImVector_ImGuiDockRequest',
                                  'ImVector_ImGuiGroupData',
@@ -438,29 +444,32 @@ def convert_header(
                                  'ImVector_ImGuiInputEvent',
                                  'ImVector_ImGuiItemFlags',
                                  'ImVector_ImGuiKeyRoutingData',
+                                 'ImVector_ImGuiListClipperData',
                                  'ImVector_ImGuiListClipperRange',
                                  'ImVector_ImGuiNavTreeNodeData',
                                  'ImVector_ImGuiOldColumnData',
                                  'ImVector_ImGuiOldColumns',
-                                 'ImVector_ImGuiTabItem',
                                  'ImVector_ImGuiPopupData',
+                                 'ImVector_ImGuiPtrOrIndex',
+                                 'ImVector_ImGuiSettingsHandler',
+                                 'ImVector_ImGuiShrinkWidthItem',
                                  'ImVector_ImGuiStackLevelInfo',
                                  'ImVector_ImGuiStyleMod',
+                                 'ImVector_ImGuiTabBar',
+                                 'ImVector_ImGuiTabItem',
+                                 'ImVector_ImGuiTable',
+                                 'ImVector_ImGuiTableColumnSortSpecs',
+                                 'ImVector_ImGuiTableInstanceData',
+                                 'ImVector_ImGuiTableTempData',
+                                 'ImVector_ImGuiViewportPPtr',
                                  'ImVector_ImGuiWindowPtr',
                                  'ImVector_ImGuiWindowStackData',
-                                 'ImVector_ImGuiViewportPPtr',
                                  'ImVector_unsigned_char',
-                                 'ImVector_ImGuiListClipperData',
-                                 'ImVector_ImGuiTableTempData',
-                                 'ImVector_ImGuiShrinkWidthItem',
-                                 'ImVector_ImGuiSettingsHandler',
-                                 'ImVector_ImGuiContextHook',
-                                 'ImVector_const_charPtr',
-                                 'ImVector_ImGuiPtrOrIndex',
-                                 'ImVector_ImGuiTableInstanceData',
-                                 'ImVector_ImGuiTableColumnSortSpecs',
-                             ]
-        )
+                                 # This terribleness is because those two types needs to after
+                                 # the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
+                                 'ImPool_ImGuiTable',
+                                 'ImPool_ImGuiTabBar',
+                             ])
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)

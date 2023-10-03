@@ -33,6 +33,8 @@ def extract_template_parameter(template_name, tokens):
 # instantiation as a way of working around some issues with the subtleties of template expansion rules (notably
 # "const T*" with T as "Blah *" expanding to "Blah* const*" rather than the lexical substitution "const Blah**")
 def apply(dom_root, custom_type_fudges={}):
+    keep_templates = []
+
     # Iterate through all templates
     for template in dom_root.list_all_children_of_type(code_dom.DOMTemplate):
         templated_obj = template.get_templated_object()
@@ -114,7 +116,42 @@ def apply(dom_root, custom_type_fudges={}):
             # Replace all occurrences of the type parameter with the instantiation parameter
 
             for element in instantiation.list_all_children_of_type(code_dom.DOMType):
+                element_type_name = element.unmodified_element.tokens[0].value
+                element_instantiation_parameter, _, _ = extract_template_parameter(element_type_name, element.unmodified_element.tokens)
+                
+                # Check if template is not instantiated
+                if template.template_parameter_tokens[1].value == element_instantiation_parameter:
 
+                    # Replace the type with a template instance
+
+                    original_element = element
+                    element = element.unmodified_element.clone()
+
+                    # Replace the template parameter with type instance
+
+                    for tok in element.tokens:
+                        if tok.value == element_instantiation_parameter:
+                            tok.value = instantiation_parameter
+
+                    # Replace the original element
+
+                    original_element.parent.replace_child(original_element, [element])
+                    element.parent.field_type = element
+
+                    # Make sure the element type's template is not deleted yet
+
+                    for element_template in dom_root.list_all_children_of_type(code_dom.DOMTemplate):
+                        element_template_type = element_template.children[0]
+                        if isinstance(element_template_type, code_dom.DOMClassStructUnion):
+                            if element_template_type.name == element_type_name:
+                                if not element_template in keep_templates:
+                                    keep_templates.append(element_template)
+
+                    # At this point, we've created another template instance type,
+                    # but it itself is not flattened yet. We'll need another iteration
+                    # to resolve the newly created type.
+                    continue 
+                    
                 modified_anything = False
 
                 for i in range(0, len(element.tokens)):
@@ -206,9 +243,6 @@ def apply(dom_root, custom_type_fudges={}):
                                                     code_dom.DOMBlankLines(1),
                                                     instantiation])
 
-        # Remove the original template
-        template.parent.remove_child(template)
-
         # Replace any references to the original template types with the new instantiations
         for (instantiation_parameter, instantiation_name) in zip(instantiation_parameters, instantiation_names):
             for type_element in dom_root.list_all_children_of_type(code_dom.DOMType):
@@ -227,3 +261,8 @@ def apply(dom_root, custom_type_fudges={}):
 
                     type_element.tokens[first_token_of_reference].value = instantiation_name
                     del type_element.tokens[first_token_of_reference + 1:last_token + 1]  # +1 to eat the closing >
+
+    for template in dom_root.list_all_children_of_type(code_dom.DOMTemplate):           
+        # Remove the original template
+        if not template in keep_templates:
+            template.parent.remove_child(template) 
