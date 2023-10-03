@@ -481,10 +481,6 @@ def generate(dom_root, file):
     for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
         if not define.exclude_from_metadata:
 
-            # Don't include defines with no actual content
-            if define.content is None:
-                continue
-
             # Don't include function-style defines
             if "(" in define.name:
                 continue
