@@ -232,6 +232,7 @@ def convert_header(
     mod_flatten_class_functions.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
+    mod_remove_extern_fields.apply(dom_root)
     mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
     mod_remove_enum_forward_declarations.apply(dom_root)
@@ -490,6 +491,7 @@ def convert_header(
 
     mod_remove_typedefs.apply(dom_root, [
         "ImBitArrayForNamedKeys", # template with two parameters, not supported
+        "GImGui"
     ])
 
     dom_root.validate_hierarchy()

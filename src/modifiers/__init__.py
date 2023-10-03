@@ -14,6 +14,7 @@ from . import mod_disambiguate_functions
 from . import mod_convert_by_value_struct_args_to_pointers
 from . import mod_convert_references_to_pointers
 from . import mod_remove_static_fields
+from . import mod_remove_extern_fields
 from . import mod_remove_nested_typedefs
 from . import mod_remove_all_functions_from_classes
 from . import mod_merge_blank_lines
