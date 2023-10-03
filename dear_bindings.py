@@ -591,7 +591,9 @@ if __name__ == '__main__':
                              "(eg \"Imgui/\"). (default: blank)")
     parser.add_argument('--config-include',
                         help="Path to additional .h file to read configuration defines from (i.e. the file you set "
-                             "IMGUI_USER_CONFIG to, if any).")
+                             "IMGUI_USER_CONFIG to, if any).",
+                        default=[],
+                        action='append')
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -605,8 +607,8 @@ if __name__ == '__main__':
     config_include_files.append(os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
 
     # Add any user-supplied config file as well
-    if args.config_include is not None:
-        config_include_files.append(os.path.realpath(args.config_include))
+    for config_include in args.config_include:
+        config_include_files.append(os.path.realpath(config_include))
 
     # Perform conversion
     try:
@@ -623,7 +625,6 @@ if __name__ == '__main__':
             args.imgui_include_dir
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
-        raise
         print("Exception during conversion:")
         traceback.print_exc()
         sys.exit(1)
