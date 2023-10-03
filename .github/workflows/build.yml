@@ -41,15 +41,14 @@ jobs:
 
     - name: Generate cimgui
       run: |
-         python3 dear_bindings.py --output cimgui --nogeneratedefaultargfunctions --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h 
+         python3 dear_bindings.py --output cimgui --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h
 
     - name: Generate cimgui_internal
       run: |
-         python3 dear_bindings.py --output cimgui_internal --nogeneratedefaultargfunctions --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h
+         python3 dear_bindings.py --output cimgui_internal --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h
 
     - name: Build
       run: |
-        # FIXME: cimgui_internal.cpp can be added when generator produces compilable result.
         ${{ matrix.compiler }}                  \
           -o example_null                       \
           -Iimgui -I.                           \
