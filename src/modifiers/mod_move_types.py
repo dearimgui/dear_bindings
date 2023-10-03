@@ -17,7 +17,8 @@ def apply(dom_root, destination_header, type_names):
         # Look for the right section to add these to - if we can, we want to put them in the same place as
         # forward declarations
         for comment in destination_header.list_all_children_of_type(code_dom.DOMComment):
-            if "[SECTION] Forward declarations" in comment.comment_text:
+            if ("[SECTION] Helpers" in comment.comment_text or # Found in imgui.h
+                    "[SECTION] Widgets support: flags, enums, data structures" in comment.comment_text): # Found in imgui_internal.h
                 insert_point = comment
                 # No early-out here because we actually want the /last/ instance of this comment
 

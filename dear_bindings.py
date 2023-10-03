@@ -490,8 +490,7 @@ def convert_header(
     ])
 
     mod_remove_typedefs.apply(dom_root, [
-        "ImBitArrayForNamedKeys", # template with two parameters, not supported
-        "GImGui"
+        "ImBitArrayForNamedKeys" # template with two parameters, not supported
     ])
 
     dom_root.validate_hierarchy()
