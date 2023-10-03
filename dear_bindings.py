@@ -255,30 +255,6 @@ def convert_header(
         'ImGui_ListBoxObsolete'  # New name
     )
 
-    mod_disambiguate_functions.apply(dom_root,
-                                     name_suffix_remaps={
-                                         # Some more user-friendly suffixes for certain types
-                                         'const char*': 'Str',
-                                         'char*': 'Str',
-                                         'unsigned int': 'Uint',
-                                         'unsigned int*': 'UintPtr',
-                                         'ImGuiID': 'ID',
-                                         'const void*': 'Ptr',
-                                         'void*': 'Ptr'},
-                                     # Functions that look like they have name clashes but actually don't
-                                     # thanks to preprocessor conditionals
-                                     functions_to_ignore=[
-                                         "cImFileOpen",
-                                         "cImFileClose",
-                                         "cImFileGetSize",
-                                         "cImFileRead",
-                                         "cImFileWrite"],
-                                     functions_to_rename_everything=[
-                                         "ImGui_CheckboxFlags"  # This makes more sense as IntPtr/UIntPtr variants
-                                     ],
-                                     type_priorities={
-                                     })
-    
     if not no_generate_default_arg_functions:
         mod_generate_default_argument_functions.apply(dom_root,
                                                       # We ignore functions that don't get called often because in those
@@ -387,6 +363,42 @@ def convert_header(
                                                           'flags',
                                                           'popup_flags'
                                                       ])
+        
+    if is_probably_imgui_internal:
+        # Some functions in imgui_internal already have the Ex suffix,
+        # which wreaks havok on disambiguation
+        mod_rename_functions.apply(main_src_root, {
+            'ImGui_BeginMenuEx': 'ImGui_BeginMenuWithIcon',
+            'ImGui_MenuItemEx': 'ImGui_MenuItemWithIcon',
+            'ImGui_BeginTableEx': 'ImGui_BeginTableWithID',
+            'ImGui_ButtonEx': 'ImGui_ButtonWithFlags',
+            'ImGui_ImageButtonEx': 'ImGui_ImageButtonWithFlags',
+            'ImGui_InputTextEx': 'ImGui_InputTextWithHintAndSize',
+        })
+        
+    mod_disambiguate_functions.apply(dom_root,
+                                     name_suffix_remaps={
+                                         # Some more user-friendly suffixes for certain types
+                                         'const char*': 'Str',
+                                         'char*': 'Str',
+                                         'unsigned int': 'Uint',
+                                         'unsigned int*': 'UintPtr',
+                                         'ImGuiID': 'ID',
+                                         'const void*': 'Ptr',
+                                         'void*': 'Ptr'},
+                                     # Functions that look like they have name clashes but actually don't
+                                     # thanks to preprocessor conditionals
+                                     functions_to_ignore=[
+                                         "cImFileOpen",
+                                         "cImFileClose",
+                                         "cImFileGetSize",
+                                         "cImFileRead",
+                                         "cImFileWrite"],
+                                     functions_to_rename_everything=[
+                                         "ImGui_CheckboxFlags"  # This makes more sense as IntPtr/UIntPtr variants
+                                     ],
+                                     type_priorities={
+                                     })
 
     # Do some special-case renaming of functions
     mod_rename_functions.apply(dom_root, {
