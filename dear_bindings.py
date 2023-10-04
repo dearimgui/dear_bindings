@@ -153,11 +153,20 @@ def convert_header(
                                         "ImBitVector",
                                         "ImSpanAllocator",
                                         "ImChunkStream",
-                                        "ImGuiTextIndex"])
-    # Remove all functions from ImVector and ImSpan, as they're not really useful
-    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan"])
+                                        "ImGuiInputTextState",
+                                        ])
+    # Remove all functions from certain types, as they're not really useful
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
     # Remove all functions from ImPool, since we can't handle nested template functions yet
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
+    
+    # Special case for ImGuiContext - it includes a field of type ImGuiInputTextState,
+    # which includes a field of type ImStb::STB_TexteditState, which we fail to generate at the moment.
+    # ImGuiContext is too important however to be removed, but! It's pretty much always used through a pointer,
+    # and rarely by directly manipulating the fields. 
+    # What we do here, is basically treat ImGuiContext as an opaque pointer.
+    mod_remove_all_fields_from_classes.apply(dom_root, ["ImGuiContext"], True)
+    
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -171,6 +180,10 @@ def convert_header(
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
                                           "ImGui::CheckboxFlagsT"])
+    
+    mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
+                                          "ImGui::DebugNodeInputTextState"])
+    
 
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
@@ -234,6 +247,7 @@ def convert_header(
     ])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
+    mod_flatten_inheritance.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
     mod_remove_extern_fields.apply(dom_root)
@@ -431,45 +445,52 @@ def convert_header(
                                             ])
         
     if is_probably_imgui_internal:
-        mod_move_types.apply(dom_root,
-                             main_src_root,
-                             [
-                                 'ImVector_const_charPtr',
-                                 'ImVector_ImGuiColorMod',
-                                 'ImVector_ImGuiContextHook',
-                                 'ImVector_ImGuiDockNodeSettings',
-                                 'ImVector_ImGuiDockRequest',
-                                 'ImVector_ImGuiGroupData',
-                                 'ImVector_ImGuiID',
-                                 'ImVector_ImGuiInputEvent',
-                                 'ImVector_ImGuiItemFlags',
-                                 'ImVector_ImGuiKeyRoutingData',
-                                 'ImVector_ImGuiListClipperData',
-                                 'ImVector_ImGuiListClipperRange',
-                                 'ImVector_ImGuiNavTreeNodeData',
-                                 'ImVector_ImGuiOldColumnData',
-                                 'ImVector_ImGuiOldColumns',
-                                 'ImVector_ImGuiPopupData',
-                                 'ImVector_ImGuiPtrOrIndex',
-                                 'ImVector_ImGuiSettingsHandler',
-                                 'ImVector_ImGuiShrinkWidthItem',
-                                 'ImVector_ImGuiStackLevelInfo',
-                                 'ImVector_ImGuiStyleMod',
-                                 'ImVector_ImGuiTabBar',
-                                 'ImVector_ImGuiTabItem',
-                                 'ImVector_ImGuiTable',
-                                 'ImVector_ImGuiTableColumnSortSpecs',
-                                 'ImVector_ImGuiTableInstanceData',
-                                 'ImVector_ImGuiTableTempData',
-                                 'ImVector_ImGuiViewportPPtr',
-                                 'ImVector_ImGuiWindowPtr',
-                                 'ImVector_ImGuiWindowStackData',
-                                 'ImVector_unsigned_char',
-                                 # This terribleness is because those two types needs to after
-                                 # the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
-                                 'ImPool_ImGuiTable',
-                                 'ImPool_ImGuiTabBar',
-                             ])
+        mod_move_elements.apply(dom_root,
+                                main_src_root,
+                                [
+                                    # This terribleness is because those few type definitions needs to appear
+                                    # below the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
+                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImGuiTextIndex'),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImVector_int'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_const_charPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiColorMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiItemFlags'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiKeyRoutingData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperRange'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiNavTreeNodeData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumnData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumns'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPopupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPtrOrIndex'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiSettingsHandler'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiShrinkWidthItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStackLevelInfo'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStyleMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_unsigned_char'),
+
+                                    # Fudge those typedefs to be at the top
+                                    (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', True),
+                                    (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', True),
+                                ])
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)

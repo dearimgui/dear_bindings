@@ -5,9 +5,11 @@ from . import mod_remove_function_bodies
 from . import mod_remove_operators
 from . import mod_remove_structs
 from . import mod_remove_functions
+from . import mod_remove_all_fields_from_classes
 from . import mod_add_prefix_to_loose_functions
 from . import mod_flatten_class_functions
 from . import mod_flatten_nested_classes
+from . import mod_flatten_inheritance
 from . import mod_flatten_templates
 from . import mod_flatten_conditionals
 from . import mod_disambiguate_functions
@@ -50,5 +52,5 @@ from . import mod_mark_special_enum_values
 from . import mod_mark_flags_enums
 from . import mod_add_exploded_variadic_functions
 from . import mod_add_unformatted_functions
-from . import mod_move_types
+from . import mod_move_elements
 from . import mod_remove_typedefs
