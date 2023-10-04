@@ -126,7 +126,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
 
         if not self.is_forward_declaration:
             # Add base classes
-            if self.base_classes is not None:
+            if not context.for_c and self.base_classes is not None:
                 is_first = True
                 for accessibility, class_name in self.base_classes:
                     declaration += " : " if is_first else ", "
