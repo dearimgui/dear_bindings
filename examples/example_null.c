@@ -29,10 +29,15 @@ int main(int argc, char** argv)
 
         static float f = 0.0f;
         ImGui_Text("Hello, world!");
+        #ifdef CIMGUI_WITH_GENERATED_DEFAULT_ARG_FUNCTIONS
         ImGui_SliderFloat("float", &f, 0.0f, 1.0f);
+        #else
+        ImGui_SliderFloat("float", &f, 0.0f, 1.0f, "%.3f", 0);
+        #endif
         ImGui_Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
         ImGui_ShowDemoWindow(NULL);
         ImGui_FocusItem();
+        ImGui_DebugLogUnformatted("Message from cimgui_internal.h!");
 
         ImGui_Render();
     }
