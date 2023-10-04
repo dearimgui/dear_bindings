@@ -8,8 +8,7 @@ def apply(dom_root, class_names, add_dummy_field):
         if class_element.get_fully_qualified_name() not in class_names:
             continue
 
-        fields = class_element.list_directly_contained_children_of_type(
-            code_dom.DOMFieldDeclaration)
+        fields = class_element.list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
 
         # We want to also remove fields inside direct ifdefs
         preprocessor_ifs = class_element.list_directly_contained_children_of_type(code_dom.DOMPreprocessorIf)
