@@ -75,10 +75,6 @@ options:
   --generateunformattedfunctions
                         Generate unformatted variants of format string 
                         supporting functions
-  --generateexplodedvarargsfunctions
-                        Generate variants of variadic function with an explicit 
-                        arguments list (for bindings to language without 
-                        variadic function support)
   --backend             Indicates that the header being processed is a backend
                         header (experimental)
   --imgui-include-dir IMGUI_INCLUDE_DIR

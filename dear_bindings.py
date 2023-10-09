@@ -88,7 +88,6 @@ def convert_header(
         template_dir,
         no_struct_by_value_arguments,
         no_generate_default_arg_functions,
-        generate_exploded_varargs_functions,
         generate_unformatted_functions,
         is_backend,
         imgui_include_dir
@@ -434,9 +433,6 @@ def convert_header(
         'ImGui_IsRectVisibleImVec2': 'ImGui_IsRectVisible'
     })
 
-    if generate_exploded_varargs_functions:
-        mod_add_exploded_variadic_functions.apply(dom_root, 7, not is_probably_imgui_internal) # 7 arguments feels reasonable? Yes.
-
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,
                                             functions_to_ignore=[
@@ -606,10 +602,6 @@ if __name__ == '__main__':
     parser.add_argument('--nogeneratedefaultargfunctions',
                         action='store_true',
                         help='Do not generate function variants with implied default values')
-    parser.add_argument('--generateexplodedvarargsfunctions',
-                        action='store_true',
-                        help='Generate variants of variadic function with an explicit arguments list '
-                             '(for bindings to languages without variadic function support)')
     parser.add_argument('--generateunformattedfunctions',
                         action='store_true',
                         help='Generate unformatted variants of format string supporting functions')
@@ -650,7 +642,6 @@ if __name__ == '__main__':
             args.templatedir,
             args.nopassingstructsbyvalue,
             args.nogeneratedefaultargfunctions,
-            args.generateexplodedvarargsfunctions,
             args.generateunformattedfunctions,
             args.backend,
             args.imgui_include_dir

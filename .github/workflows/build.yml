@@ -45,13 +45,13 @@ jobs:
     - name: Generate cimgui
       run: >- 
         ${{ 
-          format('python3 dear_bindings.py --output cimgui {0} --generateexplodedvarargsfunctions --generateunformattedfunctions imgui/imgui.h', 
+          format('python3 dear_bindings.py --output cimgui {0} --generateunformattedfunctions imgui/imgui.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
     - name: Generate cimgui_internal
       run: >- 
         ${{ 
-          format('python3 dear_bindings.py --output cimgui_internal {0} --generateexplodedvarargsfunctions --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h', 
+          format('python3 dear_bindings.py --output cimgui_internal {0} --generateunformattedfunctions --config-include imgui/imgui.h imgui/imgui_internal.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
     - name: Build
