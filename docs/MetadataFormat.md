@@ -513,8 +513,7 @@ want to ignore any functions with `has_imstr_helper` set.
 | is_default_argument_helper    | Is this function a variant generated to simulate default arguments?                                                                                                               |
 | is_manual_helper              | Is this a manually added function that doesn't exist in the original C++ API but was added specially to the C API? (at present only `ImVector_Construct` and `ImVector_Destruct`) |
 | is_imstr_helper               | Is this function a helper variant added that takes `const char*` instead of `ImStr` arguments?                                                                                    |
-| has_imstr_helper              | Is this function one which takes `ImStr` arguments and has had a `const char*` helper variant generated?                                                                          |
-| exploded_varargs_count        | If non-zero, the number of wrapped arguments for a variant of a variadic function with varargs exploded into explicit arguments                                                   |
+| has_imstr_helper              | Is this function one which takes `ImStr` arguments and has had a `const char*` helper variant generated?                                                                          |                                                 |
 | is_unformatted_helper         | Is this function a helper variant of a format string accepting function that accepts an pre-formatted string instead                                                              |
 | original_class                | The name of the class this method originally belonged to, if any                                                                                                                  |
 

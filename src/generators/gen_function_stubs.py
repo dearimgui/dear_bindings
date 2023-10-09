@@ -182,7 +182,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         if has_self:
             fudged_function_arguments = fudged_function_arguments[1:]
 
-        if len(fudged_function_arguments) != len(original_function.arguments) and function.exploded_varargs_count == 0:
+        if len(fudged_function_arguments) != len(original_function.arguments):
             raise Exception("Argument list mismatch with original function")
 
         # Write function declaration
@@ -205,12 +205,6 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
         #                                    indexed by the original name
 
         arg_to_original_arg_list = list(zip(fudged_function_arguments, original_function.arguments))
-        if function.exploded_varargs_count != 0:
-            arg_to_original_arg_list = list(itertools.zip_longest(
-                fudged_function_arguments,
-                original_function.arguments,
-                fillvalue=original_function.arguments[-1]
-            ))
         for (arg, original_arg) in arg_to_original_arg_list:
             if original_arg.is_array and not arg.is_implicit_default:
                 if len(original_arg.arg_type.tokens) >= 1:
