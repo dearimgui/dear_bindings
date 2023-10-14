@@ -360,7 +360,7 @@ class DOMElement:
                 child.__attach_unmodified_clones(clone_child)
 
     # Is this element a preprocessor container (#if or similar)?
-    def __is_preprocessor_container(self):
+    def is_preprocessor_container(self):
         return False
 
     # Get a list of the directly contained children of this element - this means all immediate children and
@@ -370,7 +370,7 @@ class DOMElement:
         result = []
         for child_list in self.get_child_lists():
             for child in child_list:
-                if child.__is_preprocessor_container():
+                if child.is_preprocessor_container():
                     # Recurse into preprocessor containers
                     for container_child in child.list_directly_contained_children():
                         result.append(container_child)

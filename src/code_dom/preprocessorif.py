@@ -162,7 +162,7 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         self.else_children.remove(child)
         child.parent = None
 
-    def __is_preprocessor_container(self):
+    def is_preprocessor_container(self):
         return True
 
     def get_child_lists(self):

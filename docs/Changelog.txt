@@ -11,6 +11,7 @@
 * Standardised the rule that "metadata elements are omitted if not known" and removed cases where they were omitted
   when not their default values. (#42)
 * Made the JSON generator include #defines with no actual value (#43)
+* Fixed a bug where DOM elements inside preprocessor conditionals didn't get enumerated under some circumstances
 
 --- v0.06
 
