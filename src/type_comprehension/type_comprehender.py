@@ -254,6 +254,22 @@ def get_type_description(type_str):
                 # Closing bracket, need to parse everything on the left now
                 right_parse_point += 1
                 break
+            elif c == ':' and type_str[right_parse_point + 1] == ':':
+                # Namespace identifier
+                right_parse_point += 2
+                (_, right_parse_point) = extract_word(type_str, right_parse_point)
+                break
+            elif c == '.' and type_str == " ...":
+                right_parse_point += 4 # FIXME: is it safe to ignore?
+                break
+            elif c == '<':
+                right_parse_point += 1
+                (_, right_parse_point) = extract_word(type_str, right_parse_point)
+                break
+            elif c == '>':
+                right_parse_point += 1
+                (_, right_parse_point) = extract_word(type_str, right_parse_point)
+                break
             else:
                 raise Exception("Parse error - unexpected " + c + " in '" + type_str + "'")
 
@@ -293,6 +309,9 @@ def get_type_description(type_str):
             elif c == '(':
                 # Opening bracket, eat it and go back to parsing on the right if we can
                 left_parse_point -= 1
+                break
+            elif c == '.' and type_str == " ...":
+                left_parse_point -= 4 # FIXME: is it safe to ignore?
                 break
             else:
                 raise Exception("Parse error - unexpected " + c + " in '" + type_str + "'")

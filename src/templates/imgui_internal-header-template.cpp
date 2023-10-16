@@ -2,7 +2,9 @@
 #include "%IMGUI_INCLUDE_DIR%imgui_internal.h"
 
 // API for exported functions
+#ifndef CIMGUI_API
 #define CIMGUI_API extern "C"
+#endif
 
 #include <stdio.h>
 

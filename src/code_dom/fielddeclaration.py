@@ -99,6 +99,16 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                 else:
                     dom_element.width_specifiers.append(None)
 
+                # Check for initializer
+                                
+                if stream.get_token_of_type(['EQUAL']):
+                    while True:
+                        # Skip initializer
+                        next_token = stream.peek_token()
+                        if next_token.type != 'SEMICOLON':
+                            stream.get_token()
+                            break    
+
                 separator_token = stream.get_token_of_type(["SEMICOLON", "COMMA"])
                 if separator_token is None:
                     stream.rewind(checkpoint)

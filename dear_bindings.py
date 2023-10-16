@@ -17,6 +17,7 @@
 import os
 from src import code_dom
 from src import c_lexer
+from src import utils
 import argparse
 import sys
 import traceback
@@ -108,6 +109,10 @@ def convert_header(
     _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
     main_src_root.dest_filename += ".h"  # Presume the primary output file is the .h
 
+    # Check if we'll do some special treatment for imgui_internal.h
+    dest_file_name_only = os.path.basename(dest_file_no_ext)
+    is_probably_imgui_internal = dest_file_name_only.endswith('_internal')
+
     dom_root.validate_hierarchy()
     #  dom_root.dump()
 
@@ -145,13 +150,22 @@ def convert_header(
                                         # Templated stuff in imgui_internal.h
                                         "ImBitArray",
                                         "ImBitVector",
-                                        "ImSpan",
                                         "ImSpanAllocator",
-                                        "ImPool",
                                         "ImChunkStream",
-                                        "ImGuiTextIndex"])
-    # Remove all functions from ImVector, as they're not really useful
-    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+                                        "ImGuiInputTextState",
+                                        ])
+    # Remove all functions from certain types, as they're not really useful
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
+    # Remove all functions from ImPool, since we can't handle nested template functions yet
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
+    
+    # Special case for ImGuiContext - it includes a field of type ImGuiInputTextState,
+    # which includes a field of type ImStb::STB_TexteditState, which we fail to generate at the moment.
+    # ImGuiContext is too important however to be removed, but! It's pretty much always used through a pointer,
+    # and rarely by directly manipulating the fields. 
+    # What we do here, is basically treat ImGuiContext as an opaque pointer.
+    mod_remove_all_fields_from_classes.apply(dom_root, ["ImGuiContext"], True)
+    
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -165,6 +179,10 @@ def convert_header(
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
                                           "ImGui::CheckboxFlagsT"])
+    
+    mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
+                                          "ImGui::DebugNodeInputTextState"])
+    
 
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
@@ -213,13 +231,25 @@ def convert_header(
     mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
-    mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
-    # We treat ImVec2, ImVec4 and ImColor as by-value types
-    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor', 'ImStr'])
+    # Each iteration handles templates one more nesting level deep
+    for _ in range(0, 2):
+        mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+
+    # We treat certain types as by-value types
+    mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
+        'ImVec2',
+        'ImVec4',
+        'ImColor',
+        'ImStr',
+        'ImRect',
+        'ImGuiListClipperRange'
+    ])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
+    mod_flatten_inheritance.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
+    mod_remove_extern_fields.apply(dom_root)
     mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
     mod_remove_enum_forward_declarations.apply(dom_root)
@@ -243,30 +273,6 @@ def convert_header(
         'ImGui_ListBoxObsolete'  # New name
     )
 
-    mod_disambiguate_functions.apply(dom_root,
-                                     name_suffix_remaps={
-                                         # Some more user-friendly suffixes for certain types
-                                         'const char*': 'Str',
-                                         'char*': 'Str',
-                                         'unsigned int': 'Uint',
-                                         'unsigned int*': 'UintPtr',
-                                         'ImGuiID': 'ID',
-                                         'const void*': 'Ptr',
-                                         'void*': 'Ptr'},
-                                     # Functions that look like they have name clashes but actually don't
-                                     # thanks to preprocessor conditionals
-                                     functions_to_ignore=[
-                                         "cImFileOpen",
-                                         "cImFileClose",
-                                         "cImFileGetSize",
-                                         "cImFileRead",
-                                         "cImFileWrite"],
-                                     functions_to_rename_everything=[
-                                         "ImGui_CheckboxFlags"  # This makes more sense as IntPtr/UIntPtr variants
-                                     ],
-                                     type_priorities={
-                                     })
-    
     if not no_generate_default_arg_functions:
         mod_generate_default_argument_functions.apply(dom_root,
                                                       # We ignore functions that don't get called often because in those
@@ -375,6 +381,42 @@ def convert_header(
                                                           'flags',
                                                           'popup_flags'
                                                       ])
+        
+    if is_probably_imgui_internal:
+        # Some functions in imgui_internal already have the Ex suffix,
+        # which wreaks havok on disambiguation
+        mod_rename_functions.apply(main_src_root, {
+            'ImGui_BeginMenuEx': 'ImGui_BeginMenuWithIcon',
+            'ImGui_MenuItemEx': 'ImGui_MenuItemWithIcon',
+            'ImGui_BeginTableEx': 'ImGui_BeginTableWithID',
+            'ImGui_ButtonEx': 'ImGui_ButtonWithFlags',
+            'ImGui_ImageButtonEx': 'ImGui_ImageButtonWithFlags',
+            'ImGui_InputTextEx': 'ImGui_InputTextWithHintAndSize',
+        })
+        
+    mod_disambiguate_functions.apply(dom_root,
+                                     name_suffix_remaps={
+                                         # Some more user-friendly suffixes for certain types
+                                         'const char*': 'Str',
+                                         'char*': 'Str',
+                                         'unsigned int': 'Uint',
+                                         'unsigned int*': 'UintPtr',
+                                         'ImGuiID': 'ID',
+                                         'const void*': 'Ptr',
+                                         'void*': 'Ptr'},
+                                     # Functions that look like they have name clashes but actually don't
+                                     # thanks to preprocessor conditionals
+                                     functions_to_ignore=[
+                                         "cImFileOpen",
+                                         "cImFileClose",
+                                         "cImFileGetSize",
+                                         "cImFileRead",
+                                         "cImFileWrite"],
+                                     functions_to_rename_everything=[
+                                         "ImGui_CheckboxFlags"  # This makes more sense as IntPtr/UIntPtr variants
+                                     ],
+                                     type_priorities={
+                                     })
 
     # Do some special-case renaming of functions
     mod_rename_functions.apply(dom_root, {
@@ -394,9 +436,57 @@ def convert_header(
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,
                                             functions_to_ignore=[
-                                                "ImGui_Text",
-                                                "ImGuiTextBuffer_appendf"
+                                                'ImGui_Text',
+                                                'ImGuiTextBuffer_appendf'
                                             ])
+        
+    if is_probably_imgui_internal:
+        mod_move_elements.apply(dom_root,
+                                main_src_root,
+                                [
+                                    # This terribleness is because those few type definitions needs to appear
+                                    # below the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
+                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImGuiTextIndex'),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImVector_int'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_const_charPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiColorMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiItemFlags'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiKeyRoutingData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperRange'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiNavTreeNodeData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumnData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumns'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPopupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPtrOrIndex'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiSettingsHandler'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiShrinkWidthItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStackLevelInfo'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStyleMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_unsigned_char'),
+
+                                    # Fudge those typedefs to be at the top
+                                    (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', True),
+                                    (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', True),
+                                ])
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
@@ -422,7 +512,11 @@ def convert_header(
         "IM_COL32_WHITE",
         "IM_COL32_BLACK",
         "IM_COL32_BLACK_TRANS",
-        "ImDrawCallback_ResetRenderState",
+        "ImDrawCallback_ResetRenderState"
+    ])
+
+    mod_remove_typedefs.apply(dom_root, [
+        "ImBitArrayForNamedKeys" # template with two parameters, not supported
     ])
 
     dom_root.validate_hierarchy()
@@ -439,11 +533,9 @@ def convert_header(
 
     print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
-    dest_file_name_only = os.path.basename(dest_file_no_ext)
-
     # If our output name ends with _internal, then generate a version of it without that on the assumption that
     # this is probably imgui_internal.h and thus we need to know what imgui.h is (likely) called as well.
-    if dest_file_name_only.endswith('_internal'):
+    if is_probably_imgui_internal:
         dest_file_name_only_no_internal = dest_file_name_only[:-9]
     else:
         dest_file_name_only_no_internal = dest_file_name_only
@@ -464,9 +556,13 @@ def convert_header(
     with open(dest_file_no_ext + ".cpp", "w") as file:
         insert_header_templates(file, template_dir, src_file_name_only, ".cpp", expansions)
 
-        gen_struct_converters.generate(main_src_root, file, indent=0)
+        gen_struct_converters.generate(dom_root, file, indent=0)
 
-        gen_function_stubs.generate(main_src_root, file, indent=0,
+        # Extract custom types from everything we parsed,
+        # but generate only for the main header
+        imgui_custom_types = utils.get_imgui_custom_types(dom_root)
+        gen_function_stubs.generate(main_src_root, file, imgui_custom_types,
+                                    indent=0,
                                     custom_varargs_list_suffixes=custom_varargs_list_suffixes)
 
     # Generate metadata
@@ -518,7 +614,9 @@ if __name__ == '__main__':
                              "(eg \"Imgui/\"). (default: blank)")
     parser.add_argument('--config-include',
                         help="Path to additional .h file to read configuration defines from (i.e. the file you set "
-                             "IMGUI_USER_CONFIG to, if any).")
+                             "IMGUI_USER_CONFIG to, if any).",
+                        default=[],
+                        action='append')
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -532,8 +630,8 @@ if __name__ == '__main__':
     config_include_files.append(os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
 
     # Add any user-supplied config file as well
-    if args.config_include is not None:
-        config_include_files.append(os.path.realpath(args.config_include))
+    for config_include in args.config_include:
+        config_include_files.append(os.path.realpath(config_include))
 
     # Perform conversion
     try:
