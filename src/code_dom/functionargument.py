@@ -15,6 +15,7 @@ class DOMFunctionArgument(code_dom.element.DOMElement):
         self.is_implicit_default = False  # Set if this argument should not be exposed, but always treated as default
         #                                   (see mod_generate_default_argument_functions)
         self.is_instance_pointer = False  # Set if this is the instance pointer argument (i.e. "this"/"self")
+        self.stub_call_value = None   # Set to make function stub use this as a value instead of passing the argument
 
     # Parse tokens from the token stream given
     @staticmethod

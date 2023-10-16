@@ -72,6 +72,9 @@ options:
   --nopassingstructsbyvalue
                         Convert any by-value struct arguments to pointers (for
                         other language bindings)
+  --generateunformattedfunctions
+                        Generate unformatted variants of format string 
+                        supporting functions
   --backend             Indicates that the header being processed is a backend
                         header (experimental)
   --imgui-include-dir IMGUI_INCLUDE_DIR

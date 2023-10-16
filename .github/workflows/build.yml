@@ -41,7 +41,7 @@ jobs:
 
     - name: Generate
       run: |
-         python3 dear_bindings.py --output cimgui          imgui/imgui.h
+         python3 dear_bindings.py --output cimgui          imgui/imgui.h --generateunformattedfunctions
          # imgui_internal.h disabled for now as it generates errors
          # python3 dear_bindings.py --output cimgui_internal imgui/imgui_internal.h
 

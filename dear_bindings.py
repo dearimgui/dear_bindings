@@ -80,8 +80,17 @@ def parse_single_header(src_file, context):
 # Parse the C++ header found in src_file, and write a C header to dest_file_no_ext.h, with binding implementation in
 # dest_file_no_ext.cpp. Metadata will be written to dest_file_no_ext.json. implementation_header should point to a file
 # containing the initial header block for the implementation (provided in the templates/ directory).
-def convert_header(src_file, config_include_files, dest_file_no_ext, template_dir, nostructbyvaluearguments, is_backend,
-                   imgui_include_dir):
+def convert_header(
+        src_file,
+        config_include_files,
+        dest_file_no_ext,
+        template_dir,
+        no_struct_by_value_arguments,
+        no_generate_default_arg_functions,
+        generate_unformatted_functions,
+        is_backend,
+        imgui_include_dir
+    ):
 
     # Set up context and DOM root
     context = code_dom.ParseContext()
@@ -113,6 +122,7 @@ def convert_header(src_file, config_include_files, dest_file_no_ext, template_di
     # Add headers we need and remove those we don't
     if not is_backend:
         mod_add_includes.apply(dom_root, ["<stdbool.h>"])  # We need stdbool.h to get bool defined
+        mod_add_includes.apply(dom_root, ["<stdint.h>"])  # We need stdint.h to get int32_t
         mod_remove_includes.apply(dom_root, ["<float.h>",
                                              "<string.h>"])
 
@@ -194,7 +204,7 @@ def convert_header(src_file, config_include_files, dest_file_no_ext, template_di
     mod_remove_operators.apply(dom_root)
     mod_remove_heap_constructors_and_destructors.apply(dom_root)
     mod_convert_references_to_pointers.apply(dom_root)
-    if nostructbyvaluearguments:
+    if no_struct_by_value_arguments:
         mod_convert_by_value_struct_args_to_pointers.apply(dom_root)
     # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
     # if anyone tries to use it
@@ -256,113 +266,115 @@ def convert_header(src_file, config_include_files, dest_file_no_ext, template_di
                                      ],
                                      type_priorities={
                                      })
-    mod_generate_default_argument_functions.apply(dom_root,
-                                                  # We ignore functions that don't get called often because in those
-                                                  # cases the default helper doesn't add much value but does clutter
-                                                  # up the header file
-                                                  functions_to_ignore=[
-                                                      # Main
-                                                      'ImGui_CreateContext',
-                                                      'ImGui_DestroyContext',
-                                                      # Demo, Debug, Information
-                                                      'ImGui_ShowDemoWindow',
-                                                      'ImGui_ShowMetricsWindow',
-                                                      'ImGui_ShowDebugLogWindow',
-                                                      'ImGui_ShowStackToolWindow',
-                                                      'ImGui_ShowAboutWindow',
-                                                      'ImGui_ShowStyleEditor',
-                                                      # Styles
-                                                      'ImGui_StyleColorsDark',
-                                                      'ImGui_StyleColorsLight',
-                                                      'ImGui_StyleColorsClassic',
-                                                      # Windows
-                                                      'ImGui_Begin',
-                                                      'ImGui_BeginChild',
-                                                      'ImGui_BeginChildID',
-                                                      'ImGui_SetNextWindowSizeConstraints',
-                                                      # Scrolling
-                                                      'ImGui_SetScrollHereX',
-                                                      'ImGui_SetScrollHereY',
-                                                      'ImGui_SetScrollFromPosX',
-                                                      'ImGui_SetScrollFromPosY',
-                                                      # Parameters stacks
-                                                      'ImGui_PushTextWrapPos',
-                                                      # Widgets
-                                                      'ImGui_ProgressBar',
-                                                      'ImGui_ColorPicker4',
-                                                      'ImGui_TreePushPtr', # Ensure why core lib has this default to NULL?
-                                                      'ImGui_BeginListBox',
-                                                      'ImGui_ListBox',
-                                                      'ImGui_MenuItemBoolPtr',
-                                                      'ImGui_BeginPopupModal',
-                                                      'ImGui_OpenPopupOnItemClick',
-                                                      'ImGui_TableGetColumnName',
-                                                      'ImGui_TableGetColumnFlags',
-                                                      'ImGui_TableSetBgColor',
-                                                      'ImGui_GetColumnWidth',
-                                                      'ImGui_GetColumnOffset',
-                                                      'ImGui_BeginTabItem',
-                                                      # Misc
-                                                      'ImGui_LogToTTY',
-                                                      'ImGui_LogToFile',
-                                                      'ImGui_LogToClipboard',
-                                                      'ImGui_BeginDisabled',
-                                                      # Inputs
-                                                      'ImGui_IsMousePosValid',
-                                                      'ImGui_IsMouseDragging',
-                                                      'ImGui_GetMouseDragDelta',
-                                                      'ImGui_CaptureKeyboardFromApp',
-                                                      'ImGui_CaptureMouseFromApp',
-                                                      # Settings
-                                                      'ImGui_LoadIniSettingsFromDisk',
-                                                      'ImGui_LoadIniSettingsFromMemory',
-                                                      'ImGui_SaveIniSettingsToMemory',
-                                                      'ImGui_SaveIniSettingsToMemory',
-                                                      # Memory Allcators
-                                                      'ImGui_SetAllocatorFunctions',
-                                                      # Other types
-                                                      'ImGuiIO_SetKeyEventNativeDataEx',
-                                                      'ImGuiTextFilter_Draw',
-                                                      'ImGuiTextFilter_PassFilter',
-                                                      'ImGuiTextBuffer_append',
-                                                      'ImGuiInputTextCallbackData_InsertChars',
-                                                      'ImColor_SetHSV',
-                                                      'ImColor_HSV',
-                                                      'ImGuiListClipper_Begin',
-                                                      # ImDrawList
-                                                      # - all 'int num_segments = 0' made explicit
-                                                      'ImDrawList_AddCircleFilled',
-                                                      'ImDrawList_AddBezierCubic',
-                                                      'ImDrawList_AddBezierQuadratic',
-                                                      'ImDrawList_PathStroke',
-                                                      'ImDrawList_PathArcTo',
-                                                      'ImDrawList_PathBezierCubicCurveTo',
-                                                      'ImDrawList_PathBezierQuadraticCurveTo',
-                                                      'ImDrawList_PathRect',
-                                                      'ImDrawList_AddBezierCurve',
-                                                      'ImDrawList_PathBezierCurveTo',
-                                                      'ImDrawList_PushClipRect',
-                                                      # ImFont, ImFontGlyphRangesBuilder
-                                                      'ImFontGlyphRangesBuilder_AddText',
-                                                      'ImFont_AddRemapChar',
-                                                      'ImFont_RenderText',
-                                                      # Obsolete functions
-                                                      'ImGui_ImageButtonImTextureID',
-                                                      'ImGui_ListBoxHeaderInt',
-                                                      'ImGui_ListBoxHeader',
-                                                      'ImGui_OpenPopupContextItem',
-                                                  ],
-                                                  function_prefixes_to_ignore=[
-                                                      'ImGuiStorage_',
-                                                      'ImFontAtlas_'
-                                                  ],
-                                                  trivial_argument_types=[
-                                                      'ImGuiCond'
-                                                  ],
-                                                  trivial_argument_names=[
-                                                      'flags',
-                                                      'popup_flags'
-                                                  ])
+    
+    if not no_generate_default_arg_functions:
+        mod_generate_default_argument_functions.apply(dom_root,
+                                                      # We ignore functions that don't get called often because in those
+                                                      # cases the default helper doesn't add much value but does clutter
+                                                      # up the header file
+                                                      functions_to_ignore=[
+                                                          # Main
+                                                          'ImGui_CreateContext',
+                                                          'ImGui_DestroyContext',
+                                                          # Demo, Debug, Information
+                                                          'ImGui_ShowDemoWindow',
+                                                          'ImGui_ShowMetricsWindow',
+                                                          'ImGui_ShowDebugLogWindow',
+                                                          'ImGui_ShowStackToolWindow',
+                                                          'ImGui_ShowAboutWindow',
+                                                          'ImGui_ShowStyleEditor',
+                                                          # Styles
+                                                          'ImGui_StyleColorsDark',
+                                                          'ImGui_StyleColorsLight',
+                                                          'ImGui_StyleColorsClassic',
+                                                          # Windows
+                                                          'ImGui_Begin',
+                                                          'ImGui_BeginChild',
+                                                          'ImGui_BeginChildID',
+                                                          'ImGui_SetNextWindowSizeConstraints',
+                                                          # Scrolling
+                                                          'ImGui_SetScrollHereX',
+                                                          'ImGui_SetScrollHereY',
+                                                          'ImGui_SetScrollFromPosX',
+                                                          'ImGui_SetScrollFromPosY',
+                                                          # Parameters stacks
+                                                          'ImGui_PushTextWrapPos',
+                                                          # Widgets
+                                                          'ImGui_ProgressBar',
+                                                          'ImGui_ColorPicker4',
+                                                          'ImGui_TreePushPtr', # Ensure why core lib has this default to NULL?
+                                                          'ImGui_BeginListBox',
+                                                          'ImGui_ListBox',
+                                                          'ImGui_MenuItemBoolPtr',
+                                                          'ImGui_BeginPopupModal',
+                                                          'ImGui_OpenPopupOnItemClick',
+                                                          'ImGui_TableGetColumnName',
+                                                          'ImGui_TableGetColumnFlags',
+                                                          'ImGui_TableSetBgColor',
+                                                          'ImGui_GetColumnWidth',
+                                                          'ImGui_GetColumnOffset',
+                                                          'ImGui_BeginTabItem',
+                                                          # Misc
+                                                          'ImGui_LogToTTY',
+                                                          'ImGui_LogToFile',
+                                                          'ImGui_LogToClipboard',
+                                                          'ImGui_BeginDisabled',
+                                                          # Inputs
+                                                          'ImGui_IsMousePosValid',
+                                                          'ImGui_IsMouseDragging',
+                                                          'ImGui_GetMouseDragDelta',
+                                                          'ImGui_CaptureKeyboardFromApp',
+                                                          'ImGui_CaptureMouseFromApp',
+                                                          # Settings
+                                                          'ImGui_LoadIniSettingsFromDisk',
+                                                          'ImGui_LoadIniSettingsFromMemory',
+                                                          'ImGui_SaveIniSettingsToMemory',
+                                                          'ImGui_SaveIniSettingsToMemory',
+                                                          # Memory Allcators
+                                                          'ImGui_SetAllocatorFunctions',
+                                                          # Other types
+                                                          'ImGuiIO_SetKeyEventNativeDataEx',
+                                                          'ImGuiTextFilter_Draw',
+                                                          'ImGuiTextFilter_PassFilter',
+                                                          'ImGuiTextBuffer_append',
+                                                          'ImGuiInputTextCallbackData_InsertChars',
+                                                          'ImColor_SetHSV',
+                                                          'ImColor_HSV',
+                                                          'ImGuiListClipper_Begin',
+                                                          # ImDrawList
+                                                          # - all 'int num_segments = 0' made explicit
+                                                          'ImDrawList_AddCircleFilled',
+                                                          'ImDrawList_AddBezierCubic',
+                                                          'ImDrawList_AddBezierQuadratic',
+                                                          'ImDrawList_PathStroke',
+                                                          'ImDrawList_PathArcTo',
+                                                          'ImDrawList_PathBezierCubicCurveTo',
+                                                          'ImDrawList_PathBezierQuadraticCurveTo',
+                                                          'ImDrawList_PathRect',
+                                                          'ImDrawList_AddBezierCurve',
+                                                          'ImDrawList_PathBezierCurveTo',
+                                                          'ImDrawList_PushClipRect',
+                                                          # ImFont, ImFontGlyphRangesBuilder
+                                                          'ImFontGlyphRangesBuilder_AddText',
+                                                          'ImFont_AddRemapChar',
+                                                          'ImFont_RenderText',
+                                                          # Obsolete functions
+                                                          'ImGui_ImageButtonImTextureID',
+                                                          'ImGui_ListBoxHeaderInt',
+                                                          'ImGui_ListBoxHeader',
+                                                          'ImGui_OpenPopupContextItem',
+                                                      ],
+                                                      function_prefixes_to_ignore=[
+                                                          'ImGuiStorage_',
+                                                          'ImFontAtlas_'
+                                                      ],
+                                                      trivial_argument_types=[
+                                                          'ImGuiCond'
+                                                      ],
+                                                      trivial_argument_names=[
+                                                          'flags',
+                                                          'popup_flags'
+                                                      ])
 
     # Do some special-case renaming of functions
     mod_rename_functions.apply(dom_root, {
@@ -378,6 +390,13 @@ def convert_header(src_file, config_include_files, dest_file_no_ext, template_di
         'ImGui_IsRectVisible': 'ImGui_IsRectVisibleBySize',
         'ImGui_IsRectVisibleImVec2': 'ImGui_IsRectVisible'
     })
+
+    if generate_unformatted_functions:
+        mod_add_unformatted_functions.apply(dom_root,
+                                            functions_to_ignore=[
+                                                "ImGui_Text",
+                                                "ImGuiTextBuffer_appendf"
+                                            ])
 
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
@@ -484,6 +503,12 @@ if __name__ == '__main__':
     parser.add_argument('--nopassingstructsbyvalue',
                         action='store_true',
                         help='Convert any by-value struct arguments to pointers (for other language bindings)')
+    parser.add_argument('--nogeneratedefaultargfunctions',
+                        action='store_true',
+                        help='Do not generate function variants with implied default values')
+    parser.add_argument('--generateunformattedfunctions',
+                        action='store_true',
+                        help='Generate unformatted variants of format string supporting functions')
     parser.add_argument('--backend',
                         action='store_true',
                         help='Indicates that the header being processed is a backend header (experimental)')
@@ -512,8 +537,17 @@ if __name__ == '__main__':
 
     # Perform conversion
     try:
-        convert_header(os.path.realpath(args.src), config_include_files, args.output, args.templatedir,
-                       args.nopassingstructsbyvalue, args.backend, args.imgui_include_dir)
+        convert_header(
+            os.path.realpath(args.src),
+            config_include_files,
+            args.output,
+            args.templatedir,
+            args.nopassingstructsbyvalue,
+            args.nogeneratedefaultargfunctions,
+            args.generateunformattedfunctions,
+            args.backend,
+            args.imgui_include_dir
+        )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
         traceback.print_exc()
