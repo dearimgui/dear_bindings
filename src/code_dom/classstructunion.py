@@ -13,6 +13,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.base_classes = None  # List of base classes, as tuples with their accessibility (i.e. ("private", "CBase"))
+        self.use_unmodified_name_for_typedef = False  # Should the name be used as-is for the typedef?
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -120,8 +121,8 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         if not self.is_anonymous:
             declaration += " " + self.name
             # We need the struct name to be different from the typedef name to prevent compiler complaints about
-            # forward declarations not matching
-            if context.for_c:
+            # forward declarations not matching (except for some special cases like DirectX types)
+            if context.for_c and not self.use_unmodified_name_for_typedef:
                 declaration += "_t"
 
         # Add base classes

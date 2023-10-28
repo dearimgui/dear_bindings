@@ -249,6 +249,21 @@ def convert_header(
         'ImGui_ListBoxObsolete'  # New name
     )
 
+    # The DirectX backends declare some DirectX types that need to not have _t appended to their typedef names
+    mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
+                                                                ["ID3D11Device",
+                                                                 "ID3D11DeviceContext",
+                                                                 "ID3D12Device",
+                                                                 "ID3D12DescriptorHeap",
+                                                                 "ID3D12GraphicsCommandList",
+                                                                 "D3D12_CPU_DESCRIPTOR_HANDLE",
+                                                                 "D3D12_GPU_DESCRIPTOR_HANDLE"
+                                                                 ])
+
+    # These DirectX types are awkward and we need to use a pointer-based cast when converting them
+    mod_mark_types_for_pointer_cast.apply(dom_root, ["D3D12_CPU_DESCRIPTOR_HANDLE",
+                                                     "D3D12_GPU_DESCRIPTOR_HANDLE"])
+
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types

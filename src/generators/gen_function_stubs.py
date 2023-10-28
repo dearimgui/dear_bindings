@@ -53,9 +53,14 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
                               additional_dereferences + ">("
                 cast_suffix = ")"
             else:
-                cast_prefix = additional_dereferences + "reinterpret_cast<" + to_type_str + \
-                              additional_dereferences + ">("
-                cast_suffix = ")"
+                if from_type.use_pointer_cast_conversion:
+                    cast_prefix = additional_dereferences + "(*reinterpret_cast<" + to_type_str + \
+                                  additional_dereferences + "*>(&"
+                    cast_suffix = "))"
+                else:
+                    cast_prefix = additional_dereferences + "reinterpret_cast<" + to_type_str + \
+                                  additional_dereferences + ">("
+                    cast_suffix = ")"
 
         # Check for by-value types (note that we do *not* want to use original_for_type here, but rather the modified
         # type for the check)
