@@ -271,8 +271,7 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}, is_backe
                                                                    to_cpp=False)
         thunk_call += return_cast_prefix
 
-        # Prefix with :: to ensure we get the version from the global namespace, not cimgui::
-        function_call_name = "::" + function.get_original_fully_qualified_name()
+        function_call_name = function.get_original_fully_qualified_name()
 
         if uses_varargs:
             if function_call_name in custom_varargs_list_suffixes:
@@ -292,6 +291,10 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}, is_backe
                 thunk_call += "reinterpret_cast<" + \
                               self_class_type.get_original_fully_qualified_name(include_leading_colons=True) + \
                               "*>(self)->"
+        else:
+            # If the function is not a member function, prefix the call with :: to avoid accidentally picking
+            # up functions from the wrong namespace
+            function_call_name = "::" + function_call_name
 
         if (function.return_type is not None) and (function.return_type.to_c_string() != "void"):
             # If the return type was a reference that we turned into a pointer, turn it into a pointer here

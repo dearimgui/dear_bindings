@@ -264,6 +264,13 @@ def convert_header(
     mod_mark_types_for_pointer_cast.apply(dom_root, ["D3D12_CPU_DESCRIPTOR_HANDLE",
                                                      "D3D12_GPU_DESCRIPTOR_HANDLE"])
 
+    # SDL backend forward-declared types
+    mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
+                                                                ["SDL_Window",
+                                                                 "SDL_Renderer"
+                                                                 ])
+
+
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
                                          # Some more user-friendly suffixes for certain types
