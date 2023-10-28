@@ -266,7 +266,8 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}, is_backe
                                                                    to_cpp=False)
         thunk_call += return_cast_prefix
 
-        function_call_name = function.get_original_fully_qualified_name()
+        # Prefix with :: to ensure we get the version from the global namespace, not cimgui::
+        function_call_name = "::" + function.get_original_fully_qualified_name()
 
         if uses_varargs:
             if function_call_name in custom_varargs_list_suffixes:

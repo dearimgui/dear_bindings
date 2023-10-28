@@ -4,7 +4,7 @@ from src import utils
 
 # This modifier adds additional forward declarations to the file
 # declarations should be a set of C-style class/struct/union declaration statements
-def apply(dom_root, declarations):
+def apply(src_root, declarations):
 
     elements_to_append = []
 
@@ -17,10 +17,11 @@ def apply(dom_root, declarations):
 
     # We try and insert these before the first function
 
-    insert_point = dom_root.children[0]  # Default to adding at the top of the file if we can't find anywhere else
+    insert_point = src_root.children[0]  # Default to adding at the top of the file if we can't find anywhere else
 
-    for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
-        insert_point = function.parent.get_prev_child(function)
+    for function in src_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+        if function.parent.get_prev_child(function) is not None:
+            insert_point = function.parent.get_prev_child(function)
         break
 
     insert_point.parent.insert_before_child(insert_point, elements_to_append)

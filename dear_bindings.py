@@ -132,7 +132,13 @@ def convert_header(
 
         # Backends need a forward-declaration for ImDrawData so that the code generator understands
         # that it is an ImGui type and needs conversion
-        mod_add_forward_declarations.apply(dom_root, ["struct ImDrawData;"])
+        mod_add_forward_declarations.apply(main_src_root, ["struct ImDrawData;"])
+
+        # Look for "ImGui_ImplWin32_WndProcHandler" and rewrite the #if on it (this is a bit of a hack)
+        mod_rewrite_containing_preprocessor_conditional.apply(dom_root, "ImGui_ImplWin32_WndProcHandler",
+                                                              "0",
+                                                              "IMGUI_BACKEND_HAS_WINDOWS_H",
+                                                              True)
 
     mod_attach_preceding_comments.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
