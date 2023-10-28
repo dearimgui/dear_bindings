@@ -14,6 +14,16 @@
 * Fixed a bug where DOM elements inside preprocessor conditionals didn't get enumerated under some circumstances
 * Added --generateunformattedfunctions to generate versions of string format functions that don't try and do any
   formatting (many thanks to [@ZimM-LostPolygon] for the implementation!)
+* Fixed silly bug that caused is_flags_enum to always be set (#53)
+* Fixed parsing of preprocessor conditionals containing continuations (#50)
+* Added --imconfig-path to override path to imconfig.h
+* Made backends use CIMGUI_IMPL_API consistently
+* Worked around Win32 backend wndproc handler not getting generated (#51)
+* Added :: to function references in stubs to avoid name clash issues
+* Changed forward declarations to not use _t in situations where it causes problems with backends (#51)
+* Added a special case for forward-declared by-value structs in the DX12 backend
+* Added support for typedefs with an explicit type
+* Fixed backend headers to use backends/ folder for includes, and added some missing headers
 
 --- v0.06
 
