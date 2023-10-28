@@ -398,9 +398,9 @@ def convert_header(
                                                 "ImGuiTextBuffer_appendf"
                                             ])
 
-    # Make all functions use CIMGUI_API
+    # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
-    mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
+    mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API', 'IMGUI_IMPL_API': 'CIMGUI_IMPL_API'})
 
     mod_forward_declare_structs.apply(dom_root)
     mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers
@@ -418,7 +418,7 @@ def convert_header(
 
     # Exclude some defines that aren't really useful from the metadata
     mod_exclude_defines_from_metadata.apply(dom_root, [
-        "IMGUI_IMPL_API",
+        "CIMGUI_IMPL_API",
         "IM_COL32_WHITE",
         "IM_COL32_BLACK",
         "IM_COL32_BLACK_TRANS",
@@ -458,6 +458,7 @@ def convert_header(
 
         write_context = code_dom.WriteContext()
         write_context.for_c = True
+        write_context.for_backend = is_backend
         main_src_root.write_to_c(file, context=write_context)
 
     # Generate implementations
@@ -467,7 +468,8 @@ def convert_header(
         gen_struct_converters.generate(main_src_root, file, indent=0)
 
         gen_function_stubs.generate(main_src_root, file, indent=0,
-                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes)
+                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes,
+                                    is_backend=is_backend)
 
     # Generate metadata
     with open(dest_file_no_ext + ".json", "w") as file:

@@ -83,12 +83,13 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
 
 
 # Generate function stub bodies
-def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
+def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}, is_backend=False):
     generator = conditional_generator.ConditionalGenerator()
 
     write_context = code_dom.WriteContext()
     write_context.for_c = True
     write_context.for_implementation = True
+    write_context.for_backend = is_backend
 
     # Build a list of all the classes/structs/enums ImGui defines, so we know which things need casting/name-fudging
     # (we also put function pointers in here as they need the same treatment, hence the "callbacks" bit)
