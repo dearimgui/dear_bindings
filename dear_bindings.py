@@ -519,6 +519,9 @@ if __name__ == '__main__':
     parser.add_argument('--config-include',
                         help="Path to additional .h file to read configuration defines from (i.e. the file you set "
                              "IMGUI_USER_CONFIG to, if any).")
+    parser.add_argument('--imconfig-path',
+                        help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same"
+                             "directory as the source file.")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -529,7 +532,10 @@ if __name__ == '__main__':
     config_include_files = []
 
     # Add imconfig.h to the include list to get any #defines set in that
-    config_include_files.append(os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+    imconfig_path = args.imconfig_path if args.imconfig_path is not None else (
+        os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+
+    config_include_files.append(imconfig_path)
 
     # Add any user-supplied config file as well
     if args.config_include is not None:
