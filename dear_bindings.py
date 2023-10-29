@@ -89,7 +89,8 @@ def convert_header(
         no_generate_default_arg_functions,
         generate_unformatted_functions,
         is_backend,
-        imgui_include_dir
+        imgui_include_dir,
+        backend_include_dir
     ):
 
     # Set up context and DOM root
@@ -478,6 +479,7 @@ def convert_header(
 
     # Expansions to be used when processing templates, to insert variables as required
     expansions = {"%IMGUI_INCLUDE_DIR%": imgui_include_dir,
+                  "%BACKEND_INCLUDE_DIR%": backend_include_dir,
                   "%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
                   "%OUTPUT_HEADER_NAME_NO_INTERNAL%": dest_file_name_only_no_internal + ".h"}
 
@@ -546,6 +548,10 @@ if __name__ == '__main__':
                         default='',
                         help="Path to ImGui headers to use in emitted include files. Should include a trailing slash "
                              "(eg \"Imgui/\"). (default: blank)")
+    parser.add_argument('--backend-include-dir',
+                        default='',
+                        help="Path to ImGui backend headers to use in emitted files. Should include a trailing slash "
+                             "(eg \"Imgui/Backends/\"). (default: same as --imgui-include-dir)")
     parser.add_argument('--config-include',
                         help="Path to additional .h file to read configuration defines from (i.e. the file you set "
                              "IMGUI_USER_CONFIG to, if any).")
@@ -582,7 +588,8 @@ if __name__ == '__main__':
             args.nogeneratedefaultargfunctions,
             args.generateunformattedfunctions,
             args.backend,
-            args.imgui_include_dir
+            args.imgui_include_dir,
+            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")
