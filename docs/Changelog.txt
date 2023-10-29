@@ -25,6 +25,7 @@
 * Added support for typedefs with an explicit type
 * Fixed backend headers to use backends/ folder for includes, and added some missing headers
 * Added --backend-include-dir to allow specifying the path where backend header files are found
+* Made "fmt" arguments non-nullable by default in the metadata (#57, thanks to [@pdoane] for the idea)
 
 --- v0.06
 
