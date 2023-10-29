@@ -208,6 +208,7 @@ def convert_header(
                                    "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
                                    "construct out_ranges)")
 
+    mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
     mod_remove_heap_constructors_and_destructors.apply(dom_root)
     mod_convert_references_to_pointers.apply(dom_root)
