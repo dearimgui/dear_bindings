@@ -8,6 +8,7 @@ class DOMTypedef(code_dom.element.DOMElement):
         super().__init__()
         self.name = None
         self.type = None
+        self.structure_type = None  # One of STRUCT/CLASS/UNION as appropriate, or None if not supplied
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -18,6 +19,10 @@ class DOMTypedef(code_dom.element.DOMElement):
             return None
 
         dom_element = DOMTypedef()
+
+        tok = stream.get_token_of_type(['STRUCT', 'CLASS', 'UNION'])
+        if tok is not None:
+            dom_element.structure_type = tok.type
 
         dom_element.type = code_dom.type.DOMType.parse(context, stream)
         if dom_element.type is None:
@@ -58,12 +63,24 @@ class DOMTypedef(code_dom.element.DOMElement):
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
 
-        # Function pointers have the name/etc included
-        if isinstance(self.type, code_dom.functionpointertype.DOMFunctionPointerType):
-            write_c_line(file, indent, self.add_attached_comment_to_line("typedef " + self.type.to_c_string() + ";"))
-        else:
-            write_c_line(file, indent, self.add_attached_comment_to_line("typedef " + self.type.to_c_string() +
-                                                                         " " + self.name + ";"))
+        declaration = "typedef"
+
+        if self.structure_type == "STRUCT":
+            declaration += " struct"
+        elif self.structure_type == "CLASS":
+            declaration += " class"
+        elif self.structure_type == "UNION":
+            declaration += " union"
+
+        declaration += " " + self.type.to_c_string()
+
+        # Function pointers have the name/etc included already
+        if not isinstance(self.type, code_dom.functionpointertype.DOMFunctionPointerType):
+            declaration += " " + self.name
+
+        declaration += ";"
+
+        write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
 
     def __str__(self):
         return "Typedef: " + self.name + " type=" + str(self.type)

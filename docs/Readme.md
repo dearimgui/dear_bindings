@@ -1,7 +1,7 @@
 Dear Bindings
 -------------
 
-Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top.
+Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top (see our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) list). 
 
 At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users.
 

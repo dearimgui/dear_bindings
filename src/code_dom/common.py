@@ -15,6 +15,7 @@ class WriteContext:
         self.known_structs = None  # List of known struct names, for applying struct tags when writing C
         self.include_leading_colons = False  # Do we want to include leading colons to fully-qualify all names?
         self.mark_non_nullable_pointers = False  # Do we want to emit non-nullable pointers as ^ instead of *?
+        self.for_backend = False  # Are we outputting backend code?
 
 
 # Collapse a list of tokens back into a C-style string, attempting to be reasonably intelligent and/or aesthetic

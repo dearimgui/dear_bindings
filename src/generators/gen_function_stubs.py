@@ -53,9 +53,14 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
                               additional_dereferences + ">("
                 cast_suffix = ")"
             else:
-                cast_prefix = additional_dereferences + "reinterpret_cast<" + to_type_str + \
-                              additional_dereferences + ">("
-                cast_suffix = ")"
+                if from_type.use_pointer_cast_conversion:
+                    cast_prefix = additional_dereferences + "(*reinterpret_cast<" + to_type_str + \
+                                  additional_dereferences + "*>(&"
+                    cast_suffix = "))"
+                else:
+                    cast_prefix = additional_dereferences + "reinterpret_cast<" + to_type_str + \
+                                  additional_dereferences + ">("
+                    cast_suffix = ")"
 
         # Check for by-value types (note that we do *not* want to use original_for_type here, but rather the modified
         # type for the check)
@@ -83,12 +88,13 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
 
 
 # Generate function stub bodies
-def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
+def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}, is_backend=False):
     generator = conditional_generator.ConditionalGenerator()
 
     write_context = code_dom.WriteContext()
     write_context.for_c = True
     write_context.for_implementation = True
+    write_context.for_backend = is_backend
 
     # Build a list of all the classes/structs/enums ImGui defines, so we know which things need casting/name-fudging
     # (we also put function pointers in here as they need the same treatment, hence the "callbacks" bit)
@@ -285,6 +291,10 @@ def generate(dom_root, file, indent=0, custom_varargs_list_suffixes={}):
                 thunk_call += "reinterpret_cast<" + \
                               self_class_type.get_original_fully_qualified_name(include_leading_colons=True) + \
                               "*>(self)->"
+        else:
+            # If the function is not a member function, prefix the call with :: to avoid accidentally picking
+            # up functions from the wrong namespace
+            function_call_name = "::" + function_call_name
 
         if (function.return_type is not None) and (function.return_type.to_c_string() != "void"):
             # If the return type was a reference that we turned into a pointer, turn it into a pointer here

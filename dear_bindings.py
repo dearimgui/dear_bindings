@@ -89,7 +89,8 @@ def convert_header(
         no_generate_default_arg_functions,
         generate_unformatted_functions,
         is_backend,
-        imgui_include_dir
+        imgui_include_dir,
+        backend_include_dir
     ):
 
     # Set up context and DOM root
@@ -132,7 +133,13 @@ def convert_header(
 
         # Backends need a forward-declaration for ImDrawData so that the code generator understands
         # that it is an ImGui type and needs conversion
-        mod_add_forward_declarations.apply(dom_root, ["struct ImDrawData;"])
+        mod_add_forward_declarations.apply(main_src_root, ["struct ImDrawData;"])
+
+        # Look for "ImGui_ImplWin32_WndProcHandler" and rewrite the #if on it (this is a bit of a hack)
+        mod_rewrite_containing_preprocessor_conditional.apply(dom_root, "ImGui_ImplWin32_WndProcHandler",
+                                                              "0",
+                                                              "IMGUI_BACKEND_HAS_WINDOWS_H",
+                                                              True)
 
     mod_attach_preceding_comments.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
@@ -201,6 +208,7 @@ def convert_header(
                                    "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
                                    "construct out_ranges)")
 
+    mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
     mod_remove_heap_constructors_and_destructors.apply(dom_root)
     mod_convert_references_to_pointers.apply(dom_root)
@@ -242,6 +250,28 @@ def convert_header(
         'old_callback',  # Argument to look for to identify this function
         'ImGui_ListBoxObsolete'  # New name
     )
+
+    # The DirectX backends declare some DirectX types that need to not have _t appended to their typedef names
+    mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
+                                                                ["ID3D11Device",
+                                                                 "ID3D11DeviceContext",
+                                                                 "ID3D12Device",
+                                                                 "ID3D12DescriptorHeap",
+                                                                 "ID3D12GraphicsCommandList",
+                                                                 "D3D12_CPU_DESCRIPTOR_HANDLE",
+                                                                 "D3D12_GPU_DESCRIPTOR_HANDLE"
+                                                                 ])
+
+    # These DirectX types are awkward and we need to use a pointer-based cast when converting them
+    mod_mark_types_for_pointer_cast.apply(dom_root, ["D3D12_CPU_DESCRIPTOR_HANDLE",
+                                                     "D3D12_GPU_DESCRIPTOR_HANDLE"])
+
+    # SDL backend forward-declared types
+    mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
+                                                                ["SDL_Window",
+                                                                 "SDL_Renderer"
+                                                                 ])
+
 
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
@@ -398,9 +428,9 @@ def convert_header(
                                                 "ImGuiTextBuffer_appendf"
                                             ])
 
-    # Make all functions use CIMGUI_API
+    # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
-    mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
+    mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API', 'IMGUI_IMPL_API': 'CIMGUI_IMPL_API'})
 
     mod_forward_declare_structs.apply(dom_root)
     mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers
@@ -418,7 +448,7 @@ def convert_header(
 
     # Exclude some defines that aren't really useful from the metadata
     mod_exclude_defines_from_metadata.apply(dom_root, [
-        "IMGUI_IMPL_API",
+        "CIMGUI_IMPL_API",
         "IM_COL32_WHITE",
         "IM_COL32_BLACK",
         "IM_COL32_BLACK_TRANS",
@@ -450,6 +480,7 @@ def convert_header(
 
     # Expansions to be used when processing templates, to insert variables as required
     expansions = {"%IMGUI_INCLUDE_DIR%": imgui_include_dir,
+                  "%BACKEND_INCLUDE_DIR%": backend_include_dir,
                   "%OUTPUT_HEADER_NAME%": dest_file_name_only + ".h",
                   "%OUTPUT_HEADER_NAME_NO_INTERNAL%": dest_file_name_only_no_internal + ".h"}
 
@@ -458,6 +489,7 @@ def convert_header(
 
         write_context = code_dom.WriteContext()
         write_context.for_c = True
+        write_context.for_backend = is_backend
         main_src_root.write_to_c(file, context=write_context)
 
     # Generate implementations
@@ -467,7 +499,8 @@ def convert_header(
         gen_struct_converters.generate(main_src_root, file, indent=0)
 
         gen_function_stubs.generate(main_src_root, file, indent=0,
-                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes)
+                                    custom_varargs_list_suffixes=custom_varargs_list_suffixes,
+                                    is_backend=is_backend)
 
     # Generate metadata
     with open(dest_file_no_ext + ".json", "w") as file:
@@ -516,9 +549,16 @@ if __name__ == '__main__':
                         default='',
                         help="Path to ImGui headers to use in emitted include files. Should include a trailing slash "
                              "(eg \"Imgui/\"). (default: blank)")
+    parser.add_argument('--backend-include-dir',
+                        default='',
+                        help="Path to ImGui backend headers to use in emitted files. Should include a trailing slash "
+                             "(eg \"Imgui/Backends/\"). (default: same as --imgui-include-dir)")
     parser.add_argument('--config-include',
                         help="Path to additional .h file to read configuration defines from (i.e. the file you set "
                              "IMGUI_USER_CONFIG to, if any).")
+    parser.add_argument('--imconfig-path',
+                        help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same"
+                             "directory as the source file.")
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -529,7 +569,10 @@ if __name__ == '__main__':
     config_include_files = []
 
     # Add imconfig.h to the include list to get any #defines set in that
-    config_include_files.append(os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+    imconfig_path = args.imconfig_path if args.imconfig_path is not None else (
+        os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+
+    config_include_files.append(imconfig_path)
 
     # Add any user-supplied config file as well
     if args.config_include is not None:
@@ -546,7 +589,8 @@ if __name__ == '__main__':
             args.nogeneratedefaultargfunctions,
             args.generateunformattedfunctions,
             args.backend,
-            args.imgui_include_dir
+            args.imgui_include_dir,
+            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")

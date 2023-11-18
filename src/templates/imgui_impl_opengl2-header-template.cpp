@@ -1,5 +1,5 @@
 #include "%IMGUI_INCLUDE_DIR%imgui.h"
-#include "%IMGUI_INCLUDE_DIR%imgui_impl_opengl2.h"
+#include "%BACKEND_INCLUDE_DIR%imgui_impl_opengl2.h"
 
 #include <stdio.h>
 

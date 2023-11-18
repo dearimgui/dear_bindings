@@ -48,3 +48,7 @@ from . import mod_calculate_enum_values
 from . import mod_mark_special_enum_values
 from . import mod_mark_flags_enums
 from . import mod_add_unformatted_functions
+from . import mod_rewrite_containing_preprocessor_conditional
+from . import mod_mark_structs_as_using_unmodified_name_for_typedef
+from . import mod_mark_types_for_pointer_cast
+from . import mod_set_arguments_as_nullable

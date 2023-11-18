@@ -7,6 +7,7 @@ import copy
 class DOMType(code_dom.element.DOMElement):
     def __init__(self):
         super().__init__()
+        self.use_pointer_cast_conversion = False  # Should the function stub generator use a pointer-based cast?
 
     # Parse tokens from the token stream given
     @staticmethod

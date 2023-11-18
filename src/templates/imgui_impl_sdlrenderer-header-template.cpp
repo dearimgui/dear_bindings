@@ -1,5 +1,5 @@
 #include "%IMGUI_INCLUDE_DIR%imgui.h"
-#include "%IMGUI_INCLUDE_DIR%imgui_impl_sdlrenderer.h"
+#include "%BACKEND_INCLUDE_DIR%imgui_impl_sdlrenderer.h"
 
 #include <stdio.h>
 
