@@ -332,30 +332,31 @@ def emit_field(container, field):
 def emit_struct_field_list(container, fields_root):
     # It is important that we preserve ordering here (so we can't, for example, emit all fields first and then nested
     # structs, as those structs could be implicit field declarations)
-    for child in container.children:
-        if isinstance(child, code_dom.DOMFieldDeclaration):
-            # Regular fields
-            emit_field(fields_root, child)
-        elif isinstance(child, code_dom.DOMClassStructUnion):
-            # Nested structs
+    for child_list in container.get_child_lists():
+        for child in child_list:
+            if isinstance(child, code_dom.DOMFieldDeclaration):
+                # Regular fields
+                emit_field(fields_root, child)
+            elif isinstance(child, code_dom.DOMClassStructUnion):
+                # Nested structs
 
-            # If the struct is anonymous, then it needs a dummy field emitted for it
-            # This is technically slightly wrong, as you could have a named struct that is also an implicit field
-            # declaration, but the parser doesn't currently support that case (and it isn't exactly common practice
-            # in C++ AFAIK), so for now we assume that only anonymous structs fit this pattern.
-            if child.is_anonymous:
-                dummy_field = code_dom.DOMFieldDeclaration()
-                dummy_field.names = [child.name]
-                dummy_field.is_array = [False]
-                dummy_field.width_specifiers = [None]
-                dummy_field.is_anonymous = child.is_anonymous  # Technically wrong, but see above
-                dummy_type = utils.create_type(child.name)
-                dummy_field.field_type = dummy_type
-                emit_field(fields_root, dummy_field)
-        else:
-            # If we find anything else, recurse into it to look for fields (as it may be a preprocessor declaration
-            # or similar)
-            emit_struct_field_list(child, fields_root)
+                # If the struct is anonymous, then it needs a dummy field emitted for it
+                # This is technically slightly wrong, as you could have a named struct that is also an implicit field
+                # declaration, but the parser doesn't currently support that case (and it isn't exactly common practice
+                # in C++ AFAIK), so for now we assume that only anonymous structs fit this pattern.
+                if child.is_anonymous:
+                    dummy_field = code_dom.DOMFieldDeclaration()
+                    dummy_field.names = [child.name]
+                    dummy_field.is_array = [False]
+                    dummy_field.width_specifiers = [None]
+                    dummy_field.is_anonymous = child.is_anonymous  # Technically wrong, but see above
+                    dummy_type = utils.create_type(child.name)
+                    dummy_field.field_type = dummy_type
+                    emit_field(fields_root, dummy_field)
+            else:
+                # If we find anything else, recurse into it to look for fields (as it may be a preprocessor declaration
+                # or similar)
+                emit_struct_field_list(child, fields_root)
 
 
 # Emit data for a single struct
