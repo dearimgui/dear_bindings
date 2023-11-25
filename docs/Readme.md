@@ -1,9 +1,9 @@
 Dear Bindings
 -------------
 
-Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top. 
+Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top (see our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) list). 
 
-At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users. 
+At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users.
 
 It should be compatible with Dear ImGui v1.84 onwards (some earlier versions also work but compatibility isn't guaranteed).
 
@@ -20,9 +20,9 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 # Recent changes
 
-* v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively. 
-* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends 
-  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details  
+* v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
+* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends
+  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details
 * v0.04 introduced a number of bugfixes and other tweaks
 
 You can see a full list of recent changes [here](Changelog.txt).
@@ -41,13 +41,18 @@ Dear Bindings was designed as a potential replacement to the [cimgui](https://gi
 
 # Usage
 
-Assuming you have `imgui.h` in a sibling directory, and would like to generate `cimgui.h`, `cimgui.cpp` and `cimgui.json`:
-
 ```
 python dear_bindings.py -o cimgui ../imgui/imgui.h
 ```
 
-Once you have generated `cimgui.h` and `cimgui.cpp` they can be compiled in a project to generate a C API (`cimgui.h` defines the API, whilst `cimgui.cpp` implements the binding to the underlying C++ code).
+With a target `imgui.h`, Dear Bindings generates `cimgui.h` (defines the C
+API), `cimgui.cpp` (implements the C binding to the underlying C++ code), and
+`cimgui.json` (a metadata file, see below).
+
+Using a C++ compiler, you can compile `cimgui.cpp` along with `imgui/*.cpp`
+into a static library. This can be used to integrate with a C program, for
+example, by including the generated C header `cimgui.h` and linking against
+this library.
 
 Other command line arguments:
 
@@ -73,7 +78,7 @@ options:
                         Convert any by-value struct arguments to pointers (for
                         other language bindings)
   --generateunformattedfunctions
-                        Generate unformatted variants of format string 
+                        Generate unformatted variants of format string
                         supporting functions
   --backend             Indicates that the header being processed is a backend
                         header (experimental)
@@ -137,7 +142,7 @@ Becomes these four functions in the C header:
 bool ImGui_ListBoxHeaderExInt(const char* label, int items_count, int height_in_items /* = -1 */);
 bool ImGui_ListBoxHeaderInt(const char* label, int items_count); // Implied height_in_items = -1
 bool ImGui_ListBoxHeaderEx(const char* label, ImVec2 size /* = ImVec2(0, 0) */);
-bool ImGui_ListBoxHeader(const char* label);     
+bool ImGui_ListBoxHeader(const char* label);
 ```
 
 The generated code and metadata preserves `#define` settings for various options (such as `IMGUI_USE_BGRA_PACKED_COLOR`), so those can be utilised as normal. If the original ImGui code and user code is being compiled separately then care must be taken that the `#define` settings are the same. For programmatic binding generation, the exported metadata contains information on which elements are affected by `#ifdef` checks so appropriate action to match behaviour in the target language can be taken.
@@ -196,7 +201,7 @@ python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_im
 
 This has had _very_ minimal testing as yet (basically, all backends except OSX/Metal convert cleanly, and the SDL and OpenGL3 backends seem to compile), but the results look reasonable. Feedback on how well this works would be most appreciated.
 
-I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one). 
+I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one).
 
 Software using Dear Bindings
 ----------------------------

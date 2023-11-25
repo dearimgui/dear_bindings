@@ -551,7 +551,7 @@ Function arguments as they appear in function (and function pointer) metadata.
 | type                | The argument type                                                            |
 | is_array            | Is this an array argument?                                                   |
 | array_bounds        | Array bounds, if this is an array argument                                   |
-| is_vararges         | Is this a varargs argument?                                                  |
+| is_varargs          | Is this a varargs argument?                                                  |
 | is_instance_pointer | Is this the instance pointer? (i.e. the 'this' pointer for a class function) | 
 | default_value       | The default value, if present                                                |
 
