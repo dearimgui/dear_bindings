@@ -259,7 +259,9 @@ def convert_header(
                                                                  "ID3D12DescriptorHeap",
                                                                  "ID3D12GraphicsCommandList",
                                                                  "D3D12_CPU_DESCRIPTOR_HANDLE",
-                                                                 "D3D12_GPU_DESCRIPTOR_HANDLE"
+                                                                 "D3D12_GPU_DESCRIPTOR_HANDLE",
+                                                                 "GLFWwindow",
+                                                                 "GLFWmonitor"
                                                                  ])
 
     # These DirectX types are awkward and we need to use a pointer-based cast when converting them

@@ -27,6 +27,7 @@
 * Added --backend-include-dir to allow specifying the path where backend header files are found
 * Made "fmt" arguments non-nullable by default in the metadata (#57, thanks to [@pdoane] for the idea)
 * Fixed a bug where JSON metadata did not include fields that were in the else clause of a preprocessor conditional (#61)
+* Fixed GLFWwindow and GLFWmonitor getting incorrectly defined with an alternate tag name in the GLFW backend header (#63)
 
 --- v0.06
 
