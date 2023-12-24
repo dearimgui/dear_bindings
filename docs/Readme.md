@@ -199,9 +199,15 @@ To convert a backend header, use `--backend` on the command line - for example:
 python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
 ```
 
-This has had _very_ minimal testing as yet (basically, all backends except OSX/Metal convert cleanly, and the SDL and OpenGL3 backends seem to compile), but the results look reasonable. Feedback on how well this works would be most appreciated.
+Tested Backends:
+* Win32
+* DirectX 11
+* DirectX 12
+* OpenGL 3
+* Vulkan
 
-I've left out the Metal/OSX backends for now as the Objective-C code in them looks like it would probably make life painful, and I'm not sure there's even a use-case for them here (please let me know if you have one).
+All other backends (except Metal/OSX) at least appear to convert cleanly with reasonable looking results. Further testing (adding to the list above) would be most appreciated.
+The Metal/OSX backends have been excluded for now as the Objective-C code in them looks like it would probably make life painful. Please provide feedback if there is a use case for these.
 
 Software using Dear Bindings
 ----------------------------
