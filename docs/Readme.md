@@ -222,13 +222,13 @@ They assume that C bindings files have been generated into the `generated/` fold
 `example_null` is a very basic app that simply runs a few cycles of the ImGui update/draw loop. It has no rendering engine so nothing actually gets drawn.
 `example_win32_directx9` and `example_sdl2_opengl2` are the ImGui samples of the same names with minimal changes to port it into C.
 
-# Building on Windows
+### Building examples on Windows
 
 The Examples.sln solution file can be used to build all three examples on Windows using Visual Studio 2022 (older versions may work too).
-On Windows ImGuiLib is used as an ancillary project to provide ImGui wrapped up as a static library with C function exports.
-To build example_sdl2_opengl, you will need to have SDL2 installed and the SDL2_DIR environment variable set to point to your SDL2 installation.
+On Windows `ImGuiLib` is used as an ancillary project to provide ImGui wrapped up as a static library with C function exports.
+To build `example_sdl2_opengl`, you will need to have SDL2 installed and the SDL2_DIR environment variable set to point to your SDL2 installation.
 
-# Building on Linux/OSX
+### Building examples on Linux/OSX
 
 `example_null` and `example_sdl2_opengl2` both contain makefiles that should build correctly on OSX and Linux (tested on Mac OS Sonoma and Ubuntu 22.04.3 LTS).
 You'll need SDL2 installed via `brew install SDL2` on OSX or `apt install libsdl2-dev` or similar for that sample to work.
