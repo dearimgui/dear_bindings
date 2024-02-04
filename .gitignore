@@ -4,3 +4,17 @@ __pycache__
 TestCode
 venv
 Test.h
+examples/.vs
+examples/example_win32_directx9/x64
+examples/ImGuiLib/x64
+examples/x64
+generated
+*.vcxproj.user
+examples/example_glfw_opengl3/x64
+examples/example_null/x64
+examples/example_sdl2_opengl2/x64
+*imgui.ini
+obj
+obj
+examples/example_null/example_null
+examples/example_sdl2_opengl2/example_sdl_opengl2

@@ -260,6 +260,7 @@ def convert_header(
                                                                  "ID3D12GraphicsCommandList",
                                                                  "D3D12_CPU_DESCRIPTOR_HANDLE",
                                                                  "D3D12_GPU_DESCRIPTOR_HANDLE",
+                                                                 "IDirect3DDevice9",
                                                                  "GLFWwindow",
                                                                  "GLFWmonitor"
                                                                  ])

@@ -51,7 +51,7 @@ jobs:
         ${{ matrix.compiler }}                  \
           -o example_null                       \
           -Iimgui -I.                           \
-          -x c examples/example_null.c          \
+          -x c examples/example_null/main.c     \
           -x c++ cimgui.cpp                     \
           imgui/imgui.cpp                       \
           imgui/imgui_demo.cpp                  \

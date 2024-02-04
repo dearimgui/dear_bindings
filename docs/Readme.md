@@ -20,6 +20,7 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 # Recent changes
 
+* v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
 * v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
 * v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends
   * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details
@@ -190,9 +191,9 @@ These minor features are removed, mostly because they either rely on C++ languag
 ImGuiOnceUponAFrame, ImNewDummy, ImNewWrapper, ImGui::Value
 ```
 
-### Converting backends (experimental)
+### Converting backends
 
-An experimental feature has been added to generate binding for the various backends.
+A semi-experimental feature has been added to generate binding for the various backends.
 To convert a backend header, use `--backend` on the command line - for example:
 
 ```commandline
@@ -201,13 +202,37 @@ python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_im
 
 Tested Backends:
 * Win32
+* DirectX 9
 * DirectX 11
 * DirectX 12
+* OpenGL 2
 * OpenGL 3
 * Vulkan
+* SDL 2
 
 All other backends (except Metal/OSX) at least appear to convert cleanly with reasonable looking results. Further testing (adding to the list above) would be most appreciated.
 The Metal/OSX backends have been excluded for now as the Objective-C code in them looks like it would probably make life painful. Please provide feedback if there is a use case for these.
+The `BuildAllBindings.bat` file can be used to convert imgui.h and all of the convertable backends.
+
+### Examples
+
+Some simple example/test programs can be found in the `examples/` folder.
+They assume that C bindings files have been generated into the `generated/` folder (`BuildAllBindings.bat` can be used to do this automatically on Windows, I'm afraid other OSes will have to do it by hand for now).
+
+`example_null` is a very basic app that simply runs a few cycles of the ImGui update/draw loop. It has no rendering engine so nothing actually gets drawn.
+`example_win32_directx9` and `example_sdl2_opengl2` are the ImGui samples of the same names with minimal changes to port it into C.
+
+# Building on Windows
+
+The Examples.sln solution file can be used to build all three examples on Windows using Visual Studio 2022 (older versions may work too).
+On Windows ImGuiLib is used as an ancillary project to provide ImGui wrapped up as a static library with C function exports.
+To build example_sdl2_opengl, you will need to have SDL2 installed and the SDL2_DIR environment variable set to point to your SDL2 installation.
+
+# Building on Linux/OSX
+
+`example_null` and `example_sdl2_opengl2` both contain makefiles that should build correctly on OSX and Linux (tested on Mac OS Sonoma and Ubuntu 22.04.3 LTS).
+You'll need SDL2 installed via `brew install SDL2` on OSX or `apt install libsdl2-dev` or similar for that sample to work.
+These samples do not use ImGuiLib but just link the required object files directly.
 
 Software using Dear Bindings
 ----------------------------
@@ -217,7 +242,7 @@ See our [Software using Dear Bindings](https://github.com/dearimgui/dear_binding
 License
 -------
 
-Dear Bindings is copyright (c) 2021-2023 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2024 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
 
 Contact
 -------

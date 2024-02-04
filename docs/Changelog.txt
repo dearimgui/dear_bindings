@@ -1,5 +1,5 @@
 
---- v0.07 WIP
+--- v0.07
 
 * Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
 * Fixed structs not having associated line numbers in the JSON output (#39)
@@ -28,6 +28,7 @@
 * Made "fmt" arguments non-nullable by default in the metadata (#57, thanks to [@pdoane] for the idea)
 * Fixed a bug where JSON metadata did not include fields that were in the else clause of a preprocessor conditional (#61)
 * Fixed GLFWwindow and GLFWmonitor getting incorrectly defined with an alternate tag name in the GLFW backend header (#63)
+* Added DirectX 9 and SDL2+OpenGL2 examples for Windows/Mac/Linux
 
 --- v0.06
 
