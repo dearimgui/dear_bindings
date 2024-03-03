@@ -272,7 +272,9 @@ def convert_header(
     # SDL backend forward-declared types
     mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
                                                                 ["SDL_Window",
-                                                                 "SDL_Renderer"
+                                                                 "SDL_Renderer",
+                                                                 "SDL_Gamepad",
+                                                                 "_SDL_GameController"
                                                                  ])
 
 
