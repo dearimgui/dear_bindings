@@ -1,4 +1,4 @@
-# Dear Bindings Version 0.07 WIP
+# Dear Bindings Version v0.08 WIP
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -435,7 +435,17 @@ def convert_header(
 
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
+    # Rename the API defines
     mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API', 'IMGUI_IMPL_API': 'CIMGUI_IMPL_API'})
+    # Remove these #defines as they don't make sense in C
+    mod_remove_defines.apply(dom_root, ["IM_PLACEMENT_NEW(_PTR)", "IM_NEW(_TYPE)"])
+    # Rewrite these defines to reference the new function names
+    # This could be done more generically but there are only two at present and there's a limit to how generic
+    # we can get (as there's all sorts of #define trickery that could break the general case), so for now we'll
+    # just do it the easy way
+    mod_rewrite_defines.apply(dom_root, ["IM_ALLOC(_SIZE)", "IM_FREE(_PTR)"], {"ImGui::": "ImGui_"})
+    # Rename IM_ALLOC and IM_FREE to stop them generating compile warnings as they clash with those in imgui.h
+    mod_rename_defines.apply(dom_root, {'IM_ALLOC(_SIZE)': 'CIM_ALLOC(_SIZE)', 'IM_FREE(_PTR)': 'CIM_FREE(_PTR)'})
 
     mod_forward_declare_structs.apply(dom_root)
     mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers

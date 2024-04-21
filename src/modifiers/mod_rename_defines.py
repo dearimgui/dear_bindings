@@ -11,18 +11,36 @@ def apply(dom_root, name_map):
 
     # Rename in any #defines
     for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
-        for token in define.tokens:
-            did_anything = False
+        define_content = define.get_content()
+        did_anything = False
+
+        if len(define.tokens) > 0:
+            # Define is using tokens
+            for token in define.tokens:
+                did_anything = False
+                for old_name in name_map:
+                    if old_name in token.value:
+                        token.value = token.value.replace(old_name, name_map[old_name])
+                        did_anything = True
+        else:
+            # Define is using name+content
             for old_name in name_map:
-                if old_name in token.value:
-                    token.value = token.value.replace(old_name, name_map[old_name])
+                if define.name.find(old_name) >= 0:
+                    define.name = define.name.replace(old_name, name_map[old_name])
                     did_anything = True
+                if define_content is not None:
+                    if define_content.find(old_name) >= 0:
+                        define_content = define_content.replace(old_name, name_map[old_name])
+                        did_anything = True
 
             if did_anything:
-                if define.pre_comments is not None:
-                    comments_to_check.extend(define.pre_comments)
-                if define.attached_comment is not None:
-                    comments_to_check.append(define.attached_comment)
+                define.set_content(define_content)
+
+        if did_anything:
+            if define.pre_comments is not None:
+                comments_to_check.extend(define.pre_comments)
+            if define.attached_comment is not None:
+                comments_to_check.append(define.attached_comment)
 
     # Rename in any conditional expressions
     for conditional in dom_root.list_all_children_of_type(code_dom.DOMPreprocessorIf):

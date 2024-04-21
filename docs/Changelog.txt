@@ -1,3 +1,8 @@
+--- v0.08 (WIP)
+
+* Rewrite the IM_ALLOC/IM_FREE macros to call the C versions of the respective functions, and rename them to
+  CIM_ALLOC and CIM_FREE to avoid conflicting with the original defines in #imgui.h
+* Remove IM_NEW/IM_PLACEMENT_NEW defines as they don't make sense outside of C++
 
 --- v0.07
 
