@@ -17,6 +17,7 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.accessibility = None  # The field accessibility
         self.name_alignment = 0  # Column to align name to (for aesthetic purposes)
+        self.default_value_tokens = None  # Tokens for the default value (if any)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -99,6 +100,29 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                 else:
                     dom_element.width_specifiers.append(None)
 
+                # Check for a default value
+
+                if stream.get_token_of_type("EQUAL"):
+                    dom_element.default_value_tokens = []
+
+                    bracket_count = 1
+
+                    while True:
+                        token = stream.get_token()
+                        if token.type == "LPAREN":
+                            bracket_count += 1
+                        elif token.type == "RPAREN":
+                            bracket_count -= 1
+                            if bracket_count == 0:
+                                stream.rewind_one_token()
+                                break
+                        elif token.type == "SEMICOLON":
+                            if bracket_count == 1:  # Semicolon at the top level terminates the expression
+                                stream.rewind_one_token()
+                                break
+
+                        dom_element.default_value_tokens.append(token)
+
                 separator_token = stream.get_token_of_type(["SEMICOLON", "COMMA"])
                 if separator_token is None:
                     stream.rewind(checkpoint)
@@ -169,6 +193,9 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                     declaration += "]"
                 if self.width_specifiers[i] is not None:
                     declaration += " : " + str(self.width_specifiers[i])
+                if self.default_value_tokens is not None:
+                    declaration += " /* = " + \
+                    collapse_tokens_to_string(self.default_value_tokens) + " */"
                 first_name = False
 
         write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
@@ -184,4 +211,6 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                 result += "]"
             if self.width_specifiers[i] is not None:
                 result += " : " + str(self.width_specifiers[i])
+            if self.default_value_tokens is not None:
+                result += " = " + collapse_tokens_to_string(self.default_value_tokens)
         return result

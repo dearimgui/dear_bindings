@@ -319,6 +319,10 @@ def emit_field(container, field):
         # Emit the type
         field_data["type"] = emit_type(field.field_type, declaration_suffix)
 
+        # Emit the default value, if any
+        if field.default_value_tokens is not None:
+            field_data["default_value"] = code_dom.common.collapse_tokens_to_string(field.default_value_tokens)
+
         add_comments(field, field_data)
         add_preprocessor_conditionals(field, field_data)
         add_internal_flag(field, field_data)

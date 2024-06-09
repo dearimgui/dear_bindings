@@ -418,6 +418,7 @@ for reference, but without any internal details.
 | fields.width                  | The bit width of the field, if specified               |
 | fields.is_anonymous           | Is this field anonymous?                               |
 | fields.type                   | The type of the field (see "types" for more details)   |
+| fields.default_value          | The default value of the field, if specified           |
 
 > Note that in versions v0.03 and earlier there was a `names` array that could contain multiple names if
 > the original C++ declaration used a single declaration with multiple names. This was confusing and complicated

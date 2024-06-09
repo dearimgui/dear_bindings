@@ -4,6 +4,10 @@
   CIM_ALLOC and CIM_FREE to avoid conflicting with the original defines in #imgui.h (#69)
 * Remove IM_NEW/IM_PLACEMENT_NEW defines as they don't make sense outside of C++
 * Fixed IMGUI_CHECKVERSION to use the correct function, and renamed to CIMGUI_CHECKVERSION (#69)
+* Fixed parsing of type declarations with inline struct/class/etc tags (#71)
+* Added support for default value declarations on structure fields. These are currently only emitted as comments
+  in the C backend (as there is no immediately usable way to actually apply them), but they are in the metadata so
+  other bindings can make use of them if necessary.
 
 --- v0.07
 
