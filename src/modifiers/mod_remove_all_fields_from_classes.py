@@ -10,11 +10,6 @@ def apply(dom_root, class_names, add_dummy_field):
 
         fields = class_element.list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
 
-        # We want to also remove fields inside direct ifdefs
-        preprocessor_ifs = class_element.list_directly_contained_children_of_type(code_dom.DOMPreprocessorIf)
-        for preprocessor_if in preprocessor_ifs:
-            fields += preprocessor_if.list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
-
         if len(fields) == 0:
             continue
 

@@ -4,6 +4,8 @@ from src import utils
 # Moves elements to a specified header. 
 # Last elements in the list will be first in the generated code
 # elements_to_move: each tuple is (DOM type, name, (optional) insert_near_forward_declarations)
+# If insert_near_forward_declarations is false then the elements
+# will be added in the "Helpers" or "Widgets support" section instead
 def apply(dom_root, destination_header, elements_to_move):
     for type_to_move in elements_to_move:
         element_type = type_to_move[0]
