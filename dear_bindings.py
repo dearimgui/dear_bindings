@@ -111,7 +111,10 @@ def convert_header(
 
     # Check if we'll do some special treatment for imgui_internal.h
     dest_file_name_only = os.path.basename(dest_file_no_ext)
-    is_probably_imgui_internal = dest_file_name_only.endswith('_internal')
+    is_imgui_internal = main_src_root.source_filename == "imgui_internal.h"
+
+    if is_imgui_internal:
+        print("Detected imgui_internal.h")
 
     dom_root.validate_hierarchy()
     #  dom_root.dump()
@@ -382,7 +385,7 @@ def convert_header(
                                                           'popup_flags'
                                                       ])
         
-    if is_probably_imgui_internal:
+    if is_imgui_internal:
         # Some functions in imgui_internal already have the Ex suffix,
         # which wreaks havok on disambiguation
         mod_rename_functions.apply(main_src_root, {
@@ -440,7 +443,7 @@ def convert_header(
                                                 'ImGuiTextBuffer_appendf'
                                             ])
         
-    if is_probably_imgui_internal:
+    if is_imgui_internal:
         mod_move_elements.apply(dom_root,
                                 main_src_root,
                                 [
@@ -537,7 +540,7 @@ def convert_header(
 
     # If our output name ends with _internal, then generate a version of it without that on the assumption that
     # this is probably imgui_internal.h and thus we need to know what imgui.h is (likely) called as well.
-    if is_probably_imgui_internal:
+    if is_imgui_internal:
         dest_file_name_only_no_internal = dest_file_name_only[:-9]
     else:
         dest_file_name_only_no_internal = dest_file_name_only
