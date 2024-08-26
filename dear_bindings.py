@@ -488,6 +488,8 @@ def convert_header(
                                     (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', True),
                                 ])
 
+    mod_remove_structs.apply(dom_root, ["ImVector_T"])        
+
     # Make all functions use CIMGUI_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
     mod_rename_defines.apply(dom_root, {'IMGUI_API': 'CIMGUI_API'})
