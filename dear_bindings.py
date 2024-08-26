@@ -83,7 +83,7 @@ def parse_single_header(src_file, context):
 # containing the initial header block for the implementation (provided in the templates/ directory).
 def convert_header(
         src_file,
-        config_include_files,
+        include_files,
         dest_file_no_ext,
         template_dir,
         no_struct_by_value_arguments,
@@ -99,7 +99,7 @@ def convert_header(
     dom_root = code_dom.DOMHeaderFileSet()
 
     # Parse any configuration include files and add them to the DOM
-    for include_file in config_include_files:
+    for include_file in include_files:
         dom_root.add_child(parse_single_header(include_file, context))
 
     # Parse and add the main header
@@ -700,9 +700,9 @@ if __name__ == '__main__':
                         default='',
                         help="Path to ImGui backend headers to use in emitted files. Should include a trailing slash "
                              "(eg \"Imgui/Backends/\"). (default: same as --imgui-include-dir)")
-    parser.add_argument('--config-include',
-                        help="Path to additional .h file to read configuration defines from (i.e. the file you set "
-                             "IMGUI_USER_CONFIG to, if any).",
+    parser.add_argument('--include',
+                        help="Path to additional .h files to include (e.g. imgui.h if converting imgui_internal.h, "
+                             "and/or the file you set IMGUI_USER_CONFIG to, if any)",
                         default=[],
                         action='append')
     parser.add_argument('--imconfig-path',
@@ -715,23 +715,23 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    config_include_files = []
+    include_files = []
 
     # Add imconfig.h to the include list to get any #defines set in that
     imconfig_path = args.imconfig_path if args.imconfig_path is not None else (
         os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
 
-    config_include_files.append(imconfig_path)
+    include_files.append(imconfig_path)
 
     # Add any user-supplied config file as well
-    for config_include in args.config_include:
-        config_include_files.append(os.path.realpath(config_include))
+    for include in args.include:
+        include_files.append(os.path.realpath(include))
 
     # Perform conversion
     try:
         convert_header(
             os.path.realpath(args.src),
-            config_include_files,
+            include_files,
             args.output,
             args.templatedir,
             args.nopassingstructsbyvalue,
