@@ -26,24 +26,14 @@ def apply(dom_root):
 
         if parent_struct is None:
             raise Exception("Failed to find parent class " + parent_struct.name + " for type " + struct.name)
-        
-        # Create a field with the parent type
-        parent_struct = parent_struct.clone()
 
-        dummy_field = code_dom.DOMFieldDeclaration()
-        dummy_field.names = ["Parent_" + parent_struct.name]
-        dummy_field.is_array = [False]
-        dummy_field.width_specifiers = [None]
-        dummy_field.accessibility = "public"
-        dummy_field.field_type = utils.create_type(parent_struct.name)
-        dummy_field.field_type.parent = dummy_field
+        parent_fields = parent_struct.clone().list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
 
         comment = code_dom.DOMComment()
-        comment.comment_text = "// Appended parent type " + parent_struct.name
-        dummy_field.attach_preceding_comments([comment])
+        comment.comment_text = "// Appended from parent type " + parent_struct.name
+        parent_fields[0].attach_preceding_comments([comment])
 
         struct.insert_before_child(struct.children[0], 
-                                   [code_dom.DOMBlankLines(1),
-                                    dummy_field, 
-                                    code_dom.DOMBlankLines(2)])
+                                   parent_fields + [code_dom.DOMBlankLines(2)]
+                                   )
         struct.base_classes = None
