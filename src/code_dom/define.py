@@ -1,5 +1,6 @@
 from .common import *
 from src import code_dom
+from src import utils
 
 
 # A #define statement
@@ -45,5 +46,22 @@ class DOMDefine(code_dom.element.DOMElement):
         else:
             write_c_line(file, indent, self.add_attached_comment_to_line("#define " + self.name))
 
+    # Retrieves just the content part of a #define (no comments or similar) as a string
+    # Returns None if the define has no content
+    def get_content(self):
+        return self.content
+
+    # Set the content part of a #define
+    # new_content should be a string
+    def set_content(self, new_content):
+        self.content = new_content
+        # This removes the raw tokens so that the define will be generated from name+content afterwards
+        self.tokens = []
+
     def __str__(self):
-        return "Define: " + str(self.tokens)
+        if self.tokens is not None:
+            return "Define: " + str(self.tokens)
+        elif self.content is not None:
+            return "Define: " + str(self.name) + " " + str(self.content)
+        else:
+            return "Define: " + str(self.name)

@@ -17,6 +17,7 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.accessibility = None  # The field accessibility
         self.name_alignment = 0  # Column to align name to (for aesthetic purposes)
+        self.default_value_tokens = None  # Tokens for the default value (if any)
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -179,6 +180,9 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                     declaration += "]"
                 if self.width_specifiers[i] is not None:
                     declaration += " : " + str(self.width_specifiers[i])
+                if self.default_value_tokens is not None:
+                    declaration += " /* = " + \
+                    collapse_tokens_to_string(self.default_value_tokens) + " */"
                 first_name = False
 
         write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
@@ -194,4 +198,6 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                 result += "]"
             if self.width_specifiers[i] is not None:
                 result += " : " + str(self.width_specifiers[i])
+            if self.default_value_tokens is not None:
+                result += " = " + collapse_tokens_to_string(self.default_value_tokens)
         return result

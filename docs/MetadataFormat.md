@@ -418,6 +418,7 @@ for reference, but without any internal details.
 | fields.width                  | The bit width of the field, if specified               |
 | fields.is_anonymous           | Is this field anonymous?                               |
 | fields.type                   | The type of the field (see "types" for more details)   |
+| fields.default_value          | The default value of the field, if specified           |
 
 > Note that in versions v0.03 and earlier there was a `names` array that could contain multiple names if
 > the original C++ declaration used a single declaration with multiple names. This was confusing and complicated
@@ -551,7 +552,7 @@ Function arguments as they appear in function (and function pointer) metadata.
 | type                | The argument type                                                            |
 | is_array            | Is this an array argument?                                                   |
 | array_bounds        | Array bounds, if this is an array argument                                   |
-| is_vararges         | Is this a varargs argument?                                                  |
+| is_varargs          | Is this a varargs argument?                                                  |
 | is_instance_pointer | Is this the instance pointer? (i.e. the 'this' pointer for a class function) | 
 | default_value       | The default value, if present                                                |
 

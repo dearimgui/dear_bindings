@@ -60,7 +60,7 @@ jobs:
           -D${{ matrix.flag_nogeneratedefaultargfunctions == 'withgeneratedefaultargfunctions' && 'CIMGUI_WITH_GENERATED_DEFAULT_ARG_FUNCTIONS' || 'CIMGUI_NO_GENERATED_DEFAULT_ARG_FUNCTIONS' }} \
           -o example_null                       \
           -Iimgui -I.                           \
-          -x c examples/example_null.c          \
+          -x c examples/example_null/main.c     \
           -x c++ cimgui.cpp                     \
           -x c++ cimgui_internal.cpp            \
           imgui/imgui.cpp                       \

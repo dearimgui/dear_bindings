@@ -8,6 +8,7 @@ import copy
 class DOMType(code_dom.element.DOMElement):
     def __init__(self):
         super().__init__()
+        self.use_pointer_cast_conversion = False  # Should the function stub generator use a pointer-based cast?
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -27,7 +28,8 @@ class DOMType(code_dom.element.DOMElement):
         have_valid_type = False
         while True:
             tok = stream.get_token_of_type(['THING', 'ASTERISK', 'AMPERSAND', 'CONST', 'CONSTEXPR', 'SIGNED',
-                                            'UNSIGNED', 'LSQUARE', 'LTRIANGLE', 'COLON'])
+                                            'UNSIGNED', 'LSQUARE', 'LTRIANGLE', 'COLON', 'STRUCT', 'CLASS', 'UNION',
+                                            'ENUM'])
             if tok is None:
                 if not have_valid_type:
                     stream.rewind(checkpoint)
@@ -81,7 +83,8 @@ class DOMType(code_dom.element.DOMElement):
                     return dom_element
             else:
                 if (tok.type == 'CONST') or (tok.type == 'CONSTEXPR') or (tok.type == 'SIGNED') or \
-                        (tok.type == 'UNSIGNED'):
+                        (tok.type == 'UNSIGNED') or (tok.type == 'CLASS') or (tok.type == 'STRUCT') or \
+                        (tok.type == 'UNION') or (tok.type == 'ENUM'):
                     # Type prefix
                     dom_element.tokens.append(tok)
                 elif tok.type == 'COLON':

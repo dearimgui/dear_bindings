@@ -1,5 +1,15 @@
+--- v0.08 (WIP)
 
---- v0.07 WIP
+* Rewrite the IM_ALLOC/IM_FREE macros to call the C versions of the respective functions, and rename them to
+  CIM_ALLOC and CIM_FREE to avoid conflicting with the original defines in #imgui.h (#69)
+* Remove IM_NEW/IM_PLACEMENT_NEW defines as they don't make sense outside of C++
+* Fixed IMGUI_CHECKVERSION to use the correct function, and renamed to CIMGUI_CHECKVERSION (#69)
+* Fixed parsing of type declarations with inline struct/class/etc tags (#71)
+* Added support for default value declarations on structure fields. These are currently only emitted as comments
+  in the C backend (as there is no immediately usable way to actually apply them), but they are in the metadata so
+  other bindings can make use of them if necessary.
+
+--- v0.07
 
 * Fixed a bug where unbounded arrays would get emitted to the metadata as having bounds of "[None]" instead of "[]". (#41)
 * Fixed structs not having associated line numbers in the JSON output (#39)
@@ -10,6 +20,25 @@
   there by regular means). It does however emit that information to the JSON output.
 * Standardised the rule that "metadata elements are omitted if not known" and removed cases where they were omitted
   when not their default values. (#42)
+* Made the JSON generator include #defines with no actual value (#43)
+* Fixed a bug where DOM elements inside preprocessor conditionals didn't get enumerated under some circumstances
+* Added --generateunformattedfunctions to generate versions of string format functions that don't try and do any
+  formatting (many thanks to [@ZimM-LostPolygon] for the implementation!)
+* Fixed silly bug that caused is_flags_enum to always be set (#53)
+* Fixed parsing of preprocessor conditionals containing continuations (#50)
+* Added --imconfig-path to override path to imconfig.h
+* Made backends use CIMGUI_IMPL_API consistently
+* Worked around Win32 backend wndproc handler not getting generated (#51)
+* Added :: to function references in stubs to avoid name clash issues
+* Changed forward declarations to not use _t in situations where it causes problems with backends (#51)
+* Added a special case for forward-declared by-value structs in the DX12 backend
+* Added support for typedefs with an explicit type
+* Fixed backend headers to use backends/ folder for includes, and added some missing headers
+* Added --backend-include-dir to allow specifying the path where backend header files are found
+* Made "fmt" arguments non-nullable by default in the metadata (#57, thanks to [@pdoane] for the idea)
+* Fixed a bug where JSON metadata did not include fields that were in the else clause of a preprocessor conditional (#61)
+* Fixed GLFWwindow and GLFWmonitor getting incorrectly defined with an alternate tag name in the GLFW backend header (#63)
+* Added DirectX 9 and SDL2+OpenGL2 examples for Windows/Mac/Linux
 
 --- v0.06
 

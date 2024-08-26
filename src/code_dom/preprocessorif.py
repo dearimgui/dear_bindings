@@ -30,6 +30,7 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         dom_element.is_negated = initial_token.type == 'PPIFNDEF'
 
         # Tokens up until the line end are part of the expression
+        last_token = None
         while True:
             token = stream.get_token(skip_newlines=False)
             if token is None:
@@ -40,10 +41,11 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
                 dom_element.attached_comment = code_dom.comment.DOMComment.parse(context, stream)
                 dom_element.attached_comment.is_attached_comment = True
                 dom_element.attached_comment.parent = dom_element
-            elif token.type == 'NEWLINE':
+            elif (token.type == 'NEWLINE') and ((last_token is None) or (last_token.value != '\\')):
                 break
             else:
                 dom_element.expression_tokens.append(token)
+                last_token = token
 
         # Then we have the actual body of the conditional
         in_else = False
@@ -144,9 +146,14 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         if self.attached_comment is not None:
             comment = self.attached_comment.to_c_string()
         else:
-            comment = " // " + opening_clause
+            comment = " // " + self.remove_continuations(opening_clause)
 
         write_c_line(file, 0, "#endif" + comment)
+
+    # Remove any continuations (i.e. "\<newline>" sequences) from the string given
+    @staticmethod
+    def remove_continuations(str):
+        return str.replace('\\\n', '')
 
     # Add a new child to the else list of this element, optionally setting the last element information in the context
     def add_child_to_else(self, child, context=None):
@@ -162,7 +169,7 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         self.else_children.remove(child)
         child.parent = None
 
-    def __is_preprocessor_container(self):
+    def is_preprocessor_container(self):
         return True
 
     def get_child_lists(self):

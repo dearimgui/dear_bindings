@@ -50,7 +50,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             if prefix_token is None:
                 break
 
-            if prefix_token.value == 'IMGUI_API':
+            if (prefix_token.value == 'IMGUI_API') or (prefix_token.value == 'IMGUI_IMPL_API'):
                 stream.get_token()  # Eat token
                 dom_element.is_imgui_api = True
             elif prefix_token.value == 'inline':
@@ -279,10 +279,16 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
     def get_prefixes_and_return_type(self, context=WriteContext()):
         declaration = ""
         if self.is_imgui_api:
-            if context.for_c:
-                declaration += "CIMGUI_API "  # Use CIMGUI_API instead of IMGUI_API as our define here
+            if context.for_backend:
+                if context.for_c:
+                    declaration += "CIMGUI_IMPL_API "  # Use CIMGUI_IMPL_API as our define here
+                else:
+                    declaration += "IMGUI_IMPL_API "
             else:
-                declaration += "IMGUI_API "
+                if context.for_c:
+                    declaration += "CIMGUI_API "  # Use CIMGUI_API instead of IMGUI_API as our define here
+                else:
+                    declaration += "IMGUI_API "
         if self.is_static and (not context.for_implementation):
             declaration += "static "
         if self.is_inline and (not context.for_implementation):
