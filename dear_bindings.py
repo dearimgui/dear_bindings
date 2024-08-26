@@ -538,6 +538,7 @@ def convert_header(
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableHeaderData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
