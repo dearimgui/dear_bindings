@@ -244,9 +244,7 @@ def convert_header(
     mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
-    # Each iteration handles templates one more nesting level deep
-    for _ in range(0, 2):
-        mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+    mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
 
     # We treat certain types as by-value types
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
