@@ -103,10 +103,10 @@ def convert_header(
     # Check if we'll do some special treatment for imgui_internal.h
     is_imgui_internal = os.path.basename(src_file) == "imgui_internal.h"
     if is_imgui_internal:
-        print("Detected imgui_internal.h, auto-including stb_textedit_minimal.h")
+        print("Detected imgui_internal.h, auto-including imstb_textedit_minimal.h")
         current_script_path = os.path.dirname(os.path.realpath(__file__))
-        stb_textedit_minimal_h_path = os.path.join(current_script_path, "src", "external", "stb_textedit_minimal.h")
-        include_files.append(stb_textedit_minimal_h_path)
+        imstb_textedit_minimal_h_path = os.path.join(current_script_path, "src", "external", "imstb_textedit_minimal.h")
+        include_files.append(imstb_textedit_minimal_h_path)
 
     # Parse any configuration include files and add them to the DOM
     for include_file in include_files:

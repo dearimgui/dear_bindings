@@ -9,33 +9,33 @@
 // and undo state.
 //
 
-#ifndef STB_TEXTEDIT_UNDOSTATECOUNT
-#define STB_TEXTEDIT_UNDOSTATECOUNT   99
+#ifndef IMSTB_TEXTEDIT_UNDOSTATECOUNT
+#define IMSTB_TEXTEDIT_UNDOSTATECOUNT   99
 #endif
-#ifndef STB_TEXTEDIT_UNDOCHARCOUNT
-#define STB_TEXTEDIT_UNDOCHARCOUNT   999
+#ifndef IMSTB_TEXTEDIT_UNDOCHARCOUNT
+#define IMSTB_TEXTEDIT_UNDOCHARCOUNT   999
 #endif
-#ifndef STB_TEXTEDIT_CHARTYPE
-typedef int STB_TEXTEDIT_CHARTYPE;
+#ifndef IMSTB_TEXTEDIT_CHARTYPE
+typedef int IMSTB_TEXTEDIT_CHARTYPE;
 #endif
-#ifndef STB_TEXTEDIT_POSITIONTYPE
-typedef int STB_TEXTEDIT_POSITIONTYPE;
+#ifndef IMSTB_TEXTEDIT_POSITIONTYPE
+typedef int IMSTB_TEXTEDIT_POSITIONTYPE;
 #endif
 
 struct StbUndoRecord
 {
    // private data
-   STB_TEXTEDIT_POSITIONTYPE  where;
-   STB_TEXTEDIT_POSITIONTYPE  insert_length;
-   STB_TEXTEDIT_POSITIONTYPE  delete_length;
+   IMSTB_TEXTEDIT_POSITIONTYPE  where;
+   IMSTB_TEXTEDIT_POSITIONTYPE  insert_length;
+   IMSTB_TEXTEDIT_POSITIONTYPE  delete_length;
    int                        char_storage;
 };
 
 struct StbUndoState
 {
    // private data
-   StbUndoRecord          undo_rec [STB_TEXTEDIT_UNDOSTATECOUNT];
-   STB_TEXTEDIT_CHARTYPE  undo_char[STB_TEXTEDIT_UNDOCHARCOUNT];
+   StbUndoRecord          undo_rec [IMSTB_TEXTEDIT_UNDOSTATECOUNT];
+   IMSTB_TEXTEDIT_CHARTYPE  undo_char[IMSTB_TEXTEDIT_UNDOCHARCOUNT];
    short undo_point, redo_point;
    int undo_char_point, redo_char_point;
 };
