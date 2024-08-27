@@ -162,11 +162,8 @@ def convert_header(
                                         "ImNewDummy",  # ImGui <1.82
                                         "ImNewWrapper",  # ImGui >=1.82
                                         # Templated stuff in imgui_internal.h
-                                        "ImBitArray",
-                                        "ImBitVector",
+                                        "ImBitArray", # template with two parameters, not supported
                                         "ImSpanAllocator",
-                                        "ImChunkStream",
-                                        "ImGuiInputTextState",
                                         ])
     # Remove all functions from certain types, as they're not really useful
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
@@ -247,6 +244,8 @@ def convert_header(
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+    # Remove dangling unspecialized template that flattening didn't handle
+    mod_remove_structs.apply(dom_root, ["ImVector_T"])
 
     # We treat certain types as by-value types
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
@@ -486,49 +485,13 @@ def convert_header(
                                 [
                                     # This terribleness is because those few type definitions needs to appear
                                     # below the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
-                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTable'),
-                                    (code_dom.DOMClassStructUnion, 'ImPool_ImGuiTabBar'),
                                     (code_dom.DOMClassStructUnion, 'ImGuiTextIndex'),
-                                    #
-                                    (code_dom.DOMClassStructUnion, 'ImVector_int'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_const_charPtr'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiColorMod'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiItemFlags'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiKeyRoutingData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperRange'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiNavTreeNodeData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumnData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumns'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPopupData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPtrOrIndex'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiSettingsHandler'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiShrinkWidthItem'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStackLevelInfo'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStyleMod'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabBar'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableHeaderData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_unsigned_char'),
+                                    (code_dom.DOMClassStructUnion, 'ImPool_', True),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_', True),
                                     # Fudge those typedefs to be at the top
-                                    (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', True),
-                                    (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', True),
+                                    (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', False, True),
+                                    (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', False, True),
                                 ])
-
-    mod_remove_structs.apply(dom_root, ["ImVector_T"])
 
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
