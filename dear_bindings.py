@@ -15,6 +15,7 @@
 #   cimgui.json : full metadata to reconstruct bindings for other programming languages, including full comments.
 
 import os
+from pathlib import Path
 from src import code_dom
 from src import c_lexer
 from src import utils
@@ -91,7 +92,8 @@ def convert_header(
         generate_unformatted_functions,
         is_backend,
         imgui_include_dir,
-        backend_include_dir
+        backend_include_dir,
+        emit_combined_json_metadata
     ):
 
     # Set up context and DOM root
@@ -651,9 +653,23 @@ def convert_header(
                                     is_backend=is_backend)
 
     # Generate metadata
-    with open(dest_file_no_ext + ".json", "w") as file:
-        # We intentionally generate JSON starting from the root here so that we include defines from imconfig.h
-        gen_metadata.generate(dom_root, file)
+    if emit_combined_json_metadata:
+        metadata_file_name = dest_file_no_ext + ".json"
+        with open(metadata_file_name, "w") as file:
+            # We intentionally generate JSON starting from the root here so that we emit metadata from all dependencies
+            gen_metadata.generate(dom_root, file)
+    else:
+        # Emit separate metadata files for each header
+        headers = dom_root.list_directly_contained_children_of_type(code_dom.DOMHeaderFile)
+        for header in headers:
+            if (header == main_src_root):
+                metadata_file_name = dest_file_no_ext
+            else:
+                metadata_file_name = dest_file_no_ext + "_" + str(Path(header.source_filename).with_suffix("")) + ".json"
+
+            metadata_file_name = metadata_file_name + ".json"
+            with open(metadata_file_name, "w") as file:
+                gen_metadata.generate(header, file)
 
 
 if __name__ == '__main__':
@@ -709,6 +725,12 @@ if __name__ == '__main__':
     parser.add_argument('--imconfig-path',
                         help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same"
                              "directory as the source file.")
+    parser.add_argument('--emit-combined-json-metadata',
+                        action='store_true',
+                        help="Emit a single combined metadata JSON file instead of emitting "
+                             "separate metadata JSON files for each header",
+                        default=False)
+    
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -740,7 +762,8 @@ if __name__ == '__main__':
             args.generateunformattedfunctions,
             args.backend,
             args.imgui_include_dir,
-            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir
+            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir,
+            args.emit_combined_json_metadata
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")

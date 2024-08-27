@@ -91,6 +91,9 @@ options:
                         Path to additional .h files to include (e.g. imgui.h
                         if converting imgui_internal.h, and/or the file you
                         set IMGUI_USER_CONFIG to, if any)
+  --emit-combined-json-metadata
+                        Emit a single combined metadata JSON file instead of
+                        emitting separate metadata JSON files for each header
 
 Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors
