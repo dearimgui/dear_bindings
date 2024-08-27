@@ -100,6 +100,14 @@ def convert_header(
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
 
+    # Check if we'll do some special treatment for imgui_internal.h
+    is_imgui_internal = os.path.basename(src_file) == "imgui_internal.h"
+    if is_imgui_internal:
+        print("Detected imgui_internal.h, auto-including stb_textedit_minimal.h")
+        current_script_path = os.path.dirname(os.path.realpath(__file__))
+        stb_textedit_minimal_h_path = os.path.join(current_script_path, "src", "external", "stb_textedit_minimal.h")
+        include_files.append(stb_textedit_minimal_h_path)
+
     # Parse any configuration include files and add them to the DOM
     for include_file in include_files:
         dom_root.add_child(parse_single_header(include_file, context))
@@ -109,15 +117,9 @@ def convert_header(
     dom_root.add_child(main_src_root)
 
     # Assign a destination filename based on the output file
+    dest_file_name_only = os.path.basename(dest_file_no_ext)
     _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
     main_src_root.dest_filename += ".h"  # Presume the primary output file is the .h
-
-    # Check if we'll do some special treatment for imgui_internal.h
-    dest_file_name_only = os.path.basename(dest_file_no_ext)
-    is_imgui_internal = main_src_root.source_filename == "imgui_internal.h"
-
-    if is_imgui_internal:
-        print("Detected imgui_internal.h")
 
     dom_root.validate_hierarchy()
     #  dom_root.dump()
