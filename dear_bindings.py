@@ -169,14 +169,7 @@ def convert_header(
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
     # Remove all functions from ImPool, since we can't handle nested template functions yet
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
-    
-    # Special case for ImGuiContext - it includes a field of type ImGuiInputTextState,
-    # which includes a field of type ImStb::STB_TexteditState, which we fail to generate at the moment.
-    # ImGuiContext is too important however to be removed, but! It's pretty much always used through a pointer,
-    # and rarely by directly manipulating the fields. 
-    # What we do here, is basically treat ImGuiContext as an opaque pointer.
-    mod_remove_all_fields_from_classes.apply(dom_root, ["ImGuiContext"], True)
-    
+
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -240,7 +233,7 @@ def convert_header(
     # if anyone tries to use it
     mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
     mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
-    mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
+    mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_', 'ImStb': 'ImStb_'})
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
@@ -249,7 +242,9 @@ def convert_header(
 
     # We treat certain types as by-value types
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
+        'ImVec1',
         'ImVec2',
+        'ImVec2ih',
         'ImVec4',
         'ImColor',
         'ImStr',
@@ -487,7 +482,45 @@ def convert_header(
                                     # below the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
                                     (code_dom.DOMClassStructUnion, 'ImGuiTextIndex'),
                                     (code_dom.DOMClassStructUnion, 'ImPool_', True),
-                                    (code_dom.DOMClassStructUnion, 'ImVector_', True),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImVector_int'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_const_charPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiColorMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiItemFlags'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiKeyRoutingData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperRange'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiNavTreeNodeData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiMultiSelectState'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiMultiSelectTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumnData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumns'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPopupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPtrOrIndex'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiSettingsHandler'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiShrinkWidthItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStackLevelInfo'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStyleMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableHeaderData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_unsigned_char'),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImChunkStream_ImGuiWindowSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImChunkStream_ImGuiTableSettings'),
                                     # Fudge those typedefs to be at the top
                                     (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', False, True),
                                     (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', False, True),
@@ -538,8 +571,8 @@ def convert_header(
         "ImDrawCallback_ResetRenderState"
     ])
 
-    mod_remove_typedefs.apply(dom_root, [
-        "ImBitArrayForNamedKeys" # template with two parameters, not supported
+    mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
+        ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
     ])
 
     dom_root.validate_hierarchy()

@@ -59,3 +59,4 @@ from . import mod_remove_defines
 from . import mod_rewrite_defines
 from . import mod_move_elements
 from . import mod_remove_typedefs
+from . import mod_replace_typedef_with_opaque_buffer
