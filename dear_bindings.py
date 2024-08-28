@@ -489,6 +489,7 @@ def convert_header(
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiFocusScopeData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
@@ -514,6 +515,7 @@ def convert_header(
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableHeaderData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTreeNodeStackData'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
                                     (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
@@ -523,7 +525,6 @@ def convert_header(
                                     (code_dom.DOMClassStructUnion, 'ImChunkStream_ImGuiTableSettings'),
                                     # Fudge those typedefs to be at the top
                                     (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', False, True),
-                                    (code_dom.DOMTypedef, 'ImGuiTableDrawChannelIdx', False, True),
                                 ])
 
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
