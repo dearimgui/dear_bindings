@@ -638,7 +638,7 @@ def convert_header(
             if (header == main_src_root):
                 metadata_file_name = dest_file_no_ext
             else:
-                metadata_file_name = dest_file_no_ext + "_" + str(Path(header.source_filename).with_suffix("")) + ".json"
+                metadata_file_name = dest_file_no_ext + "_" + str(Path(header.source_filename).with_suffix(""))
 
             metadata_file_name = metadata_file_name + ".json"
             with open(metadata_file_name, "w") as file:
