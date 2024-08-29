@@ -312,7 +312,7 @@ def emit_field(container, field):
             declaration_suffix = "[" + field_data["array_bounds"] + "]"
 
         if field.width_specifiers[i] is not None:
-            field_data["width"] = str(field.width_specifiers[i])
+            field_data["width"] = field.width_specifiers[i]
 
         field_data["is_anonymous"] = field.is_anonymous
 
