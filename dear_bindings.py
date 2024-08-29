@@ -572,6 +572,18 @@ def convert_header(
         "ImDrawCallback_ResetRenderState"
     ])
 
+    # Remove duplicate defines from imstb_textedit_minimal.h since it's already defined in imgui_internal
+    mod_exclude_defines_from_metadata.apply(dom_root,
+        [
+            "IMSTB_TEXTEDIT_UNDOSTATECOUNT",
+            "IMSTB_TEXTEDIT_UNDOCHARCOUNT"
+        ],
+        [
+            "#ifndef IMSTB_TEXTEDIT_UNDOSTATECOUNT \n#endif",
+            "#ifndef IMSTB_TEXTEDIT_UNDOCHARCOUNT \n#endif"
+        ]
+    )
+
     mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
         ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
     ])
