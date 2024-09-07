@@ -100,15 +100,28 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                 else:
                     dom_element.width_specifiers.append(None)
 
-                # Check for initializer
-                                
-                if stream.get_token_of_type(['EQUAL']):
+                # Check for a default value
+
+                if stream.get_token_of_type("EQUAL"):
+                    dom_element.default_value_tokens = []
+
+                    bracket_count = 1
+
                     while True:
-                        # Skip initializer
-                        next_token = stream.peek_token()
-                        if next_token.type != 'SEMICOLON':
-                            stream.get_token()
-                            break    
+                        token = stream.get_token()
+                        if token.type == "LPAREN":
+                            bracket_count += 1
+                        elif token.type == "RPAREN":
+                            bracket_count -= 1
+                            if bracket_count == 0:
+                                stream.rewind_one_token()
+                                break
+                        elif token.type == "SEMICOLON":
+                            if bracket_count == 1:  # Semicolon at the top level terminates the expression
+                                stream.rewind_one_token()
+                                break
+
+                        dom_element.default_value_tokens.append(token)
 
                 separator_token = stream.get_token_of_type(["SEMICOLON", "COMMA"])
                 if separator_token is None:
