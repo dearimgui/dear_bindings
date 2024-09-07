@@ -57,7 +57,8 @@ jobs:
     - name: Build
       run: |
         ${{ matrix.compiler }}                  \
-          -D${{ matrix.flag_nogeneratedefaultargfunctions == 'withgeneratedefaultargfunctions' && 'CIMGUI_WITH_GENERATED_DEFAULT_ARG_FUNCTIONS' || 'CIMGUI_NO_GENERATED_DEFAULT_ARG_FUNCTIONS' }} \
+          -D${{ matrix.flag_nogeneratedefaultargfunctions == 'withgeneratedefaultargfunctions' && 'CIMGUI_WITH_GENERATE_DEFAULT_ARG_FUNCTIONS' || 'CIMGUI_NO_GENERATE_DEFAULT_ARG_FUNCTIONS' }} \
+          -DCIMGUI_WITH_GENERATE_UNFORMATTED_FUNCTIONS \
           -o example_null                       \
           -Iimgui -I.                           \
           -x c examples/example_null/main.c     \
