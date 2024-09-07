@@ -139,6 +139,12 @@ def convert_header(
         mod_remove_includes.apply(dom_root, ["<float.h>",
                                              "<string.h>"])
 
+    if is_imgui_internal:
+        # Point imstb_textedit.h to cimstb_textedit.h (which needs to be generated using something like:
+        # "--imconfig-path ..\imgui\imconfig.h -o generated\cimstb_textedit src\external\imstb_textedit_minimal.h"
+        # to process that file
+        mod_change_includes.apply(dom_root, {"\"imstb_textedit.h\"": "\"cimstb_textedit.h\""})
+
     if is_backend:
         # Backends need to reference cimgui.h, not imgui.h
         mod_change_includes.apply(dom_root, {"\"imgui.h\"": "\"cimgui.h\""})
@@ -153,6 +159,8 @@ def convert_header(
                                                               "IMGUI_BACKEND_HAS_WINDOWS_H",
                                                               True)
 
+    # Rename
+    mod_rename_types.apply(dom_root, {"ImStb::STB_TexteditState": "STB_TexteditState"})
     mod_attach_preceding_comments.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
     mod_assign_anonymous_type_names.apply(dom_root)

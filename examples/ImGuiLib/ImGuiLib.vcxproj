@@ -25,6 +25,8 @@
     <ClCompile Include="..\..\..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\..\..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\..\generated\cimgui.cpp" />
+    <ClCompile Include="..\..\generated\cimgui_internal.cpp" />
+    <ClCompile Include="..\..\generated\cimstb_textedit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\imgui\imgui.h" />
@@ -33,6 +35,8 @@
     <ClInclude Include="..\..\..\imgui\imstb_textedit.h" />
     <ClInclude Include="..\..\..\imgui\imstb_truetype.h" />
     <ClInclude Include="..\..\generated\cimgui.h" />
+    <ClInclude Include="..\..\generated\cimgui_internal.h" />
+    <ClInclude Include="..\..\generated\cimstb_textedit.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

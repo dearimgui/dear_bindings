@@ -24,6 +24,12 @@
     <ClCompile Include="..\..\..\imgui\imgui_widgets.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\generated\cimgui_internal.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\generated\cimstb_textedit.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\generated\cimgui.h">
@@ -42,6 +48,12 @@
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\imgui\imstb_truetype.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\generated\cimgui_internal.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\generated\cimstb_textedit.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
