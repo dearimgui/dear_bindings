@@ -571,7 +571,7 @@ def convert_header(
         ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
     ])
 
-    # Remove namespaced define t
+    # Remove namespaced define
     mod_remove_typedefs.apply(dom_root, [
         "ImStbTexteditState"
     ])

@@ -10,9 +10,6 @@ def apply(dom_root, class_name, field_name, new_field_type):
 
         fields = class_element.list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
 
-        if len(fields) == 0:
-            continue
-
         for field in fields:
             if field_name not in field.names:
                 continue
