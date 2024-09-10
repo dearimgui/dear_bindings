@@ -102,11 +102,6 @@ def convert_header(
 
     # Check if we'll do some special treatment for imgui_internal.h
     is_imgui_internal = os.path.basename(src_file) == "imgui_internal.h"
-    if is_imgui_internal:
-        print("Detected imgui_internal.h, auto-including imstb_textedit_minimal.h")
-        current_script_path = os.path.dirname(os.path.realpath(__file__))
-        imstb_textedit_minimal_h_path = os.path.join(current_script_path, "src", "external", "imstb_textedit_minimal.h")
-        include_files.append(imstb_textedit_minimal_h_path)
 
     # Parse any configuration include files and add them to the DOM
     for include_file in include_files:
@@ -572,21 +567,16 @@ def convert_header(
         "ImDrawCallback_ResetRenderState"
     ])
 
-    # Remove duplicate defines from imstb_textedit_minimal.h since it's already defined in imgui_internal
-    mod_exclude_defines_from_metadata.apply(dom_root,
-        [
-            "IMSTB_TEXTEDIT_UNDOSTATECOUNT",
-            "IMSTB_TEXTEDIT_UNDOCHARCOUNT"
-        ],
-        [
-            "#ifndef IMSTB_TEXTEDIT_UNDOSTATECOUNT \n#endif",
-            "#ifndef IMSTB_TEXTEDIT_UNDOCHARCOUNT \n#endif"
-        ]
-    )
-
     mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
         ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
     ])
+
+    # Remove namespaced define t
+    mod_remove_typedefs.apply(dom_root, [
+        "ImStbTexteditState"
+    ])
+    # Replace the stb_textedit type reference with an opaque pointer
+    mod_change_class_field_type.apply(dom_root, "ImGuiInputTextState", "Stb", "void*")
 
     dom_root.validate_hierarchy()
 
