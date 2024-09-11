@@ -7,5 +7,4 @@ def apply(dom_root):
         function.body = None
         if function.is_inline or function.is_static:
             function.is_inline = False
-            function.is_static = False
             function.is_imgui_api = True

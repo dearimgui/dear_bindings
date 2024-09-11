@@ -49,7 +49,7 @@ def apply(dom_root):
             # Note the class it came from originally
             function.original_class = struct
 
-            if not function.is_constructor:
+            if (not function.is_constructor) and (not function.is_static):
                 # Add a self argument as the first argument of the function
                 self_arg = code_dom.DOMFunctionArgument()
                 self_arg.arg_type = code_dom.DOMType()

@@ -289,7 +289,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
                     declaration += "CIMGUI_API "  # Use CIMGUI_API instead of IMGUI_API as our define here
                 else:
                     declaration += "IMGUI_API "
-        if self.is_static and (not context.for_implementation):
+        if self.is_static and (not context.for_implementation) and (not context.for_c):
             declaration += "static "
         if self.is_inline and (not context.for_implementation):
             if context.for_c:

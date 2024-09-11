@@ -446,6 +446,7 @@ def emit_function(function):
     result["is_unformatted_helper"] = function.is_unformatted_helper # True for functions that are variants of format string
     #                                                                  accepting functions with format set to '%s' and
     #                                                                  a single string argument.
+    result["is_static"] = function.is_static
 
     # Note the original name of the class this came from
     if function.original_class is not None:
