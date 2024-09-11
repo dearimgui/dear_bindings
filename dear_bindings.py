@@ -15,8 +15,10 @@
 #   cimgui.json : full metadata to reconstruct bindings for other programming languages, including full comments.
 
 import os
+from pathlib import Path
 from src import code_dom
 from src import c_lexer
+from src import utils
 import argparse
 import sys
 import traceback
@@ -82,7 +84,7 @@ def parse_single_header(src_file, context):
 # containing the initial header block for the implementation (provided in the templates/ directory).
 def convert_header(
         src_file,
-        config_include_files,
+        include_files,
         dest_file_no_ext,
         template_dir,
         no_struct_by_value_arguments,
@@ -90,15 +92,19 @@ def convert_header(
         generate_unformatted_functions,
         is_backend,
         imgui_include_dir,
-        backend_include_dir
+        backend_include_dir,
+        emit_combined_json_metadata
     ):
 
     # Set up context and DOM root
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
 
+    # Check if we'll do some special treatment for imgui_internal.h
+    is_imgui_internal = os.path.basename(src_file) == "imgui_internal.h"
+
     # Parse any configuration include files and add them to the DOM
-    for include_file in config_include_files:
+    for include_file in include_files:
         dom_root.add_child(parse_single_header(include_file, context))
 
     # Parse and add the main header
@@ -106,6 +112,7 @@ def convert_header(
     dom_root.add_child(main_src_root)
 
     # Assign a destination filename based on the output file
+    dest_file_name_only = os.path.basename(dest_file_no_ext)
     _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
     main_src_root.dest_filename += ".h"  # Presume the primary output file is the .h
 
@@ -150,15 +157,14 @@ def convert_header(
                                         "ImNewDummy",  # ImGui <1.82
                                         "ImNewWrapper",  # ImGui >=1.82
                                         # Templated stuff in imgui_internal.h
-                                        "ImBitArray",
-                                        "ImBitVector",
-                                        "ImSpan",
+                                        "ImBitArray", # template with two parameters, not supported
                                         "ImSpanAllocator",
-                                        "ImPool",
-                                        "ImChunkStream",
-                                        "ImGuiTextIndex"])
-    # Remove all functions from ImVector, as they're not really useful
-    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector"])
+                                        ])
+    # Remove all functions from certain types, as they're not really useful
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
+    # Remove all functions from ImPool, since we can't handle nested template functions yet
+    mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
+
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
     # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
@@ -172,6 +178,10 @@ def convert_header(
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
                                           "ImGui::CheckboxFlagsT"])
+    
+    mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
+                                          "ImGui::DebugNodeInputTextState"])
+    
 
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
@@ -218,16 +228,30 @@ def convert_header(
     # if anyone tries to use it
     mod_flatten_conditionals.apply(dom_root, "IM_VEC2_CLASS_EXTRA", False)
     mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
-    mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_'})
+    mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_', 'ImStb': 'ImStb_'})
     mod_flatten_nested_classes.apply(dom_root)
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
-    # We treat ImVec2, ImVec4 and ImColor as by-value types
-    mod_mark_by_value_structs.apply(dom_root, by_value_structs=['ImVec2', 'ImVec4', 'ImColor', 'ImStr'])
+    # Remove dangling unspecialized template that flattening didn't handle
+    mod_remove_structs.apply(dom_root, ["ImVector_T"])
+
+    # We treat certain types as by-value types
+    mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
+        'ImVec1',
+        'ImVec2',
+        'ImVec2ih',
+        'ImVec4',
+        'ImColor',
+        'ImStr',
+        'ImRect',
+        'ImGuiListClipperRange'
+    ])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
+    mod_flatten_inheritance.apply(dom_root)
     mod_remove_nested_typedefs.apply(dom_root)
     mod_remove_static_fields.apply(dom_root)
+    mod_remove_extern_fields.apply(dom_root)
     mod_remove_constexpr.apply(dom_root)
     mod_generate_imstr_helpers.apply(dom_root)
     mod_remove_enum_forward_declarations.apply(dom_root)
@@ -277,6 +301,18 @@ def convert_header(
                                                                  "_SDL_GameController"
                                                                  ])
 
+    if is_imgui_internal:
+        # Some functions in imgui_internal already have the Ex suffix,
+        # which wreaks havok on disambiguation
+        mod_rename_functions.apply(main_src_root, {
+            'ImGui_BeginMenuEx': 'ImGui_BeginMenuWithIcon',
+            'ImGui_MenuItemEx': 'ImGui_MenuItemWithIcon',
+            'ImGui_BeginTableEx': 'ImGui_BeginTableWithID',
+            'ImGui_ButtonEx': 'ImGui_ButtonWithFlags',
+            'ImGui_ImageButtonEx': 'ImGui_ImageButtonWithFlags',
+            'ImGui_InputTextEx': 'ImGui_InputTextWithHintAndSize',
+            'ImGui_RenderTextClippedEx': 'ImGui_RenderTextClippedWithDrawList',
+        })
 
     mod_disambiguate_functions.apply(dom_root,
                                      name_suffix_remaps={
@@ -429,9 +465,62 @@ def convert_header(
     if generate_unformatted_functions:
         mod_add_unformatted_functions.apply(dom_root,
                                             functions_to_ignore=[
-                                                "ImGui_Text",
-                                                "ImGuiTextBuffer_appendf"
+                                                'ImGui_Text',
+                                                'ImGuiTextBuffer_appendf'
                                             ])
+        
+    if is_imgui_internal:
+        mod_move_elements.apply(dom_root,
+                                main_src_root,
+                                [
+                                    # This terribleness is because those few type definitions needs to appear
+                                    # below the definitions of ImVector_ImGuiTable and ImVector_ImGuiTabBar
+                                    (code_dom.DOMClassStructUnion, 'ImGuiTextIndex'),
+                                    (code_dom.DOMClassStructUnion, 'ImPool_', True),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImVector_int'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_const_charPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiColorMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiContextHook'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockNodeSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiDockRequest'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiFocusScopeData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiGroupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiID'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiInputEvent'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiItemFlags'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiKeyRoutingData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiListClipperRange'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiNavTreeNodeData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiMultiSelectState'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiMultiSelectTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumnData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiOldColumns'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPopupData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiPtrOrIndex'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiSettingsHandler'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiShrinkWidthItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStackLevelInfo'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiStyleMod'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabBar'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTabItem'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTable'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableColumnSortSpecs'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableHeaderData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableInstanceData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTableTempData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiTreeNodeStackData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiViewportPPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowPtr'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_ImGuiWindowStackData'),
+                                    (code_dom.DOMClassStructUnion, 'ImVector_unsigned_char'),
+                                    #
+                                    (code_dom.DOMClassStructUnion, 'ImChunkStream_ImGuiWindowSettings'),
+                                    (code_dom.DOMClassStructUnion, 'ImChunkStream_ImGuiTableSettings'),
+                                    # Fudge those typedefs to be at the top
+                                    (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', False, True),
+                                ])
 
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
@@ -475,8 +564,19 @@ def convert_header(
         "IM_COL32_WHITE",
         "IM_COL32_BLACK",
         "IM_COL32_BLACK_TRANS",
-        "ImDrawCallback_ResetRenderState",
+        "ImDrawCallback_ResetRenderState"
     ])
+
+    mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
+        ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
+    ])
+
+    # Remove namespaced define
+    mod_remove_typedefs.apply(dom_root, [
+        "ImStbTexteditState"
+    ])
+    # Replace the stb_textedit type reference with an opaque pointer
+    mod_change_class_field_type.apply(dom_root, "ImGuiInputTextState", "Stb", "void*")
 
     dom_root.validate_hierarchy()
 
@@ -492,11 +592,9 @@ def convert_header(
 
     print("Writing output to " + dest_file_no_ext + "[.h/.cpp/.json]")
 
-    dest_file_name_only = os.path.basename(dest_file_no_ext)
-
     # If our output name ends with _internal, then generate a version of it without that on the assumption that
     # this is probably imgui_internal.h and thus we need to know what imgui.h is (likely) called as well.
-    if dest_file_name_only.endswith('_internal'):
+    if is_imgui_internal:
         dest_file_name_only_no_internal = dest_file_name_only[:-9]
     else:
         dest_file_name_only_no_internal = dest_file_name_only
@@ -519,16 +617,34 @@ def convert_header(
     with open(dest_file_no_ext + ".cpp", "w") as file:
         insert_header_templates(file, template_dir, src_file_name_only, ".cpp", expansions)
 
-        gen_struct_converters.generate(main_src_root, file, indent=0)
+        gen_struct_converters.generate(dom_root, file, indent=0)
 
-        gen_function_stubs.generate(main_src_root, file, indent=0,
+        # Extract custom types from everything we parsed,
+        # but generate only for the main header
+        imgui_custom_types = utils.get_imgui_custom_types(dom_root)
+        gen_function_stubs.generate(main_src_root, file, imgui_custom_types,
+                                    indent=0,
                                     custom_varargs_list_suffixes=custom_varargs_list_suffixes,
                                     is_backend=is_backend)
 
     # Generate metadata
-    with open(dest_file_no_ext + ".json", "w") as file:
-        # We intentionally generate JSON starting from the root here so that we include defines from imconfig.h
-        gen_metadata.generate(dom_root, file)
+    if emit_combined_json_metadata:
+        metadata_file_name = dest_file_no_ext + ".json"
+        with open(metadata_file_name, "w") as file:
+            # We intentionally generate JSON starting from the root here so that we emit metadata from all dependencies
+            gen_metadata.generate(dom_root, file)
+    else:
+        # Emit separate metadata files for each header
+        headers = dom_root.list_directly_contained_children_of_type(code_dom.DOMHeaderFile)
+        for header in headers:
+            if (header == main_src_root):
+                metadata_file_name = dest_file_no_ext
+            else:
+                metadata_file_name = dest_file_no_ext + "_" + str(Path(header.source_filename).with_suffix(""))
+
+            metadata_file_name = metadata_file_name + ".json"
+            with open(metadata_file_name, "w") as file:
+                gen_metadata.generate(header, file)
 
 
 if __name__ == '__main__':
@@ -576,12 +692,20 @@ if __name__ == '__main__':
                         default='',
                         help="Path to ImGui backend headers to use in emitted files. Should include a trailing slash "
                              "(eg \"Imgui/Backends/\"). (default: same as --imgui-include-dir)")
-    parser.add_argument('--config-include',
-                        help="Path to additional .h file to read configuration defines from (i.e. the file you set "
-                             "IMGUI_USER_CONFIG to, if any).")
+    parser.add_argument('--include',
+                        help="Path to additional .h files to include (e.g. imgui.h if converting imgui_internal.h, "
+                             "and/or the file you set IMGUI_USER_CONFIG to, if any)",
+                        default=[],
+                        action='append')
     parser.add_argument('--imconfig-path',
                         help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same"
                              "directory as the source file.")
+    parser.add_argument('--emit-combined-json-metadata',
+                        action='store_true',
+                        help="Emit a single combined metadata JSON file instead of emitting "
+                             "separate metadata JSON files for each header",
+                        default=False)
+    
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -589,23 +713,23 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    config_include_files = []
+    include_files = []
 
     # Add imconfig.h to the include list to get any #defines set in that
     imconfig_path = args.imconfig_path if args.imconfig_path is not None else (
         os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
 
-    config_include_files.append(imconfig_path)
+    include_files.append(imconfig_path)
 
     # Add any user-supplied config file as well
-    if args.config_include is not None:
-        config_include_files.append(os.path.realpath(args.config_include))
+    for include in args.include:
+        include_files.append(os.path.realpath(include))
 
     # Perform conversion
     try:
         convert_header(
             os.path.realpath(args.src),
-            config_include_files,
+            include_files,
             args.output,
             args.templatedir,
             args.nopassingstructsbyvalue,
@@ -613,7 +737,8 @@ if __name__ == '__main__':
             args.generateunformattedfunctions,
             args.backend,
             args.imgui_include_dir,
-            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir
+            args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir,
+            args.emit_combined_json_metadata
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")

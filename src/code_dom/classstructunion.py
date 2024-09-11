@@ -84,7 +84,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
                     if not child_element.no_default_add:
                         dom_element.add_child(child_element, context)
                 else:
-                    print("Unrecognised element: " + str(vars(tok)))
+                    print("Unrecognised element: " + str(vars(tok)) + " in DOMClassStructUnion " + dom_element.name)
                     break
 
         stream.get_token_of_type(['SEMICOLON'])  # Eat the trailing semicolon
@@ -125,14 +125,14 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
             if context.for_c and not self.use_unmodified_name_for_typedef:
                 declaration += "_t"
 
-        # Add base classes
-        if self.base_classes is not None:
-            is_first = True
-            for accessibility, class_name in self.base_classes:
-                declaration += " : " if is_first else ", "
-                declaration += accessibility + " " + class_name
-
         if not self.is_forward_declaration:
+            # Add base classes
+            if not context.for_c and self.base_classes is not None:
+                is_first = True
+                for accessibility, class_name in self.base_classes:
+                    declaration += " : " if is_first else ", "
+                    declaration += accessibility + " " + class_name
+
             write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
             write_c_line(file, indent, "{")
             for child in self.children:

@@ -77,7 +77,7 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
                     else:
                         dom_element.add_child(child_element, context)
             else:
-                print("Unrecognised element " + str(stream.peek_token()))
+                print("Unrecognised element: " + str(stream.peek_token()) + " in DOMPreprocessorIf")
                 break
 
         return dom_element

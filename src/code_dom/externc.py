@@ -40,7 +40,7 @@ class DOMExternC(code_dom.element.DOMElement):
                 if not child_element.no_default_add:
                     dom_element.add_child(child_element, context)
             else:
-                print("Unrecognised element: " + str(vars(tok)))
+                print("Unrecognised element: " + str(vars(tok)) + " in DOMExternC")
                 break
 
             if not has_braces:

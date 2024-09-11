@@ -63,6 +63,21 @@ def create_typedef(text):
     return element
 
 
+# Create a preprocessor if DOM element from a string
+def create_preprocessor_if(text):
+    stream = c_lexer.tokenize(text)
+    context = code_dom.ParseContext()
+    context.current_content_parser = lambda: code_dom.DOMHeaderFile.parse_content(context, stream)
+    element = code_dom.DOMPreprocessorIf.parse(context, stream)
+    # There may be a comment following the declaration, so check for it and attach if there is
+    attached_comment = code_dom.DOMComment.parse(context, stream)
+    if attached_comment is not None:
+        element.attached_comment = attached_comment
+        element.attached_comment.is_attached_comment = True
+        element.attached_comment.parent = element
+    return element
+
+
 # Create a code block DOM element from a string (e.g. "{ return 1.0f; }")
 def create_code_block(text):
     stream = c_lexer.tokenize(text)
@@ -155,3 +170,41 @@ def migrate_comments(from_element, to_element):
         to_element.attached_comment = from_element.attached_comment
         to_element.attached_comment.parent = to_element
         from_element.attached_comment = None
+
+# Build a list of all the classes/structs/enums ImGui defines, so we know which things need casting/name-fudging
+# (we also put function pointers in here as they need the same treatment, hence the "callbacks" bit)
+def get_imgui_custom_types(dom_root):
+    imgui_custom_types = {}
+
+    for struct in dom_root.list_all_children_of_type(code_dom.DOMClassStructUnion):
+        if struct.name is not None:
+            imgui_custom_types[struct.name] = struct
+            imgui_custom_types["cimgui::" + struct.name] = struct  # Also add the qualified version
+            # And the original names
+            if struct.unmodified_element is not None:
+                imgui_custom_types[struct.unmodified_element.name] = struct
+
+    for enum in dom_root.list_all_children_of_type(code_dom.DOMEnum):
+        if not enum.is_forward_declaration:
+            imgui_custom_types[enum.name] = enum
+            imgui_custom_types["cimgui::" + enum.name] = enum  # Also add the qualified version
+            # And the original names
+            if enum.unmodified_element is not None:
+                imgui_custom_types[enum.unmodified_element.name] = enum
+
+    # Also include function pointer definitions, as we basically need to treat them like class/structs for casting
+    # purposes
+    for typedef in dom_root.list_all_children_of_type(code_dom.DOMTypedef):
+        if isinstance(typedef.type, code_dom.DOMFunctionPointerType):
+            imgui_custom_types[typedef.name] = typedef
+
+    return imgui_custom_types
+
+def find_nearest_parent_of_type(child, parent_type):
+    current = child
+    while current != None:
+        current = current.parent
+        if isinstance(current, parent_type):
+            break
+
+    return current

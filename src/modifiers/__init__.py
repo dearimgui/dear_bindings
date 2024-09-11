@@ -5,15 +5,18 @@ from . import mod_remove_function_bodies
 from . import mod_remove_operators
 from . import mod_remove_structs
 from . import mod_remove_functions
+from . import mod_remove_all_fields_from_classes
 from . import mod_add_prefix_to_loose_functions
 from . import mod_flatten_class_functions
 from . import mod_flatten_nested_classes
+from . import mod_flatten_inheritance
 from . import mod_flatten_templates
 from . import mod_flatten_conditionals
 from . import mod_disambiguate_functions
 from . import mod_convert_by_value_struct_args_to_pointers
 from . import mod_convert_references_to_pointers
 from . import mod_remove_static_fields
+from . import mod_remove_extern_fields
 from . import mod_remove_nested_typedefs
 from . import mod_remove_all_functions_from_classes
 from . import mod_merge_blank_lines
@@ -54,3 +57,7 @@ from . import mod_mark_types_for_pointer_cast
 from . import mod_set_arguments_as_nullable
 from . import mod_remove_defines
 from . import mod_rewrite_defines
+from . import mod_move_elements
+from . import mod_remove_typedefs
+from . import mod_replace_typedef_with_opaque_buffer
+from . import mod_change_class_field_type

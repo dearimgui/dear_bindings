@@ -1,5 +1,6 @@
 from .common import *
 from src import code_dom
+from src import type_comprehension
 import copy
 
 
@@ -160,7 +161,11 @@ class DOMType(code_dom.element.DOMElement):
             for tok in tokens_to_emit:
                 new_tok = copy.deepcopy(tok)
                 if new_tok.type == 'THING':
-                    new_tok.value = "::" + new_tok.value
+                    # Skip leading colons for builtin types
+                    built_in_type = type_comprehension.TCBuiltInType(new_tok.value)
+                    include_leading_colons = built_in_type.type == type_comprehension.builtin_type.BuiltinType.unknown
+                    if include_leading_colons:
+                        new_tok.value = "::" + new_tok.value
                 fudged_tokens.append(new_tok)
             tokens_to_emit = fudged_tokens
 

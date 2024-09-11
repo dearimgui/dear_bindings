@@ -44,7 +44,7 @@ class DOMNamespace(code_dom.element.DOMElement):
                 if not child_element.no_default_add:
                     dom_element.add_child(child_element, context)
             else:
-                print("Unrecognised element: " + str(vars(tok)))
+                print("Unrecognised element: " + str(vars(tok)) + " in DOMNamespace " + dom_element.name)
                 break
 
         return dom_element

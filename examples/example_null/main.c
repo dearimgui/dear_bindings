@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "cimgui.h"
-//#include "cimgui_internal.h" // FIXME: Unsupported for now.
+#include "cimgui_internal.h"
 
 int main(int argc, char** argv)
 {
@@ -29,9 +29,19 @@ int main(int argc, char** argv)
 
         static float f = 0.0f;
         ImGui_Text("Hello, world!");
+        #ifdef CIMGUI_NO_GENERATE_DEFAULT_ARG_FUNCTIONS
+        ImGui_SliderFloat("float", &f, 0.0f, 1.0f, "%.3f", 0);
+        #else
         ImGui_SliderFloat("float", &f, 0.0f, 1.0f);
+        #endif
         ImGui_Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io->Framerate, io->Framerate);
         ImGui_ShowDemoWindow(NULL);
+        ImGui_FocusItem();
+
+        ImGui_DebugLog("%s", "Message from cimgui_internal.h!");
+        #ifdef CIMGUI_WITH_GENERATE_UNFORMATTED_FUNCTIONS
+        ImGui_DebugLogUnformatted("Message from cimgui_internal.h!");
+        #endif
 
         ImGui_Render();
     }

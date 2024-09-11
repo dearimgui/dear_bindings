@@ -13,7 +13,7 @@ on:
 
 jobs:
   Linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -24,6 +24,9 @@ jobs:
         compiler:
           - gcc
           - clang
+        flag_nogeneratedefaultargfunctions:
+          - nogeneratedefaultargfunctions
+          - withgeneratedefaultargfunctions
 
     steps:
     # Checkout both repositories
@@ -39,20 +42,28 @@ jobs:
       run: |
         sudo pip3 install ply
 
-    - name: Generate
-      run: |
-         python3 dear_bindings.py --output cimgui          imgui/imgui.h --generateunformattedfunctions
-         # imgui_internal.h disabled for now as it generates errors
-         # python3 dear_bindings.py --output cimgui_internal imgui/imgui_internal.h
-
+    - name: Generate cimgui
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output cimgui {0} --generateunformattedfunctions imgui/imgui.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
+    - name: Generate cimgui_internal
+      run: >- 
+        ${{ 
+          format('python3 dear_bindings.py --output cimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
+            matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
+        }}
     - name: Build
       run: |
-        # FIXME: cimgui_internal.cpp can be added when generator produces compilable result.
         ${{ matrix.compiler }}                  \
+          -D${{ matrix.flag_nogeneratedefaultargfunctions == 'withgeneratedefaultargfunctions' && 'CIMGUI_WITH_GENERATE_DEFAULT_ARG_FUNCTIONS' || 'CIMGUI_NO_GENERATE_DEFAULT_ARG_FUNCTIONS' }} \
+          -DCIMGUI_WITH_GENERATE_UNFORMATTED_FUNCTIONS \
           -o example_null                       \
           -Iimgui -I.                           \
           -x c examples/example_null/main.c     \
           -x c++ cimgui.cpp                     \
+          -x c++ cimgui_internal.cpp            \
           imgui/imgui.cpp                       \
           imgui/imgui_demo.cpp                  \
           imgui/imgui_draw.cpp                  \

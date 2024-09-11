@@ -23,6 +23,10 @@ def apply(dom_root):
             else:
                 # We need to evaluate this expression
 
+                # Fudge some odd values that have '(int)' casts in them.
+                # This is not perfect, but shouldn't cause any problems.
+                value_string = value_string.replace("(int)", "")
+
                 compiled = compile(value_string, "<string>", "eval")
 
                 # This is partly about checking for unknown values, but mostly about preventing the use of anything

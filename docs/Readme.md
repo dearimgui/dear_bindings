@@ -87,10 +87,13 @@ options:
                         Path to ImGui headers to use in emitted include files.
                         Should include a trailing slash (eg "Imgui/").
                         (default: blank)
-  --config-include CONFIG_INCLUDE
-                        Path to additional .h file to read configuration
-                        defines from (i.e. the file you set IMGUI_USER_CONFIG
-                        to, if any).
+  --include INCLUDED_FILE
+                        Path to additional .h files to include (e.g. imgui.h
+                        if converting imgui_internal.h, and/or the file you
+                        set IMGUI_USER_CONFIG to, if any)
+  --emit-combined-json-metadata
+                        Emit a single combined metadata JSON file instead of
+                        emitting separate metadata JSON files for each header
 
 Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors
