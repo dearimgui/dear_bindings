@@ -3,7 +3,7 @@ Dear Bindings
 
 Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top (see our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) list). 
 
-At present, it only converts `imgui.h` (i.e. the main Dear ImGui API), but in the future it should also support `imgui_internal.h` and potentially other ImGui-related files that may be useful for advanced users.
+At present, it can convert `imgui.h` (i.e. the main Dear ImGui API), and has (semi-experimental, but not totally untested) support for `imgui_internal.h` and most of the backend headers.
 
 It should be compatible with Dear ImGui v1.84 onwards (some earlier versions also work but compatibility isn't guaranteed).
 
@@ -11,15 +11,23 @@ The intention with Dear Bindings is to try and **produce a C header file which i
 
 # Latest Prebuilt Versions
 
-You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json) for both `master` and `docking` branch in our [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. For a given build, click "Artifacts" to find them.
+You can find prebuilt versions (consisting of `cimgui.h`, `cimgui.cpp`, `cimgui.json` 
+and their equivalents for `imgui_internal.h`) 
+for both `master` and `docking` branch in our 
+[Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. 
+For a given build, click "Artifacts" to find them.
 
 # Requirements
 
-* Python 3.8x+ (3.7x+ most likely works but 3.8 is the currently tested version)
+* Python 3.10+
 * [ply](https://www.dabeaz.com/ply/) (Python Lex-Yacc, v3.11 tested)
+
+(ply can be automatically installed via `requirements.txt` - see "Usage" below for more details)
 
 # Recent changes
 
+* v0.10 adds (somewhat experimental) support for comverting `imgui_internal.h`.
+* v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
 * v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
 * v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends
@@ -28,27 +36,54 @@ You can find prebuilt versions (consisting of cimgui.h, cimgui.cpp, cimgui.json)
 
 You can see a full list of recent changes [here](Changelog.txt).
 
-# Differences with cimgui
+# Differences from cimgui
 
 Dear Bindings was designed as a potential replacement to the [cimgui](https://github.com/cimgui/cimgui) project.
 
-| dear_bindings | cimgui |
-|----|----|
-| Written in Python | Written in Lua |
-| Preserve comments and alignment | -- |
+| dear_bindings                                                                                            | cimgui |
+|----------------------------------------------------------------------------------------------------------|----|
+| Written in Python                                                                                        | Written in Lua |
+| Preserve comments and alignment                                                                          | -- |
 | Use more polished rules to name functions, resolve overloads and offer simplified and \*Ex alternatives. | -- |
-| Currently cannot generates bindings for imgui_internal.h. | Can generate bindings for imgui_internal.h (but output is in the same header, making it difficult to tell if you are using a public or internal function). |
-| Currently not mature, more likely to have issues | Has been used for years. |
+| Experimental bindings for imgui_internal.h (as a separate file).                                         | Can generate bindings for imgui_internal.h (but output is in the same header, making it difficult to tell if you are using a public or internal function). |
+| Currently not mature, more likely to have issues                                                         | Has been used for years. |
 
 # Usage
 
+If you don't have a Python environment, then install Python (at least version 3.10), and then in the project directory run:
+
+```commandline
+pip install -r requirements.txt
 ```
+
+...which should install the prerequisite Python libraries automatically.
+
+Then you can do:
+
+```commandline
 python dear_bindings.py -o cimgui ../imgui/imgui.h
+```
+
+...and if you want imgui_internal.h available as well:
+
+```commandline
+python dear_bindings.py -o cimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
+```
+
+For an all-in-one build (Windows-only right now), you can do:
+
+```commandline
+BuildAllBindings.bat
 ```
 
 With a target `imgui.h`, Dear Bindings generates `cimgui.h` (defines the C
 API), `cimgui.cpp` (implements the C binding to the underlying C++ code), and
 `cimgui.json` (a metadata file, see below).
+
+Correspondingly, `cimgui_internal.h`, `cimgui_internal.cpp` and 
+`cimgui_internal.json` contain the bindings for `imgui_internal.h`, which has
+a lot of useful functions for more advanced use-cases that are not exposed in the
+main public API for one reason or another.
 
 Using a C++ compiler, you can compile `cimgui.cpp` along with `imgui/*.cpp`
 into a static library. This can be used to integrate with a C program, for
@@ -57,7 +92,7 @@ this library.
 
 Other command line arguments:
 
-```
+```commandline
 usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR]
                         [--nopassingstructsbyvalue] [--backend]
                         src
@@ -213,14 +248,16 @@ Tested Backends:
 * Vulkan
 * SDL 2
 
-All other backends (except Metal/OSX) at least appear to convert cleanly with reasonable looking results. Further testing (adding to the list above) would be most appreciated.
-The Metal/OSX backends have been excluded for now as the Objective-C code in them looks like it would probably make life painful. Please provide feedback if there is a use case for these.
-The `BuildAllBindings.bat` file can be used to convert imgui.h and all of the convertable backends.
+All other backends (except Metal/OSX) at least appear to convert cleanly with reasonable looking results. Further
+testing (adding to the list above) would be most appreciated.
+The Metal/OSX backends have been excluded for now as the Objective-C code in them looks like it would probably make life
+painful. Please provide feedback if there is a use-case for these.
+The `BuildAllBindings.bat` file can be used to convert `imgui.h`, `imgui_internal.h` and all of the convertable backends.
 
 ### Examples
 
 Some simple example/test programs can be found in the `examples/` folder.
-They assume that C bindings files have been generated into the `generated/` folder (`BuildAllBindings.bat` can be used to do this automatically on Windows, I'm afraid other OSes will have to do it by hand for now).
+They assume that C bindings files (for both `imgui.h` and `imgui_internal.h`) have been generated into the `generated/` folder (`BuildAllBindings.bat` can be used to do this automatically on Windows, I'm afraid other OSes will have to do it by hand for now).
 
 `example_null` is a very basic app that simply runs a few cycles of the ImGui update/draw loop. It has no rendering engine so nothing actually gets drawn.
 `example_win32_directx9` and `example_sdl2_opengl2` are the ImGui samples of the same names with minimal changes to port it into C.
@@ -242,10 +279,17 @@ Software using Dear Bindings
 
 See our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) wiki page.
 
+Credits
+-------
+
+Developed by [@ShironekoBen] and other [contributers](https://github.com/dearimgui/dear_bindings/graphs/contributors).
+
+Much of the `imgui_internal.h` support was added by [@ZimM-LostPolygon].
+
 License
 -------
 
-Dear Bindings is copyright (c) 2021-2024 Ben Carter, and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2024 and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
 
 Contact
 -------

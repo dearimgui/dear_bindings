@@ -1,10 +1,10 @@
-# Dear Bindings Version v0.08 WIP
+# Dear Bindings Version v0.10
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
 # Example command-line:
 #   python dear_bindings.py --output cimgui ../imgui/imgui.h
-#   python dear_bindings.py --output cimgui_internal ../imgui/imgui_internal.h   (FIXME: result won't compile yet)
+#   python dear_bindings.py --output cimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
 
 # Example Input:
 #   imgui.h     : a C++ header file (aiming to also support imgui_internal.h, implot.h etc.: support is not complete yet).

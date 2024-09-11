@@ -18,6 +18,14 @@ echo.
 python dear_bindings.py -o %OUTPUT_PATH%\cimgui %IMGUI_PATH%\imgui.h
 IF ERRORLEVEL 1 GOTO fail
 
+rem Process imgui_internal.h header
+
+echo.
+echo Processing imgui_internal.h
+echo.
+python dear_bindings.py -o %OUTPUT_PATH%\cimgui_internal --include %IMGUI_PATH%\imgui.h %IMGUI_PATH%\imgui_internal.h
+IF ERRORLEVEL 1 GOTO fail
+
 rem Process backends
 
 for %%n in (

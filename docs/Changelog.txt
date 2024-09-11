@@ -1,4 +1,8 @@
---- v0.08 (WIP)
+--- v0.10
+
+* Added support for converting imgui_internal.h - many thanks to [@ZimM-LostPolygon] for doing the heavy lifting on this!
+
+--- v0.08
 
 * Rewrite the IM_ALLOC/IM_FREE macros to call the C versions of the respective functions, and rename them to
   CIM_ALLOC and CIM_FREE to avoid conflicting with the original defines in #imgui.h (#69)
