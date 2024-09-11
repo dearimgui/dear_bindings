@@ -282,9 +282,9 @@ See our [Software using Dear Bindings](https://github.com/dearimgui/dear_binding
 Credits
 -------
 
-Developed by [@ShironekoBen] and other [contributers](https://github.com/dearimgui/dear_bindings/graphs/contributors).
+Developed by Ben Carter and other [contributers](https://github.com/dearimgui/dear_bindings/graphs/contributors).
 
-Much of the `imgui_internal.h` support was added by [@ZimM-LostPolygon].
+Much of the `imgui_internal.h` support was added by @ZimM-LostPolygon.
 
 License
 -------
