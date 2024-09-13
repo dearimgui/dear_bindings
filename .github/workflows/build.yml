@@ -30,8 +30,8 @@ jobs:
 
     steps:
     # Checkout both repositories
-    - uses: actions/checkout@v3
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         path: imgui
         repository: ocornut/imgui
@@ -74,9 +74,9 @@ jobs:
     - name: Run
       run: ./example_null
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: dear_bindings_${{ matrix.branch }}
+        name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
         path: |
           cimgui.*
           cimgui_internal.*
