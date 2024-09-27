@@ -171,6 +171,8 @@ def convert_header(
     mod_remove_functions.apply(dom_root, ["ImQsort"])
     # FIXME: Remove incorrectly parsed constructor due to "explicit" keyword.
     mod_remove_functions.apply(dom_root, ["ImVec2ih::ImVec2ih"])
+    # Remove ErrorLogCallbackToDebugLog() from imgui_internal.h as there isn't a ErrorLogCallbackToDebugLogV() version for the bindings to call right now
+    mod_remove_functions.apply(dom_root, ["ImGui::ErrorLogCallbackToDebugLog"])
     # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
     mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
                                           "ImGui::ScaleValueFromRatioT",
