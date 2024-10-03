@@ -220,7 +220,6 @@ def convert_header(
 
     mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
-    mod_remove_heap_constructors_and_destructors.apply(dom_root)
     mod_convert_references_to_pointers.apply(dom_root)
     if no_struct_by_value_arguments:
         mod_convert_by_value_struct_args_to_pointers.apply(dom_root)
@@ -246,6 +245,22 @@ def convert_header(
         'ImRect',
         'ImGuiListClipperRange'
     ])
+
+    # Mark certain types as needing placement new constructors that initialize the memory block passed into them
+    mod_mark_placement_constructor_structs.apply(dom_root, [
+        'ImFontConfig',
+        'ImFontGlyphRangesBuilder',
+        'ImGuiListClipper',
+        'ImGuiSelectionBasicStorage',
+        'ImGuiSelectionExternalStorage',
+        'ImGuiStorage',
+        'ImGuiTextBuffer',
+        'ImGuiTextFilter',
+        'ImGuiWindowClass',
+    ])
+
+    mod_remove_heap_constructors_and_destructors.apply(dom_root)
+
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
     mod_flatten_inheritance.apply(dom_root)

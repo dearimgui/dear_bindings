@@ -409,6 +409,7 @@ for reference, but without any internal details.
 | original_fully_qualified_name | The original C++ name of the structure                 |
 | kind _(previously "type")_    | The type of the structure (either `struct` or `union`) |
 | by_value                      | Is this structure normally pass-by-value?              |
+| has_placement_constructor     | Does this structure have an initializer function?      |
 | forward_declaration           | Is this a forward-declaration of the structure?        |
 | is_anonymous                  | Is this an anonymous struct?                           |
 | fields                        | List of contained fields                               |
