@@ -11,9 +11,9 @@
 // **Prefer using the code in the example_sdl2_opengl3/ folder**
 // See imgui_impl_sdl2.cpp for details.
 
-#include "cimgui.h"
-#include "cimgui_impl_sdl2.h"
-#include "cimgui_impl_opengl2.h"
+#include "dcimgui.h"
+#include "dcimgui_impl_sdl2.h"
+#include "dcimgui_impl_opengl2.h"
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_opengl.h>

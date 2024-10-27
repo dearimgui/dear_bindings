@@ -139,8 +139,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\imgui\backends\imgui_impl_dx9.cpp" />
     <ClCompile Include="..\..\..\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\..\generated\backends\cimgui_impl_dx9.cpp" />
-    <ClCompile Include="..\..\generated\backends\cimgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_dx9.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_win32.cpp" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
@@ -151,9 +151,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\imgui\backends\imgui_impl_dx9.h" />
     <ClInclude Include="..\..\..\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="..\..\generated\backends\cimgui_impl_dx9.h" />
-    <ClInclude Include="..\..\generated\backends\cimgui_impl_win32.h" />
-    <ClInclude Include="..\..\generated\cimgui.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_dx9.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_win32.h" />
+    <ClInclude Include="..\..\generated\dcimgui.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

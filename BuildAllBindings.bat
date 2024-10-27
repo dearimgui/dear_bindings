@@ -15,7 +15,7 @@ rem Process main imgui.h header
 echo.
 echo Processing imgui.h
 echo.
-python dear_bindings.py -o %OUTPUT_PATH%\cimgui %IMGUI_PATH%\imgui.h
+python dear_bindings.py -o %OUTPUT_PATH%\dcimgui %IMGUI_PATH%\imgui.h
 IF ERRORLEVEL 1 GOTO fail
 
 rem Process imgui_internal.h header
@@ -23,7 +23,7 @@ rem Process imgui_internal.h header
 echo.
 echo Processing imgui_internal.h
 echo.
-python dear_bindings.py -o %OUTPUT_PATH%\cimgui_internal --include %IMGUI_PATH%\imgui.h %IMGUI_PATH%\imgui_internal.h
+python dear_bindings.py -o %OUTPUT_PATH%\dcimgui_internal --include %IMGUI_PATH%\imgui.h %IMGUI_PATH%\imgui_internal.h
 IF ERRORLEVEL 1 GOTO fail
 
 rem Process backends
@@ -50,7 +50,7 @@ for %%n in (
 	echo.
 	echo Processing %%n
 	echo.
-	python dear_bindings.py --backend --imconfig-path %IMGUI_PATH%\imconfig.h -o %OUTPUT_PATH%\backends\cimgui_impl_%%n %IMGUI_PATH%\backends\imgui_impl_%%n.h
+	python dear_bindings.py --backend --imconfig-path %IMGUI_PATH%\imconfig.h -o %OUTPUT_PATH%\backends\dcimgui_impl_%%n %IMGUI_PATH%\backends\imgui_impl_%%n.h
 	IF ERRORLEVEL 1 GOTO fail
 )
 

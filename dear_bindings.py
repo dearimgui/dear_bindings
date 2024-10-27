@@ -3,16 +3,16 @@
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
 # Example command-line:
-#   python dear_bindings.py --output cimgui ../imgui/imgui.h
-#   python dear_bindings.py --output cimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
+#   python dear_bindings.py --output dcimgui ../imgui/imgui.h
+#   python dear_bindings.py --output dcimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
 
 # Example Input:
 #   imgui.h     : a C++ header file (aiming to also support imgui_internal.h, implot.h etc.: support is not complete yet).
 
 # Example output:
-#   cimgui.h    : a C header file for compilation by a modern C compiler, including full comments from original header file.
-#   cimgui.cpp  : a CPP implementation file which can to be linked into a C program.
-#   cimgui.json : full metadata to reconstruct bindings for other programming languages, including full comments.
+#   dcimgui.h    : a C header file for compilation by a modern C compiler, including full comments from original header file.
+#   dcimgui.cpp  : a CPP implementation file which can to be linked into a C program.
+#   dcimgui.json : full metadata to reconstruct bindings for other programming languages, including full comments.
 
 import os
 from pathlib import Path
@@ -136,8 +136,8 @@ def convert_header(
                                              "<string.h>"])
 
     if is_backend:
-        # Backends need to reference cimgui.h, not imgui.h
-        mod_change_includes.apply(dom_root, {"\"imgui.h\"": "\"cimgui.h\""})
+        # Backends need to reference dcimgui.h, not imgui.h
+        mod_change_includes.apply(dom_root, {"\"imgui.h\"": "\"dcimgui.h\""})
 
         # Backends need a forward-declaration for ImDrawData so that the code generator understands
         # that it is an ImGui type and needs conversion
@@ -677,7 +677,7 @@ if __name__ == '__main__':
                         help='Path to source header file to process (generally imgui.h)')
     parser.add_argument('-o', '--output',
                         required=True,
-                        help='Path to output files (generally cimgui). This should have no extension, '
+                        help='Path to output files (generally dcimgui). This should have no extension, '
                              'as <output>.h, <output>.cpp and <output>.json will be written.')
     parser.add_argument('-t', '--templatedir',
                         default=default_template_dir,

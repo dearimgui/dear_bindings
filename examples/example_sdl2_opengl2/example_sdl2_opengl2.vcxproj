@@ -139,15 +139,15 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\imgui\backends\imgui_impl_opengl2.cpp" />
     <ClCompile Include="..\..\..\imgui\backends\imgui_impl_sdl2.cpp" />
-    <ClCompile Include="..\..\generated\backends\cimgui_impl_opengl2.cpp" />
-    <ClCompile Include="..\..\generated\backends\cimgui_impl_sdl2.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_opengl2.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_sdl2.cpp" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\imgui\backends\imgui_impl_opengl2.h" />
     <ClInclude Include="..\..\..\imgui\backends\imgui_impl_sdl2.h" />
-    <ClInclude Include="..\..\generated\backends\cimgui_impl_opengl2.h" />
-    <ClInclude Include="..\..\generated\backends\cimgui_impl_sdl2.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_opengl2.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_sdl2.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ImGuiLib\ImGuiLib.vcxproj">
