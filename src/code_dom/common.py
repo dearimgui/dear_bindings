@@ -80,19 +80,21 @@ def remove_redundant_whitespace(str):
 
 
 # Write a C-style line with indentation, and any trailing whitespace removed
+# If suppress_indent is set on the context, we emit a single space instead of the requested amount of indent
+# (this is so that writing multiple things to the same line works sensibly)
 def write_c_line(file, indent, context, text):
     # We check for # here because if a line starts with a preprocessor directive we can't combine it with other lines
     # safely
     if context.suppress_newlines and (len(text) > 0) and (text[0] != '#'):
         text = remove_redundant_whitespace(text.replace('\n', ' '))
         if context.suppress_indent:
-            file.write(text.rstrip())
+            file.write(" " + text.rstrip())
         else:
             file.write("".ljust(indent * 4) + text.rstrip())
             context.suppress_indent = True  # We don't want indentation on following output
     else:
         if context.suppress_indent:
-            file.write(text.rstrip() + "\n")
+            file.write(" " + text.rstrip() + "\n")
         else:
             file.write("".ljust(indent * 4) + text.rstrip() + "\n")
         context.suppress_indent = False
