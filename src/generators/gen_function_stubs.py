@@ -106,7 +106,7 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
             nested_classes[struct.name] = struct.get_fully_qualified_name(include_leading_colons=True)
 
     file.write("\n")
-    write_c_line(file, indent, "// Function stubs")
+    write_c_line(file, indent, write_context, "// Function stubs")
     # Emit functions
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
         if function.is_manual_helper:
@@ -169,14 +169,14 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         file.write("\n")
         function.write_to_c(file, indent=indent, context=write_context)
-        write_c_line(file, indent, "{")
+        write_c_line(file, indent, write_context, "{")
         indent += 1
 
         # Write varargs decoding preamble
 
         if uses_varargs:
-            write_c_line(file, indent, "va_list args;")
-            write_c_line(file, indent, "va_start(args, fmt);")
+            write_c_line(file, indent, write_context, "va_list args;")
+            write_c_line(file, indent, write_context, "va_start(args, fmt);")
 
         # If the function takes an array of a by-value struct, then we need to generate an intermediate array to convert
         # that into
@@ -199,13 +199,14 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
                                 raise Exception("Cannot convert an array of indeterminate size")
 
                             converted_array_name = arg.name + "_converted_array"
-                            write_c_line(file, indent,
+                            write_c_line(file, indent, write_context,
                                          underlying_type.get_original_fully_qualified_name(include_leading_colons=True)
                                          + " " + converted_array_name + "[" + str(arg.array_bounds) + "];")
 
                             # And a for loop to do the conversion
-                            write_c_line(file, indent, "for (int i=0; i<" + str(arg.array_bounds) + "; i++)")
-                            write_c_line(file, indent + 1, converted_array_name + "[i] = " +
+                            write_c_line(file, indent, write_context, "for (int i=0; i<" +
+                                         str(arg.array_bounds) + "; i++)")
+                            write_c_line(file, indent + 1, write_context, converted_array_name + "[i] = " +
                                          "ConvertToCPP_" + underlying_type.name + "(" + arg.name + "[i]);")
 
                             converted_arg_name_overrides[arg.name] = converted_array_name
@@ -323,19 +324,19 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         if function.is_destructor:
             #  Destructors get a totally different bit of code generated
-            write_c_line(file, indent, "delete self;")
+            write_c_line(file, indent, write_context, "delete self;")
         else:
-            write_c_line(file, indent, thunk_call)
+            write_c_line(file, indent, write_context, thunk_call)
 
         # Write varargs teardown
 
         if uses_varargs:
-            write_c_line(file, indent, "va_end(args);")
+            write_c_line(file, indent, write_context, "va_end(args);")
 
         # Close off body
 
         indent -= 1
-        write_c_line(file, indent, "}")
+        write_c_line(file, indent, write_context, "}")
 
         # Remove temporary argument names
         for arg_index in args_with_temp_names:

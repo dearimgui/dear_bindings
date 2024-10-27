@@ -40,11 +40,11 @@ class DOMDefine(code_dom.element.DOMElement):
         # This is a little bit weird because we want to try and preserve formatting (whitespace), which means if we
         # have tokens we use those to generate the output, otherwise we synthesize a new statement
         if len(self.tokens) > 0:
-            write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, collapse_tokens_to_string(self.tokens)))
         elif self.content is not None:
-            write_c_line(file, indent, self.add_attached_comment_to_line("#define " + self.name + " " + self.content))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "#define " + self.name + " " + self.content))
         else:
-            write_c_line(file, indent, self.add_attached_comment_to_line("#define " + self.name))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "#define " + self.name))
 
     # Retrieves just the content part of a #define (no comments or similar) as a string
     # Returns None if the define has no content

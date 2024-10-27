@@ -198,7 +198,7 @@ class DOMFieldDeclaration(code_dom.element.DOMElement):
                     collapse_tokens_to_string(self.default_value_tokens) + " */"
                 first_name = False
 
-        write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
+        write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + ";"))
 
     def __str__(self):
         result = "Field: Type=" + str(self.field_type) + " Names="

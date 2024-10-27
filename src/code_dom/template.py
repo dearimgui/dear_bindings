@@ -82,8 +82,8 @@ class DOMTemplate(code_dom.element.DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent,
-                     self.add_attached_comment_to_line("template <" +
+        write_c_line(file, indent, context,
+                     self.add_attached_comment_to_line(context, "template <" +
                                                        collapse_tokens_to_string(self.template_parameter_tokens) + ">"))
         for child in self.children:
             child.write_to_c(file, indent, context)

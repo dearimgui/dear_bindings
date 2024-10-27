@@ -42,7 +42,7 @@ class DOMInclude(code_dom.element.DOMElement):
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, self.add_attached_comment_to_line(collapse_tokens_to_string(self.tokens)))
+        write_c_line(file, indent, context, self.add_attached_comment_to_line(context, collapse_tokens_to_string(self.tokens)))
 
     def __str__(self):
         return "Include: " + str(self.tokens)

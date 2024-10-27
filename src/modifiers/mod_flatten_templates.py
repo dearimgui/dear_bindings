@@ -39,7 +39,7 @@ def apply(dom_root, custom_type_fudges={}):
             break
 
 # Flattens one nesting level of templates. 
-# Returnslist of template types that still have non-flattened usages.
+# Returns list of template types that still have non-flattened usages.
 def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTemplate]:
     keep_templates = []
 
@@ -224,10 +224,6 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
                                 element.original_name_override = element.original_name_override \
                                     .replace(fudge_key, custom_type_fudges[fudge_key])
 
-            # Create a comment to note where this came from
-            comment = code_dom.DOMComment()
-            comment.comment_text = "// Instantiation of " + template_name + "<" + instantiation_parameter + ">"
-
             # Optionally insert new struct instances into the DOM at the very end to avoid problems with referencing
             # things that aren't declared yet at the point the template appears
             place_instantiation_at_end = False
@@ -246,17 +242,16 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
                 template.parent.insert_after_child(template, [declaration_comment, declaration])
 
                 # Add at end of file
-                dom_root.add_children([code_dom.DOMBlankLines(1),
-                                       comment,
-                                       code_dom.DOMBlankLines(1),
-                                       instantiation])
+                dom_root.add_children([instantiation])
             else:
                 # Insert new instance at point of template
                 template.parent.insert_after_child(template,
-                                                   [code_dom.DOMBlankLines(1),
-                                                    comment,
-                                                    code_dom.DOMBlankLines(1),
-                                                    instantiation])
+                                                   [instantiation])
+
+            # Create a comment to note where this came from
+            comment = code_dom.DOMComment()
+            comment.comment_text = "// Instantiation of " + template_name + "<" + instantiation_parameter + ">"
+            instantiation.attach_preceding_comments([comment])
 
         # Replace any references to the original template types with the new instantiations
         for (instantiation_parameter, instantiation_name) in zip(instantiation_parameters, instantiation_names):

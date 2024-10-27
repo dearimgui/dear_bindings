@@ -1,6 +1,6 @@
 from src import code_dom
 from src import utils
-from src.code_dom.common import write_c_line
+from src.code_dom.common import write_c_line, WriteContext
 
 
 # This provides functionality to efficiently generate sets of preprocessor conditionals that match the state
@@ -12,6 +12,8 @@ class ConditionalGenerator:
     # Write the conditionals necessary to bring us to the state needed by element
     def write_conditionals(self, element, file, indent=0):
         wanted_conditionals = utils.get_preprocessor_conditionals(element)
+
+        write_context = WriteContext()
 
         # Remove the include guard from our list of conditionals
         for i in range(0, len(wanted_conditionals)):
@@ -35,7 +37,7 @@ class ConditionalGenerator:
                 file.write("\n")
                 first_endif = False
             conditional = self.current_conditionals.pop(len(self.current_conditionals) - 1)
-            write_c_line(file, indent, "#endif // " + conditional.get_opening_clause())
+            write_c_line(file, indent, write_context, "#endif // " + conditional.get_opening_clause())
 
         # Add any new conditionals
         first_if = True
@@ -44,7 +46,7 @@ class ConditionalGenerator:
             if first_if:
                 file.write("\n")
                 first_if = False
-            write_c_line(file, indent, conditional.get_opening_clause())
+            write_c_line(file, indent, write_context, conditional.get_opening_clause())
             self.current_conditionals.append(conditional)
 
     # Close off any existing conditionals
@@ -55,6 +57,6 @@ class ConditionalGenerator:
                 file.write("\n")
                 first_endif = False
             conditional = self.current_conditionals.pop(len(self.current_conditionals) - 1)
-            write_c_line(file, indent, "#endif // " + conditional.get_opening_clause())
+            write_c_line(file, indent, WriteContext(), "#endif // " + conditional.get_opening_clause())
         self.current_conditionals = []
 

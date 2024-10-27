@@ -93,7 +93,8 @@ def convert_header(
         is_backend,
         imgui_include_dir,
         backend_include_dir,
-        emit_combined_json_metadata
+        emit_combined_json_metadata,
+        prefix_replacements
     ):
 
     # Set up context and DOM root
@@ -236,6 +237,8 @@ def convert_header(
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
     # Remove dangling unspecialized template that flattening didn't handle
     mod_remove_structs.apply(dom_root, ["ImVector_T"])
+    # Mark all the ImVector_ instantiations as single-line definitions
+    mod_mark_structs_as_single_line_definition.apply(dom_root, ["ImVector_"])
 
     # We treat certain types as by-value types
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
@@ -580,6 +583,11 @@ def convert_header(
     # Replace the stb_textedit type reference with an opaque pointer
     mod_change_class_field_type.apply(dom_root, "ImGuiInputTextState", "Stb", "void*")
 
+    # If the user requested a custom prefix, then rename everything here
+
+    if len(prefix_replacements) > 0:
+        mod_rename_prefix.apply(dom_root, prefix_replacements)
+
     dom_root.validate_hierarchy()
 
     # Test code
@@ -700,14 +708,24 @@ if __name__ == '__main__':
                         default=[],
                         action='append')
     parser.add_argument('--imconfig-path',
-                        help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same"
-                             "directory as the source file.")
+                        help="Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same "
+                             "directory as the source file, or the directory immediately above it if --backend "
+                             "is specified")
     parser.add_argument('--emit-combined-json-metadata',
                         action='store_true',
                         help="Emit a single combined metadata JSON file instead of emitting "
                              "separate metadata JSON files for each header",
                         default=False)
-    
+    parser.add_argument('--custom-namespace-prefix',
+                        help="Specify a custom prefix to use on emitted functions/etc in place of the usual "
+                             "namespace-derived ImGui_")
+    parser.add_argument('--replace-prefix',
+                        help="Specify a name prefix and something to replace it with as a pair of arguments of "
+                             "the form <old prefix>=<new prefix>. For example, \"--replace-prefix ImFont_=if will\" "
+                             "result in ImFont_FindGlyph() becoming ifFontGlyph() (and all other ImFont_ names "
+                             "following suit)",
+                        default=[],
+                        action='append')
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
@@ -717,11 +735,33 @@ if __name__ == '__main__':
 
     include_files = []
 
+    default_imconfig_path = os.path.dirname(os.path.realpath(args.src))
+
+    # If --backend was specified, assume imconfig.h is in the directory above (as that is where it will be in the
+    # standard layout
+    if args.backend:
+        default_imconfig_path = os.path.dirname(default_imconfig_path)
+
     # Add imconfig.h to the include list to get any #defines set in that
     imconfig_path = args.imconfig_path if args.imconfig_path is not None else (
-        os.path.join(os.path.dirname(os.path.realpath(args.src)), "imconfig.h"))
+        os.path.join(default_imconfig_path, "imconfig.h"))
 
     include_files.append(imconfig_path)
+
+    # Build a map from all the requested prefix replacements
+    prefix_replacements = {}
+    for replacement_str in args.replace_prefix:
+        if '=' not in replacement_str:
+            print("--replace-prefix \"" + replacement_str + "\" is not of the form <old prefix>=<new prefix>")
+            sys.exit(1)
+        index = replacement_str.index('=')
+        old_prefix = replacement_str[:index]
+        new_prefix = replacement_str[(index+1):]
+        prefix_replacements[old_prefix] = new_prefix
+
+    # --custom-namespace-prefix is just handled as a handy short form for --replace-prefix ImGui_=<something>
+    if args.custom_namespace_prefix is not None:
+        prefix_replacements["ImGui_"] = args.custom_namespace_prefix
 
     # Add any user-supplied config file as well
     for include in args.include:
@@ -740,7 +780,8 @@ if __name__ == '__main__':
             args.backend,
             args.imgui_include_dir,
             args.backend_include_dir if args.backend_include_dir is not None else args.imgui_include_dir,
-            args.emit_combined_json_metadata
+            args.emit_combined_json_metadata,
+            prefix_replacements
         )
     except:  # noqa - suppress warning about broad exception clause as it's intentionally broad
         print("Exception during conversion:")

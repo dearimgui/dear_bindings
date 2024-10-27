@@ -120,12 +120,25 @@ class DOMElement:
             comment.parent = self
             comment.is_preceding_comment = True
 
+    # Convert any preceding comments into attached one
+    def move_preceding_comments_to_attached(self):
+        for comment in self.pre_comments:
+            comment.is_preceding_comment = False
+            if self.attached_comment is None:
+                self.attached_comment = comment
+            else:
+                self.attached_comment.comment_text = self.attached_comment.comment_text + ", " + comment.comment_text
+        self.pre_comments = []
+
     # Add an attached comment (if present) to the output line text given, respecting the comment alignment
-    def add_attached_comment_to_line(self, line):
+    def add_attached_comment_to_line(self, context, line):
         if self.attached_comment is not None:
-            padding = self.attached_comment.alignment - len(line)
-            padding = max(padding, 1)  # Always have at least one space after the body of the line
-            return line + (" " * padding) + self.attached_comment.to_c_string()
+            if context.suppress_indent:
+                return line + " " + self.attached_comment.to_c_string(context)
+            else:
+                padding = self.attached_comment.alignment - len(line)
+                padding = max(padding, 1)  # Always have at least one space after the body of the line
+                return line + (" " * padding) + self.attached_comment.to_c_string(context)
         else:
             return line
 
@@ -134,15 +147,15 @@ class DOMElement:
         if context.for_implementation:
             return  # No comments in implementation code
         for comment in self.pre_comments:
-            write_c_line(file, indent, comment.to_c_string())
+            write_c_line(file, indent, context, comment.to_c_string(context))
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
-        write_c_line(file, indent, " // Unsupported element " + str(self))
+        write_c_line(file, indent, context, " // Unsupported element " + str(self))
         for child in self.children:
             child.write_to_c(file, indent + 1, context)
-        write_c_line(file, indent, self.add_attached_comment_to_line(" // End of unsupported element " + str(self)))
+        write_c_line(file, indent, context, self.add_attached_comment_to_line(context, " // End of unsupported element " + str(self)))
 
     # Dump this element for debugging
     def dump(self, indent=0):

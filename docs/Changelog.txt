@@ -1,6 +1,9 @@
 --- v0.11 WIP
 
 * Fixed support for static member functions, and added metadata on static-ness. (#73)
+* Made ImVector instantiations single-line (#77)
+* Added --custom-namespace-prefix and --replace-prefix to support custom naming schemes (#80)
+* Make the imconfig.h path use the parent directory by default if --backend is specified (#81)
 
 --- v0.10
 

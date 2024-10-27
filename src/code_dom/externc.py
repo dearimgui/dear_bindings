@@ -55,8 +55,8 @@ class DOMExternC(code_dom.element.DOMElement):
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
         if self.is_cpp_guarded:
-            write_c_line(file, indent, '#ifdef __cplusplus')
-        write_c_line(file, indent, self.add_attached_comment_to_line('extern "C"'))
+            write_c_line(file, indent, context, '#ifdef __cplusplus')
+        write_c_line(file, indent, context, self.add_attached_comment_to_line(context, 'extern "C"'))
 
         # We only emit a single-line extern if this is a typedef/structure definition or function
         # This is important because it avoids an awkward bug where if an extern wraps something like a
@@ -68,22 +68,22 @@ class DOMExternC(code_dom.element.DOMElement):
                                           isinstance(self.children[0], code_dom.DOMFunctionDeclaration)):
             # Single-line(-ish) version
             if self.is_cpp_guarded:
-                write_c_line(file, indent, '#endif')
+                write_c_line(file, indent, context, '#endif')
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
         else:
             # Multi-line version
-            write_c_line(file, indent, "{")
+            write_c_line(file, indent, context, "{")
             if self.is_cpp_guarded:
-                write_c_line(file, indent, '#endif')
+                write_c_line(file, indent, context, '#endif')
             for child in self.children:
                 # Only indent in the non-guarded case, for aesthetic purposes
                 child.write_to_c(file, indent + (0 if self.is_cpp_guarded else 1), context)
             if self.is_cpp_guarded:
-                write_c_line(file, indent, '#ifdef __cplusplus')
-            write_c_line(file, indent, '} // End of extern "C" block')
+                write_c_line(file, indent, context, '#ifdef __cplusplus')
+            write_c_line(file, indent, context, '} // End of extern "C" block')
             if self.is_cpp_guarded:
-                write_c_line(file, indent, '#endif')
+                write_c_line(file, indent, context, '#endif')
 
     def __str__(self):
         return "Extern C block"

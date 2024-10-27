@@ -16,6 +16,8 @@ class WriteContext:
         self.include_leading_colons = False  # Do we want to include leading colons to fully-qualify all names?
         self.mark_non_nullable_pointers = False  # Do we want to emit non-nullable pointers as ^ instead of *?
         self.for_backend = False  # Are we outputting backend code?
+        self.suppress_newlines = False  # Do we want to remove all newlines from the output?
+        self.suppress_indent = False  # Do we want to skip adding indent? (set automatically by write_c_line())
 
 
 # Collapse a list of tokens back into a C-style string, attempting to be reasonably intelligent and/or aesthetic
@@ -46,6 +48,51 @@ def collapse_tokens_to_string_with_whitespace(tokens):
     return result
 
 
+# Remove any redundant whitespace (i.e. not part of a string literal) from the string given
+def remove_redundant_whitespace(str):
+    result = ""
+    in_single_quote_literal = False
+    in_double_quote_literal = False
+    last_was_whitespace = False
+    for c in str:
+        if in_double_quote_literal:
+            if c == '"':
+                in_double_quote_literal = False
+            result += c
+        elif in_single_quote_literal:
+            if c == "'":
+                in_single_quote_literal = False
+            result += c
+        else:
+            if c == '"':
+                in_double_quote_literal = True
+            if c == "'":
+                in_single_quote_literal = True
+            if c == ' ':
+                if last_was_whitespace:
+                    continue  # Skip emitting character
+                last_was_whitespace = True
+            else:
+                last_was_whitespace = False
+            result += c
+
+    return result
+
+
 # Write a C-style line with indentation, and any trailing whitespace removed
-def write_c_line(file, indent, text):
-    file.write("".ljust(indent * 4) + text.rstrip() + "\n")
+def write_c_line(file, indent, context, text):
+    # We check for # here because if a line starts with a preprocessor directive we can't combine it with other lines
+    # safely
+    if context.suppress_newlines and (len(text) > 0) and (text[0] != '#'):
+        text = remove_redundant_whitespace(text.replace('\n', ' '))
+        if context.suppress_indent:
+            file.write(text.rstrip())
+        else:
+            file.write("".ljust(indent * 4) + text.rstrip())
+            context.suppress_indent = True  # We don't want indentation on following output
+    else:
+        if context.suppress_indent:
+            file.write(text.rstrip() + "\n")
+        else:
+            file.write("".ljust(indent * 4) + text.rstrip() + "\n")
+        context.suppress_indent = False

@@ -338,15 +338,15 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
                 declaration += " IM_FMTLIST(" + self.im_fmtlist + ")"
 
         if context.for_implementation:
-            write_c_line(file, indent, declaration)
+            write_c_line(file, indent, context, declaration)
         else:
             if self.body is not None:
-                write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration))
                 if self.initialiser_list_tokens is not None:
-                    write_c_line(file, indent, collapse_tokens_to_string(self.initialiser_list_tokens))
+                    write_c_line(file, indent, context, collapse_tokens_to_string(self.initialiser_list_tokens))
                 self.body.write_to_c(file, indent, context)  # No +1 here because we want the body braces at our level
             else:
-                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + ";"))
 
     def __str__(self):
         result = "Function: Return type=" + str(self.return_type) + " Name=" + str(self.name)
