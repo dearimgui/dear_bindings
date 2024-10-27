@@ -4,7 +4,7 @@
 * Made ImVector instantiations single-line (#77)
 * Added --custom-namespace-prefix and --replace-prefix to support custom naming schemes (#80)
 * Make the imconfig.h path use the parent directory by default if --backend is specified (#81)
-* Modified default output filename to be dcimgui.h instead of cimgui.h to avoid ambiguity (#80)
+* **BREAKING CHANGE** Modified default output filename to be dcimgui.h instead of cimgui.h to avoid ambiguity (#80)
 
 --- v0.10
 
