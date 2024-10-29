@@ -371,6 +371,7 @@ def emit_struct(struct):
     result["original_fully_qualified_name"] = struct.get_original_fully_qualified_name()
     result["kind"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
+    result["has_placement_constructor"] = struct.has_placement_constructor
     result["forward_declaration"] = struct.is_forward_declaration
     result["is_anonymous"] = struct.is_anonymous
 
