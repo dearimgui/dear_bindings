@@ -46,12 +46,12 @@ class DOMCodeBlock(code_dom.element.DOMElement):
     def write_to_c(self, file, indent=0, context=WriteContext()):
         self.write_preceding_comments(file, indent, context)
         if self.code_on_different_line_to_braces:
-            write_c_line(file, indent, "{")
-            write_c_line(file, indent + 1, collapse_tokens_to_string_with_whitespace(self.tokens))
-            write_c_line(file, indent, self.add_attached_comment_to_line("};"))
+            write_c_line(file, indent, context, "{")
+            write_c_line(file, indent + 1, context, collapse_tokens_to_string_with_whitespace(self.tokens))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "};"))
         else:
-            write_c_line(file, indent + 1,
-                         self.add_attached_comment_to_line("{ " +
+            write_c_line(file, indent + 1, context,
+                         self.add_attached_comment_to_line(context, "{ " +
                                                            collapse_tokens_to_string_with_whitespace(self.tokens) +
                                                            " }"))
 

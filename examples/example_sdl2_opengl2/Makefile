@@ -48,8 +48,8 @@ $(OBJDIR)/%.o: $(GENERATEDBACKENDSDIR)/%.cpp
 directories:
 	@mkdir -p $(OBJDIR)
 
-example_sdl2_opengl2: $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/cimgui.o $(OBJDIR)/cimgui_impl_sdl2.o $(OBJDIR)/cimgui_impl_opengl2.o
-	$(CC) -o example_sdl_opengl2 $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/cimgui.o $(OBJDIR)/cimgui_impl_sdl2.o $(OBJDIR)/cimgui_impl_opengl2.o -lstdc++ -lm $(LIBS)
+example_sdl2_opengl2: $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o $(OBJDIR)/dcimgui_impl_sdl2.o $(OBJDIR)/dcimgui_impl_opengl2.o
+	$(CC) -o example_sdl_opengl2 $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o $(OBJDIR)/dcimgui_impl_sdl2.o $(OBJDIR)/dcimgui_impl_opengl2.o -lstdc++ -lm $(LIBS)
 
 clean:
 	rm -rf $(OBJDIR)

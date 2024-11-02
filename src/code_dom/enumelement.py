@@ -81,11 +81,11 @@ class DOMEnumElement(code_dom.element.DOMElement):
             name_padded = self.name
             if self.value_alignment > len(self.name):
                 name_padded = name_padded + (" " * (self.value_alignment - len(self.name)))
-            write_c_line(file, indent, self.add_attached_comment_to_line(name_padded + " = " +
-                                                                         collapse_tokens_to_string(self.value_tokens) +
-                                                                         ","))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, name_padded + " = " +
+                                                                                  collapse_tokens_to_string(self.value_tokens) +
+                                                                                  ","))
         else:
-            write_c_line(file, indent, self.add_attached_comment_to_line(self.name + ","))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, self.name + ","))
 
     def __str__(self):
         if self.value_tokens is None:

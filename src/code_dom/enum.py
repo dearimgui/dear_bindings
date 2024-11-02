@@ -109,20 +109,20 @@ class DOMEnum(code_dom.element.DOMElement):
             # C doesn't support storage types nor forward-declaration of enums
             if self.name is not None and not self.emit_as_anonymous_for_c:
                 # Named enums should be typedefs
-                write_c_line(file, indent, self.add_attached_comment_to_line("typedef enum "))
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "typedef enum "))
             else:
                 # Anonymous enums should not be typedefs
-                write_c_line(file, indent, self.add_attached_comment_to_line("enum "))
-            write_c_line(file, indent, "{")
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "enum "))
+            write_c_line(file, indent, context, "{")
 
             # Write enum elements
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
 
             if self.name is not None and not self.emit_as_anonymous_for_c:
-                write_c_line(file, indent, "} " + self.name + ";")
+                write_c_line(file, indent, context, "} " + self.name + ";")
             else:
-                write_c_line(file, indent, "};")
+                write_c_line(file, indent, context, "};")
         else:
             storage_type_declaration = ""
 
@@ -134,16 +134,16 @@ class DOMEnum(code_dom.element.DOMElement):
             if self.is_forward_declaration:
                 terminator = ";"
 
-            write_c_line(file, indent, self.add_attached_comment_to_line("enum " +
-                                                                         self.name +
-                                                                         storage_type_declaration +
-                                                                         terminator))
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, "enum " +
+                                                                                  self.name +
+                                                                                  storage_type_declaration +
+                                                                                  terminator))
 
             if not self.is_forward_declaration:
-                write_c_line(file, indent, "{")
+                write_c_line(file, indent, context, "{")
                 for child in self.children:
                     child.write_to_c(file, indent + 1, context)
-                write_c_line(file, indent, "};")
+                write_c_line(file, indent, context, "};")
 
     def __str__(self):
         return "Enum: " + self.name

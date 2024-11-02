@@ -80,7 +80,7 @@ class DOMTypedef(code_dom.element.DOMElement):
 
         declaration += ";"
 
-        write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
+        write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration))
 
     def __str__(self):
         return "Typedef: " + self.name + " type=" + str(self.type)

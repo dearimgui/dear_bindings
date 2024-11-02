@@ -30,8 +30,8 @@ jobs:
 
     steps:
     # Checkout both repositories
-    - uses: actions/checkout@v3
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         path: imgui
         repository: ocornut/imgui
@@ -45,13 +45,13 @@ jobs:
     - name: Generate cimgui
       run: >- 
         ${{ 
-          format('python3 dear_bindings.py --output cimgui {0} --generateunformattedfunctions imgui/imgui.h', 
+          format('python3 dear_bindings.py --output dcimgui {0} --generateunformattedfunctions imgui/imgui.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
-    - name: Generate cimgui_internal
+    - name: Generate dcimgui_internal
       run: >- 
         ${{ 
-          format('python3 dear_bindings.py --output cimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
+          format('python3 dear_bindings.py --output dcimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
     - name: Build
@@ -62,8 +62,8 @@ jobs:
           -o example_null                       \
           -Iimgui -I.                           \
           -x c examples/example_null/main.c     \
-          -x c++ cimgui.cpp                     \
-          -x c++ cimgui_internal.cpp            \
+          -x c++ dcimgui.cpp                     \
+          -x c++ dcimgui_internal.cpp            \
           imgui/imgui.cpp                       \
           imgui/imgui_demo.cpp                  \
           imgui/imgui_draw.cpp                  \
@@ -74,9 +74,9 @@ jobs:
     - name: Run
       run: ./example_null
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: dear_bindings_${{ matrix.branch }}
+        name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
         path: |
-          cimgui.*
-          cimgui_internal.*
+          dcimgui.*
+          dcimgui_internal.*

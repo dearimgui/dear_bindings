@@ -11,7 +11,7 @@ The intention with Dear Bindings is to try and **produce a C header file which i
 
 # Latest Prebuilt Versions
 
-You can find prebuilt versions (consisting of `cimgui.h`, `cimgui.cpp`, `cimgui.json` 
+You can find prebuilt versions (consisting of `dcimgui.h`, `dcimgui.cpp`, `dcimgui.json` 
 and their equivalents for `imgui_internal.h`) 
 for both `master` and `docking` branch in our 
 [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. 
@@ -26,6 +26,7 @@ For a given build, click "Artifacts" to find them.
 
 # Recent changes
 
+* v0.11 (WIP) introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
 * v0.10 adds (somewhat experimental) support for comverting `imgui_internal.h`.
 * v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
@@ -61,13 +62,13 @@ pip install -r requirements.txt
 Then you can do:
 
 ```commandline
-python dear_bindings.py -o cimgui ../imgui/imgui.h
+python dear_bindings.py -o dcimgui ../imgui/imgui.h
 ```
 
 ...and if you want imgui_internal.h available as well:
 
 ```commandline
-python dear_bindings.py -o cimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
+python dear_bindings.py -o dcimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
 ```
 
 For an all-in-one build (Windows-only right now), you can do:
@@ -76,25 +77,54 @@ For an all-in-one build (Windows-only right now), you can do:
 BuildAllBindings.bat
 ```
 
-With a target `imgui.h`, Dear Bindings generates `cimgui.h` (defines the C
-API), `cimgui.cpp` (implements the C binding to the underlying C++ code), and
-`cimgui.json` (a metadata file, see below).
+With a target `imgui.h`, Dear Bindings generates `dcimgui.h` (defines the C
+API), `dcimgui.cpp` (implements the C binding to the underlying C++ code), and
+`dcimgui.json` (a metadata file, see below).
 
-Correspondingly, `cimgui_internal.h`, `cimgui_internal.cpp` and 
-`cimgui_internal.json` contain the bindings for `imgui_internal.h`, which has
+Correspondingly, `dcimgui_internal.h`, `dcimgui_internal.cpp` and 
+`dcimgui_internal.json` contain the bindings for `imgui_internal.h`, which has
 a lot of useful functions for more advanced use-cases that are not exposed in the
 main public API for one reason or another.
 
-Using a C++ compiler, you can compile `cimgui.cpp` along with `imgui/*.cpp`
+Using a C++ compiler, you can compile `dcimgui.cpp` along with `imgui/*.cpp`
 into a static library. This can be used to integrate with a C program, for
-example, by including the generated C header `cimgui.h` and linking against
+example, by including the generated C header `dcimgui.h` and linking against
 this library.
 
-Other command line arguments:
+### Customising prefixes
+
+By default, Dear Bindings will use namespaces/class names to generate prefixes
+for names in the output - for example, `ImGui::Begin()` will become `ImGui_Begin()`.
+
+However, you may want to customise these, especially if you are looking for
+compatibility with cimgui or similar. To achieve this, you can specify 
+`--custom-namespace-prefix` to replace `ImGui_` with something else - for example,
+`--custom-namespace-prefix ig` will result in `ImGui::Begin()` becoming `igBegin()`
+instead. For more detailed customisation, you can use `--replace-prefix`, which
+allows any arbitrary name prefix to be replaced - for example, 
+`--replace-prefix ImFont_=if` will result in `ImFont_FindGlyph()` becoming
+`ifFontGlyph()` (and all other `ImFont_` names following suit). You can specify as
+many `--replace-prefix` arguments as you like (although the results are undefined
+if you specify overlapping prefixes).
+
+(for reference, `--custom-namespace-prefix Foo` is just a simplified syntax for
+`--replace-prefix ImGui_=Foo`)
+
+
+### All command line arguments
 
 ```commandline
+Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.
 usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR]
-                        [--nopassingstructsbyvalue] [--backend]
+                        [--nopassingstructsbyvalue]
+                        [--nogeneratedefaultargfunctions]
+                        [--generateunformattedfunctions] [--backend]
+                        [--imgui-include-dir IMGUI_INCLUDE_DIR]
+                        [--backend-include-dir BACKEND_INCLUDE_DIR]
+                        [--include INCLUDE] [--imconfig-path IMCONFIG_PATH]
+                        [--emit-combined-json-metadata]
+                        [--custom-namespace-prefix CUSTOM_NAMESPACE_PREFIX]
+                        [--replace-prefix REPLACE_PREFIX]
                         src
 
 positional arguments:
@@ -104,7 +134,7 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   -o OUTPUT, --output OUTPUT
-                        Path to output files (generally cimgui). This should
+                        Path to output files (generally dcimgui). This should
                         have no extension, as <output>.h, <output>.cpp and
                         <output>.json will be written.
   -t TEMPLATEDIR, --templatedir TEMPLATEDIR
@@ -113,6 +143,9 @@ options:
   --nopassingstructsbyvalue
                         Convert any by-value struct arguments to pointers (for
                         other language bindings)
+  --nogeneratedefaultargfunctions
+                        Do not generate function variants with implied default
+                        values
   --generateunformattedfunctions
                         Generate unformatted variants of format string
                         supporting functions
@@ -122,13 +155,33 @@ options:
                         Path to ImGui headers to use in emitted include files.
                         Should include a trailing slash (eg "Imgui/").
                         (default: blank)
-  --include INCLUDED_FILE
-                        Path to additional .h files to include (e.g. imgui.h
+  --backend-include-dir BACKEND_INCLUDE_DIR
+                        Path to ImGui backend headers to use in emitted files.
+                        Should include a trailing slash (eg
+                        "Imgui/Backends/"). (default: same as --imgui-include-
+                        dir)
+  --include INCLUDE     Path to additional .h files to include (e.g. imgui.h
                         if converting imgui_internal.h, and/or the file you
                         set IMGUI_USER_CONFIG to, if any)
+  --imconfig-path IMCONFIG_PATH
+                        Path to imconfig.h. If not specified, imconfig.h will
+                        be assumed to be in the same directory as the source
+                        file, or the directory immediately above it if
+                        --backend is specified
   --emit-combined-json-metadata
                         Emit a single combined metadata JSON file instead of
                         emitting separate metadata JSON files for each header
+  --custom-namespace-prefix CUSTOM_NAMESPACE_PREFIX
+                        Specify a custom prefix to use on emitted
+                        functions/etc in place of the usual namespace-derived
+                        ImGui_
+  --replace-prefix REPLACE_PREFIX
+                        Specify a name prefix and something to replace it with
+                        as a pair of arguments of the form <old prefix>=<new
+                        prefix>. For example, "--replace-prefix ImFont_=if
+                        will" result in ImFont_FindGlyph() becoming
+                        ifFontGlyph() (and all other ImFont_ names following
+                        suit)
 
 Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors
@@ -136,7 +189,7 @@ parameter errors
 
 # Generated metadata
 
-You can find details of the `cimgui.json` file format [here](MetadataFormat.md).
+You can find details of the `dcimgui.json` file format [here](MetadataFormat.md).
 
 # Generated code differences
 
@@ -235,7 +288,7 @@ A semi-experimental feature has been added to generate binding for the various b
 To convert a backend header, use `--backend` on the command line - for example:
 
 ```commandline
-python dear_bindings.py --backend -o cimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
+python dear_bindings.py --backend -o dcimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
 ```
 
 Tested Backends:

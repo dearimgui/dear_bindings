@@ -23,8 +23,8 @@ $(OBJDIR)/%.o: $(GENERATEDDIR)/%.cpp
 directories:
 	@mkdir -p $(OBJDIR)
 
-example_null: $(OBJDIR)/main.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/cimgui.o
-	$(CC) -o example_null $(OBJDIR)/main.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/cimgui.o -lstdc++ -lm 
+example_null: $(OBJDIR)/main.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o
+	$(CC) -o example_null $(OBJDIR)/main.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o -lstdc++ -lm 
 
 clean:
 	rm -rf $(OBJDIR)

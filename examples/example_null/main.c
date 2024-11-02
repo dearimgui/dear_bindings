@@ -3,8 +3,8 @@
 // This is useful to test building, but you cannot interact with anything here!
 #include <stdio.h>
 
-#include "cimgui.h"
-#include "cimgui_internal.h"
+#include "dcimgui.h"
+#include "dcimgui_internal.h"
 
 int main(int argc, char** argv)
 {

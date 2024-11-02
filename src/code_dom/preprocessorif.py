@@ -132,13 +132,13 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         self.write_preceding_comments(file, indent, context)
 
         opening_clause = self.get_opening_clause()
-        write_c_line(file, 0, opening_clause)
+        write_c_line(file, 0, context, opening_clause)
 
         for child in self.children:
             child.write_to_c(file, indent, context)
 
         if len(self.else_children) > 0:
-            write_c_line(file, 0, "#else")
+            write_c_line(file, 0, context, "#else")
             for child in self.else_children:
                 child.write_to_c(file, indent, context)
 
@@ -148,7 +148,7 @@ class DOMPreprocessorIf(code_dom.element.DOMElement):
         else:
             comment = " // " + self.remove_continuations(opening_clause)
 
-        write_c_line(file, 0, "#endif" + comment)
+        write_c_line(file, 0, context, "#endif" + comment)
 
     # Remove any continuations (i.e. "\<newline>" sequences) from the string given
     @staticmethod

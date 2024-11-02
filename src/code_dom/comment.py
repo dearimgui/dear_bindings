@@ -34,8 +34,15 @@ class DOMComment(code_dom.element.DOMElement):
 
         return dom_element
 
-    def to_c_string(self):
-        return self.comment_text
+    def to_c_string(self, context=WriteContext()):
+        if context.suppress_newlines:
+            # If newlines are suppressed, we have to use a block comment here
+            if self.comment_text.startswith("//"):
+                return "/* " + self.comment_text[2:] + " /*"
+            else:
+                return self.comment_text
+        else:
+            return self.comment_text
 
     # Generate a comment from a string (string must include // or /* */)
     @staticmethod
@@ -50,7 +57,7 @@ class DOMComment(code_dom.element.DOMElement):
             return  # No comments in implementation code
         # Attached/preceding comments are written by their attached element
         if not self.is_attached_comment and not self.is_preceding_comment:
-            write_c_line(file, indent, self.comment_text)
+            write_c_line(file, indent, context, self.comment_text)
 
     def __str__(self):
         if self.is_attached_comment or self.is_preceding_comment:

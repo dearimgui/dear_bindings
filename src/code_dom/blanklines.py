@@ -34,7 +34,7 @@ class DOMBlankLines(code_dom.element.DOMElement):
         self.write_preceding_comments(file, indent, context)
         if self.num_blank_lines > 0:
             for i in range(0, self.num_blank_lines):
-                write_c_line(file, 0, "")
+                write_c_line(file, 0, context, "")
 
     def __str__(self):
         return "Blank lines: " + str(self.num_blank_lines)

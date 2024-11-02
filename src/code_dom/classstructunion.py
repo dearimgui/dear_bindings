@@ -15,6 +15,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.base_classes = None  # List of base classes, as tuples with their accessibility (i.e. ("private", "CBase"))
         self.use_unmodified_name_for_typedef = False  # Should the name be used as-is for the typedef?
+        self.single_line_declaration = False  # Should we try to emit the declaration as a single line?
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -119,6 +120,13 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         else:
             raise Exception("Unsupported struct/class/union type")
 
+        # Forward declarations are always single line and don't need special processing
+        using_single_line_declaration = self.single_line_declaration and not self.is_forward_declaration
+
+        if using_single_line_declaration:
+            context.suppress_newlines = True
+            context.suppress_indent = False
+
         if not self.is_anonymous:
             declaration += " " + self.name
             # We need the struct name to be different from the typedef name to prevent compiler complaints about
@@ -134,19 +142,29 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
                     declaration += " : " if is_first else ", "
                     declaration += accessibility + " " + class_name
 
-            write_c_line(file, indent, self.add_attached_comment_to_line(declaration))
-            write_c_line(file, indent, "{")
+            # We want to put attached comments on the declaration, unless we're in single-line mode
+            if using_single_line_declaration:
+                write_c_line(file, indent, context, declaration)
+            else:
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration))
+            write_c_line(file, indent, context, "{")
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
             if context.for_c and not self.is_anonymous:
-                write_c_line(file, indent, "} " + self.name + ";")
+                write_c_line(file, indent, context, "} " + self.name + ";")
             else:
-                write_c_line(file, indent, "};")
+                write_c_line(file, indent, context, "};")
         else:
             if context.for_c and not self.is_anonymous:
-                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + " " + self.name + ";"))
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + " " + self.name + ";"))
             else:
-                write_c_line(file, indent, self.add_attached_comment_to_line(declaration + ";"))
+                write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + ";"))
+
+        if using_single_line_declaration:
+            context.suppress_newlines = False
+            context.suppress_indent = True
+            # This will insert the final newline and also reset suppress_indent
+            write_c_line(file, indent, context, self.add_attached_comment_to_line(context, ""))
 
     def __str__(self):
         if self.name is not None:
