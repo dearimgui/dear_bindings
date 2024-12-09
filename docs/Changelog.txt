@@ -5,6 +5,7 @@
 * Added --custom-namespace-prefix and --replace-prefix to support custom naming schemes (#80)
 * Make the imconfig.h path use the parent directory by default if --backend is specified (#81)
 * **BREAKING CHANGE** Modified default output filename to be dcimgui.h instead of cimgui.h to avoid ambiguity (#80)
+* Removed unnecessary typedefs from structs with forward declarations to avoid warnings on C99 compilers (#82)
 
 --- v0.10
 

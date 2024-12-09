@@ -76,3 +76,10 @@ def apply(dom_root):
                 next_line = insert_point.parent.get_next_child(insert_point)
 
         insert_point.parent.insert_after_child(insert_point, dom_headers_declarations)
+
+    # Mark anything we found a forward declaration for as having one
+
+    for struct in dom_root.list_all_children_of_type(code_dom.DOMClassStructUnion):
+        if (struct.structure_type != "UNION") and struct.name in forward_declarations:
+            if not struct.is_forward_declaration:
+                struct.has_forward_declaration = True
