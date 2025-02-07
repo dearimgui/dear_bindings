@@ -288,7 +288,7 @@ A semi-experimental feature has been added to generate binding for the various b
 To convert a backend header, use `--backend` on the command line - for example:
 
 ```commandline
-python dear_bindings.py --backend -o dcimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
+python dear_bindings.py --backend --include ..\imgui\imgui.h -o dcimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
 ```
 
 Tested Backends:

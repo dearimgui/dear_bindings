@@ -38,6 +38,7 @@ def apply(dom_root, custom_type_fudges={}):
         if len(keep_templates) == 0:
             break
 
+
 # Flattens one nesting level of templates. 
 # Returns list of template types that still have non-flattened usages.
 def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTemplate]:
