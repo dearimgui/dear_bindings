@@ -13,6 +13,7 @@ def apply(dom_root):
         current_add_point = struct
 
         is_by_value = struct.is_by_value
+        has_placement_constructor = struct.has_placement_constructor
 
         # Find any child functions
         # Note that this doesn't handle functions in nested classes correctly
@@ -23,15 +24,31 @@ def apply(dom_root):
             if function.is_constructor:
                 # Constructors get modified to return a pointer to the newly-created object
                 function.return_type = code_dom.DOMType()
+                function.return_type.parent = function
                 if is_by_value:
                     # By-value types have constructors that return by-value, unsurprisingly
                     function.return_type.tokens = [utils.create_token(struct.name)]
+                elif has_placement_constructor:
+                    function.return_type.tokens = [utils.create_token("void")]
+
+                    # Add a self argument as the first argument of the function
+                    self_arg = code_dom.DOMFunctionArgument()
+                    self_arg.parent = function
+                    self_arg.name = "self"
+                    self_arg.arg_type = code_dom.DOMType()
+                    self_arg.arg_type.parent = self_arg
+                    
+                    self_arg.is_instance_pointer = True
+                    self_arg.arg_type.tokens = [utils.create_token(struct.name), utils.create_token("*")]
+                    
+                    function.arguments.insert(0, self_arg)
                 else:
                     function.return_type.tokens = [utils.create_token(struct.name),
                                                    utils.create_token("*")]
-                function.return_type.parent = function
+
                 # Make a note for the code generator that this is a by-value constructor
                 function.is_by_value_constructor = is_by_value
+                function.is_placement_constructor = has_placement_constructor
             elif function.is_destructor:
                 if is_by_value:
                     # We don't support this for fairly obvious reasons
