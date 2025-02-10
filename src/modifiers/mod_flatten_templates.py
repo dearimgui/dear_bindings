@@ -99,12 +99,15 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
 
         # Duplicate the template for each instantiation
 
-        instantiation_names = []
+        instantiation_names = []  # List of the actual C names for the instantiations
+        instantiations = []  # List of the instantiation objects themselves
 
         for (instantiation_parameter, implementation_instantiation_parameter) in \
                 zip(instantiation_parameters, implementation_instantiation_parameters):
             instantiation = templated_obj.clone()
             instantiation.parent = None
+
+            instantiations.append(instantiation)
 
             # We need to set up an override so that instead of using the original template typename the
             # implementation uses the name with parameter substitution doe
@@ -125,7 +128,7 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
             # Replace all occurrences of the type parameter with the instantiation parameter
 
             for element in instantiation.list_all_children_of_type(code_dom.DOMType):
-                # Look for the THING preceeding the first LTRIANGLE
+                # Look for the THING preceding the first LTRIANGLE
                 element_type_name = None
                 for token_index, token in enumerate(element.unmodified_element.tokens):
                     if token.type == 'LTRIANGLE':
@@ -133,7 +136,8 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
                         if thing_token.type == 'THING':
                             element_type_name = thing_token.value
 
-                element_instantiation_parameter, _, _ = extract_template_parameter(element_type_name, element.unmodified_element.tokens)
+                element_instantiation_parameter, _, _ = (
+                    extract_template_parameter(element_type_name, element.unmodified_element.tokens))
 
                 # Check if template is not instantiated
                 if template_parameter_name == element_instantiation_parameter:
@@ -255,7 +259,9 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
             instantiation.attach_preceding_comments([comment])
 
         # Replace any references to the original template types with the new instantiations
-        for (instantiation_parameter, instantiation_name) in zip(instantiation_parameters, instantiation_names):
+        for (instantiation_parameter, instantiation_name, instantiation) in \
+                zip(instantiation_parameters, instantiation_names, instantiations):
+            first_reference = True
             for type_element in dom_root.list_all_children_of_type(code_dom.DOMType):
                 element_instantiation_parameter, first_token, last_token = \
                     extract_template_parameter(template_name, type_element.tokens)
@@ -272,6 +278,31 @@ def apply_single_iteration(dom_root, custom_type_fudges) -> list[code_dom.DOMTem
 
                     type_element.tokens[first_token_of_reference].value = instantiation_name
                     del type_element.tokens[first_token_of_reference + 1:last_token + 1]  # +1 to eat the closing >
+
+                    # Next check to see if the template was declared in a different header from this reference
+                    # and has not been used previously -  if so, we want to move the instantiation into this header
+                    # instead. This is mostly relevant to the Vulkan backend at the moment, which has a couple of
+                    # unique ImVector<> instantiations.
+
+                    if first_reference:
+                        instantiation_header = utils.find_nearest_parent_of_type(instantiation, code_dom.DOMHeaderFile)
+                        reference_header = utils.find_nearest_parent_of_type(type_element, code_dom.DOMHeaderFile)
+                        if instantiation_header is not reference_header:
+                            # Insert at the start of the referencing header by default
+                            insert_point = reference_header.children[0]
+
+                            # Scan the header to see if the parameter type is declared and if so insert after that
+                            # declaration (this is largely a "this makes sense for ImVector<>" mechanic)
+                            for insert_point_candidate in reference_header.list_all_children_of_types(
+                                    [code_dom.DOMClassStructUnion, code_dom.DOMTypedef ]):
+                                if insert_point_candidate.name == instantiation_parameter:
+                                    insert_point = insert_point_candidate
+                                    break
+
+                            # Move the instantiation here
+                            insert_point.parent.insert_after_child(insert_point, [ instantiation ])
+
+                    first_reference = False
 
     for template in dom_root.list_all_children_of_type(code_dom.DOMTemplate):           
         # Remove the original template

@@ -310,6 +310,21 @@ class DOMElement:
 
         return result
 
+    # Recursively find all the children of this element (and this element itself) that match the types supplied,
+    # and return them as a list
+    def list_all_children_of_types(self, element_types):
+        result = []
+
+        def walker(element):
+            for element_type in element_types:
+                if isinstance(element, element_type):
+                    result.append(element)
+                    break
+
+        self.walk(walker)
+
+        return result
+
     # Override for pickling that removes unmodified_element (mainly for cloning, as otherwise we would basically
     # end up cloning the entire unmodified tree every time we cloned anything)
     def __getstate__(self):
