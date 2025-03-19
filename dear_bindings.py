@@ -526,6 +526,16 @@ def convert_header(
                                     # Fudge those typedefs to be at the top
                                     (code_dom.DOMTypedef, 'ImGuiTableColumnIdx', False, True),
                                 ])
+    else:
+        mod_move_elements.apply(dom_root,
+                                main_src_root,
+                                [
+                                    # This is currently defined after the point where the ImVector expansions appear,
+                                    # so we need to move it up to avoid declaration issues. We move the #ifndef
+                                    # rather than the typedef itself because we want the whole block.
+                                    (code_dom.DOMPreprocessorIf, 'ImDrawIdx', False, True),
+                                ])
+
 
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)

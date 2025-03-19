@@ -9,6 +9,8 @@
 * Fixed backend generation command-line to include imgui.h so that template expansions work (#83)
 * Fixed (somewhat) template expansion in the case where the instantiation is unique to a file that is not where the
   template was originally declared (notably the Vulkan backend) (#83)
+* Added logic to move ImDrawIdx further up the file so that it doesn't end up used by ImVector expansions before the
+  actual declaration. (#87)
 
 --- v0.10
 
