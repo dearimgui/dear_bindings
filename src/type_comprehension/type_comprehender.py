@@ -154,7 +154,7 @@ def get_type_description(type_str):
             pass  # Ignore whitespace
         elif c == '(':
             pass  # Ignore group starts
-        elif (c == '*') or (c == '^'):
+        elif (c == '*') or (c == '^') or (c == "&"):
             pass  # Ignore pointers for the moment
         elif c == '[':
             break  # If we hit an array declaration, then there is no field name
@@ -280,7 +280,7 @@ def get_type_description(type_str):
                 buffered_storage_classes.append(
                     type_comprehension.TCStorageClass(type_comprehension.storage_class.StorageClass.mutable))
                 left_parse_point -= 7
-            elif (c == '*') or (c == '^'):  # ^ indicates a non-nullable pointer
+            elif (c == '*') or (c == '^') or (c == "&"):  # ^ indicates a non-nullable pointer
                 # Pointer
                 left_parse_point -= 1
                 # print("Pointer")
@@ -288,6 +288,8 @@ def get_type_description(type_str):
                 pointer_type.storage_classes = buffered_storage_classes
                 if c == '^':
                     pointer_type.nullable = False
+                if c == "&":
+                    pointer_type.reference = True
                 current_type = chain_type(current_type, pointer_type)
                 buffered_storage_classes = []
             elif c == '(':
