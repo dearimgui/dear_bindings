@@ -71,10 +71,18 @@ python dear_bindings.py -o dcimgui ../imgui/imgui.h
 python dear_bindings.py -o dcimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
 ```
 
-For an all-in-one build (Windows-only right now), you can do:
+For an all-in-one build, you can do:
+
+On Windows
 
 ```commandline
 BuildAllBindings.bat
+```
+
+On Linux (tested on Debian)
+
+```commandline
+./BuildAllBindings.sh
 ```
 
 With a target `imgui.h`, Dear Bindings generates `dcimgui.h` (defines the C
