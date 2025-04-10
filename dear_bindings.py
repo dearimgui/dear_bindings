@@ -89,6 +89,7 @@ def convert_header(
         template_dir,
         no_struct_by_value_arguments,
         no_generate_default_arg_functions,
+        no_convert_references_to_pointers,
         generate_unformatted_functions,
         is_backend,
         imgui_include_dir,
@@ -224,7 +225,8 @@ def convert_header(
     mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
     mod_remove_heap_constructors_and_destructors.apply(dom_root)
-    mod_convert_references_to_pointers.apply(dom_root)
+    if not no_convert_references_to_pointers:
+        mod_convert_references_to_pointers.apply(dom_root)
     if no_struct_by_value_arguments:
         mod_convert_by_value_struct_args_to_pointers.apply(dom_root)
     # Assume IM_VEC2_CLASS_EXTRA and IM_VEC4_CLASS_EXTRA are never defined as they are likely to just cause problems
@@ -698,6 +700,9 @@ if __name__ == '__main__':
     parser.add_argument('--nogeneratedefaultargfunctions',
                         action='store_true',
                         help='Do not generate function variants with implied default values')
+    parser.add_argument('--noconvertreferencestopointers',
+                        action='store_true',
+                        help='Do not convert references to pointers')
     parser.add_argument('--generateunformattedfunctions',
                         action='store_true',
                         help='Generate unformatted variants of format string supporting functions')
@@ -786,6 +791,7 @@ if __name__ == '__main__':
             args.templatedir,
             args.nopassingstructsbyvalue,
             args.nogeneratedefaultargfunctions,
+            args.noconvertreferencestopointers,
             args.generateunformattedfunctions,
             args.backend,
             args.imgui_include_dir,

@@ -116,6 +116,8 @@ def emit_type_comprehension_pointer(pointer):
 
     if hasattr(pointer, 'nullable'):
         result["is_nullable"] = pointer.nullable
+    if hasattr(pointer, 'reference'):
+        result["is_reference"] = pointer.reference
 
     result["inner_type"] = emit_type_comprehension_element(pointer.target)
 
