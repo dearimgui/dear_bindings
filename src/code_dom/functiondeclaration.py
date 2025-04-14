@@ -18,6 +18,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         self.is_operator = False
         self.is_constructor = False
         self.is_by_value_constructor = False  # Is this a by-value type constructor? (set during flattening)
+        self.is_placement_constructor = False # Is this a 'placement new'-style constructor? (set during flattening)
         self.is_destructor = False
         self.is_imgui_api = False
         self.im_fmtargs = None
