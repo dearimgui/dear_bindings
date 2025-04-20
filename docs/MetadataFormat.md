@@ -301,10 +301,11 @@ A simple array
 
 #### Pointer
 
-| Key         | Description                                            |
-|-------------|--------------------------------------------------------|
-| is_nullable | Indicates if it is expected that the value can be null |
-| inner_type  | The contained type                                     |
+| Key          | Description                                              |
+|--------------|----------------------------------------------------------|
+| is_nullable  | Indicates if it is expected that the value can be null   |
+| is_reference | Indicates the pointer was originally a C++ reference (&) |
+| inner_type   | The contained type                                       |
 
 `is_nullable` is emitted only when known - if omitted it should be taken to mean "it may or may not be valid for this to
 be null".
@@ -312,6 +313,9 @@ be null".
 
 > At present, `is_nullable` is only ever not specified or `false` (in other words, Dear Bindings does not currently
 > distinguish cases where a pointer is _definitely_ allowed to be null, only those where it is clearly _not_)
+
+`is_reference` indicates that the pointer started out as a C++ reference (and thus could be turned into one in languages where that is a concept).
+For obvious reasons, if `is_reference` is true then `is_nullable` will be false. 
 
 #### Builtin
 

@@ -22,6 +22,7 @@ def apply(dom_root):
                 tok.type = 'ASTERISK'
                 tok.value = '*'
                 # Note that we adjusted this so the function stub generator knows it started as a reference
+                # (this is also used as an indicator for the type comprehension system so that it can tag references)
                 tok.was_reference = True
                 # Also note that it cannot be null
                 tok.nullable = False

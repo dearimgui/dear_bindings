@@ -145,6 +145,18 @@ class DOMType(code_dom.element.DOMElement):
 
         tokens_to_emit = self.tokens
 
+        if context.emit_converted_references_as_references:
+            # Change any references that got turned into pointers _back_ into references
+            # We have to do this before the non-nullable pointer conversion because references are always non-nullable
+            # pointers and thus would get picked up by that
+            fudged_tokens = []
+            for tok in tokens_to_emit:
+                new_tok = copy.deepcopy(tok)
+                if (new_tok.value == '*') and (hasattr(new_tok, 'was_reference')) and new_tok.was_reference:
+                    new_tok.value = "&"
+                fudged_tokens.append(new_tok)
+            tokens_to_emit = fudged_tokens
+
         if context.mark_non_nullable_pointers:
             # Change any non-nullable pointers to ^s
             fudged_tokens = []

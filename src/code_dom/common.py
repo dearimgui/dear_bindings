@@ -15,6 +15,8 @@ class WriteContext:
         self.known_structs = None  # List of known struct names, for applying struct tags when writing C
         self.include_leading_colons = False  # Do we want to include leading colons to fully-qualify all names?
         self.mark_non_nullable_pointers = False  # Do we want to emit non-nullable pointers as ^ instead of *?
+        # Do we want to emit references that have been converted to pointers as references instead of pointers?
+        self.emit_converted_references_as_references = False
         self.for_backend = False  # Are we outputting backend code?
         self.suppress_newlines = False  # Do we want to remove all newlines from the output?
         self.suppress_indent = False  # Do we want to skip adding indent? (set automatically by write_c_line())

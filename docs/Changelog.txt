@@ -11,6 +11,8 @@
   template was originally declared (notably the Vulkan backend) (#83)
 * Added logic to move ImDrawIdx further up the file so that it doesn't end up used by ImVector expansions before the
   actual declaration. (#87)
+* Slightly experimental - mark references that were turned into pointers with is_reference in the metadata. (Thanks
+  to [@ramenguy99] for the feature suggestion and original PR)
 
 --- v0.10
 

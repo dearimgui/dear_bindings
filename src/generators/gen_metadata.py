@@ -116,6 +116,8 @@ def emit_type_comprehension_pointer(pointer):
 
     if hasattr(pointer, 'nullable'):
         result["is_nullable"] = pointer.nullable
+    if hasattr(pointer, 'reference'):
+        result["is_reference"] = pointer.reference
 
     result["inner_type"] = emit_type_comprehension_element(pointer.target)
 
@@ -221,8 +223,10 @@ def emit_type(type_info, declaration_suffix=""):
 
     # A version of the declaration with non-nullable pointers marked as ^ instead of *
     # (which the type comprehender knows how to interpret and output with appropriate annotations)
+    # Similarly, this emits references that have been turned into pointers as & for metadata purposes
     context = code_dom.WriteContext()
     context.mark_non_nullable_pointers = True
+    context.emit_converted_references_as_references = True
     declaration_with_non_nullable_pointers = type_info.to_c_string(context) + declaration_suffix
 
     result["declaration"] = declaration
