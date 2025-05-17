@@ -85,6 +85,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
+	tag_name: auto_build
         path: |
           dcimgui.*
           dcimgui_internal.*
