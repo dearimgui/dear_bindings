@@ -83,6 +83,9 @@ jobs:
           dcimgui.*
           dcimgui_internal.*
 
+    - name: Generate ZIP file
+      run: zip -u AllBindingFiles.zip dcimgui.* dcimgui_internal.*
+
     - name: Generate tag name
       run: echo "RELEASE_TIMESTAMP=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_ENV
 
@@ -99,3 +102,4 @@ jobs:
         files: |
           dcimgui.*
           dcimgui_internal.*
+          AllBindingFiles.zip
