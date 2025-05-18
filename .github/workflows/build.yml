@@ -88,11 +88,14 @@ jobs:
 
     - name: Release
       uses: softprops/action-gh-release@v2
+      # We don't actually use the compiled binaries in the release, so only do releases for Clang
+      if: matrix.compiler == 'clang'
       with:
         # name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
         # tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
-        tag_name: ${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ env.RELEASE_TIMESTAMP }}
-        body_path: docs/Changelog.txt
+        tag_name: ${{ matrix.branch }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ env.RELEASE_TIMESTAMP }}
+        # body_path: docs/Changelog.txt
+        body: This release contains pre-generated binding files for the Dear ImGui ${{ matrix.branch }} branch with the "${{ matrix.flag_nogeneratedefaultargfunctions }}" option set.
         files: |
           dcimgui.*
           dcimgui_internal.*
