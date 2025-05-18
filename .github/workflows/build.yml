@@ -31,7 +31,9 @@ jobs:
     steps:
     # Checkout both repositories
     - uses: actions/checkout@v4
+      id: dear_bindings_checkout
     - uses: actions/checkout@v4
+      id: imgui_checkout
       with:
         path: imgui
         repository: ocornut/imgui
@@ -84,8 +86,9 @@ jobs:
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
-        name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
-        tag_name: auto_build
-        path: |
+        # name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
+        tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
+        body_path: docs/Changelog.txt
+        files: |
           dcimgui.*
           dcimgui_internal.*
