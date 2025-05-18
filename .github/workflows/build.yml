@@ -84,7 +84,7 @@ jobs:
           dcimgui_internal.*
 
     - name: Generate tag name
-      run: echo "RELEASE_TAG_NAME=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+      run: echo "RELEASE_TAG_NAME=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_ENV
 
     - name: Release
       uses: softprops/action-gh-release@v2
