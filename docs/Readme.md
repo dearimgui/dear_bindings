@@ -11,11 +11,12 @@ The intention with Dear Bindings is to try and **produce a C header file which i
 
 # Latest Prebuilt Versions
 
-You can find prebuilt versions (consisting of `dcimgui.h`, `dcimgui.cpp`, `dcimgui.json` 
-and their equivalents for `imgui_internal.h`) 
-for both `master` and `docking` branch in our 
+You can find prebuilt versions (consisting of `dcimgui.h`, `dcimgui.cpp`, `dcimgui.json` and their equivalents for `imgui_internal.h`) 
+for both the `master` and `docking` branches on our [Releases](https://github.com/dearimgui/dear_bindings/releases) page and 
 [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. 
-For a given build, click "Artifacts" to find them.
+For a given build, click either "Assets" or "Artifacts" to find them.
+
+On the releases page, the "AllBindingFiles.zip" file is a zipped version of the generated binding files (.h/.cpp/.json) as a single downloaded, intended for easy integration with automated build pipelines.
 
 # Requirements
 
