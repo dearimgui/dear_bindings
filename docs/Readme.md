@@ -16,7 +16,8 @@ for both the `master` and `docking` branches on our [Releases](https://github.co
 [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. 
 For a given build, click either "Assets" or "Artifacts" to find them.
 
-On the releases page, the "AllBindingFiles.zip" file is a zipped version of the generated binding files (.h/.cpp/.json) as a single downloaded, intended for easy integration with automated build pipelines.
+On the releases page, the `AllBindingFiles.zip` file is a zipped version of the generated binding files (`.h`/`.cpp`/`.json`) as a single download,
+intended for easy integration with automated build pipelines.
 
 # Requirements
 
