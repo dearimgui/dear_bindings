@@ -48,7 +48,7 @@ jobs:
           format('python3 dear_bindings.py --output dcimgui {0} --generateunformattedfunctions imgui/imgui.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
-    - name: Generate dcimgui_internal
+    - name: Generate dcimgui_internal	
       run: >- 
         ${{ 
           format('python3 dear_bindings.py --output dcimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
@@ -85,7 +85,7 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
-	tag_name: auto_build
+        tag_name: auto_build
         path: |
           dcimgui.*
           dcimgui_internal.*
