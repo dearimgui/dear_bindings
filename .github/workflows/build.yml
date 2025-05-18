@@ -84,14 +84,14 @@ jobs:
           dcimgui_internal.*
 
     - name: Generate tag name
-      run: echo "RELEASE_TAG_NAME=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_ENV
+      run: echo "RELEASE_TIMESTAMP=$(date +'%Y-%m-%dT%H-%M-%S')" >> $GITHUB_ENV
 
     - name: Release
       uses: softprops/action-gh-release@v2
       with:
         # name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
         # tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
-        tag_name: ${{ env.RELEASE_TAG_NAME }}
+        tag_name: ${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ env.RELEASE_TIMESTAMP }}
         body_path: docs/Changelog.txt
         files: |
           dcimgui.*
