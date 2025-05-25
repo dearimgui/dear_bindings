@@ -44,7 +44,8 @@ jobs:
     # Get the latest tags from the repository
     - name: get_tags
       run: |
-           echo "DEAR_BINDINGS_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+           # We exclude DearBindings_* here to avoid picking up our own release tags
+           echo "DEAR_BINDINGS_TAG=$(git describe --tags --abbrev=0 --exclude DearBindings_*)" >> $GITHUB_ENV
            cd imgui
            echo "IMGUI_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
@@ -66,14 +67,14 @@ jobs:
     # Sync to those tags
     - uses: actions/checkout@v4
       id: dear_bindings_tag_checkout
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       with:
         repository: dearimgui/dear_bindings
         ref: ${{ env.DEAR_BINDINGS_TAG }}
         fetch-depth: 1
     - uses: actions/checkout@v4
       id: imgui_tag_checkout
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       with:
         path: imgui
         repository: ocornut/imgui
@@ -81,35 +82,35 @@ jobs:
         fetch-depth: 1
 
     - name: install_dependencies
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: |
         sudo pip3 install ply
 
     - name: generate_cimui
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui --generateunformattedfunctions imgui/imgui.h 
 
     - name: generate_cimui_nogeneratedefaultargfunctions
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions --nogeneratedefaultargfunctions --generateunformattedfunctions imgui/imgui.h
 
     - name: generate_dcimgui_internal
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_internal --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
 
     - name: generate_dcimgui_internal_nogeneratedefaultargfunctions
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_internal_nodefaultargfunctions --nogeneratedefaultargfunctions --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
 
     - name: Generate ZIP file
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       run: |
            echo Zipping to ${{ env.RELEASE_TAG }}.zip
            zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_internal_nodefaultargfunctions.*
 
     - name: Release
       uses: softprops/action-gh-release@v2
-      if: ${{ env.DO_RELEASE }} == '1'
+      if: ${{ env.DO_RELEASE == '1' }}
       with:
         # name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
         # tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
