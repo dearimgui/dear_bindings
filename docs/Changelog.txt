@@ -1,4 +1,4 @@
---- v0.11 WIP
+--- v0.11
 
 * Fixed support for static member functions, and added metadata on static-ness. (#73)
 * Made ImVector instantiations single-line (#77)

@@ -28,7 +28,7 @@ intended for easy integration with automated build pipelines.
 
 # Recent changes
 
-* v0.11 (WIP) introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
+* v0.11 introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
 * v0.10 adds (somewhat experimental) support for comverting `imgui_internal.h`.
 * v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
