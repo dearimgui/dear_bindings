@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.11
+# Dear Bindings Version v0.12 WIP
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 

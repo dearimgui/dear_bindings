@@ -1,3 +1,7 @@
+--- v0.12 WIP
+
+* Copy the returned value to a temporary variable when the stub function needs to call to va_end (thanks to tanoxyz)
+
 --- v0.11
 
 * Fixed support for static member functions, and added metadata on static-ness. (#73)
