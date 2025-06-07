@@ -296,13 +296,15 @@ ImVec2  (*Platform_GetWindowFramebufferScale)(ImGuiViewport* vp);
 ImVec4  (*Platform_GetWindowWorkAreaInsets)(ImGuiViewport* vp);
 ```
 
+If you set these directly to point to a C function, then you will likely encounter stack corruption due to differences in the way C and C++ handle structure return values.
+
 To avoid this issue, Dear Bindings provides corresponding setter functions that take a C function and automatically insert a C++ thunk that converts the return value appropriately.
 
 ```cpp
 void ImGuiPlatformIO_SetPlatform_GetWindowPos(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
-void ImGuiPlatformIO_SetPlatform_GetWindowSize(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
-void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
-void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec4* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowSize(void (*getWindowSizeFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void (*getWindowFramebufferScaleFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void (*getWindowWorkAreaInsetsFunc)(ImGuiViewport* vp, ImVec4* result));
 ```
 
 Note that internally these functions have to allocate a small structure to store the thunk information. This gets stored in the `BackendLanguageUserData` member of `ImGuiIO`, so if you application is using that for other purposes you will not be able to use these functions (in that case, you'll need to either implement your own thunk with the data stored elsewhere, or get in touch to see if we can find another place to store this data).

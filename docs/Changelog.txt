@@ -1,3 +1,8 @@
+--- v0.13 WIP
+
+* Cosmetic fix to the naming of the PlatformIO thunk helper functions, and made the comment more explicit about why
+  setting those callbacks directly is a bad idea.
+
 --- v0.12
 
 * Copy the returned value to a temporary variable when the stub function needs to call to va_end (thanks to tanoxyz)

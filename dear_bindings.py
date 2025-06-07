@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.12
+# Dear Bindings Version v0.13 WIP
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -234,29 +234,29 @@ def convert_header(
                                               [
                                                   "void ImGuiPlatformIO_SetPlatform_GetWindowPos(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
                                                   "// Set ImGuiPlatformIO::Platform_GetWindowPos in a C-compatible mannner",
-                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowSize(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowSize(void(*getWindowSizeFunc)(ImGuiViewport* vp, ImVec2* result)); "
                                                   "// Set ImGuiPlatformIO::Platform_GetWindowSize in a C-compatible mannner",
-                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*getWindowFramebufferScaleFunc)(ImGuiViewport* vp, ImVec2* result)); "
                                                   "// Set ImGuiPlatformIO::Platform_GetWindowFramebufferScale in a C-compatible mannner",
-                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec4* result)); "
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*getWindowWorkAreaInsetsFunc)(ImGuiViewport* vp, ImVec4* result)); "
                                                   "// Set ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets in a C-compatible mannner"
                                               ])
         # Add comments to try and point people at the helpers
         mod_add_field_comment.apply(dom_root,
                                    "ImGuiPlatformIO::Platform_GetWindowPos",
-                                   "(Use ImGuiPlatformIO_SetPlatform_GetWindowPos() to set this from C)")
+                                   "(Use ImGuiPlatformIO_SetPlatform_GetWindowPos() to set this from C, otherwise you will likely encounter stack corruption)")
 
         mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowSize",
-                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowSize() to set this from C)")
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowSize() to set this from C, otherwise you will likely encounter stack corruption)")
 
         mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowFramebufferScale",
-                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale() to set this from C)")
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale() to set this from C, otherwise you will likely encounter stack corruption)")
 
         mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets",
-                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets() to set this from C)")
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets() to set this from C, otherwise you will likely encounter stack corruption)")
 
     mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
