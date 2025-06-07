@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.13 WIP
+# Dear Bindings Version v0.13
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -95,8 +95,7 @@ def convert_header(
         backend_include_dir,
         emit_combined_json_metadata,
         prefix_replacements
-    ):
-
+):
     # Set up context and DOM root
     context = code_dom.ParseContext()
     dom_root = code_dom.DOMHeaderFileSet()
@@ -164,7 +163,7 @@ def convert_header(
                                         "ImNewDummy",  # ImGui <1.82
                                         "ImNewWrapper",  # ImGui >=1.82
                                         # Templated stuff in imgui_internal.h
-                                        "ImBitArray", # template with two parameters, not supported
+                                        "ImBitArray",  # template with two parameters, not supported
                                         "ImSpanAllocator",
                                         ])
     # Remove all functions from certain types, as they're not really useful
@@ -187,10 +186,9 @@ def convert_header(
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
                                           "ImGui::CheckboxFlagsT"])
-    
+
     mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
                                           "ImGui::DebugNodeInputTextState"])
-    
 
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
@@ -229,32 +227,59 @@ def convert_header(
 
     # If we have docking support, add some functions to allow overriding platform IO functions that return structures
     if have_docking_support:
+        # Check if we have GetWindowFramebufferScale and GetWindowWorkAreaInsets, as those are relatively recent additions
+        # and they may not exist
+
+        have_getWindowFramebufferScale = False
+        have_getWindowWorkAreaInsets = False
+
+        for field in dom_root.list_all_children_of_type(code_dom.DOMFieldDeclaration):
+            if field.get_fully_qualified_name() == "ImGuiPlatformIO::Platform_GetWindowFramebufferScale":
+                have_getWindowFramebufferScale = True
+            if field.get_fully_qualified_name() == "ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets":
+                have_getWindowWorkAreaInsets = True
+
         # Implementation for these is in templates/imgui-header-template.cpp
         mod_add_manual_helper_functions.apply(dom_root,
                                               [
                                                   "void ImGuiPlatformIO_SetPlatform_GetWindowPos(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
                                                   "// Set ImGuiPlatformIO::Platform_GetWindowPos in a C-compatible mannner",
                                                   "void ImGuiPlatformIO_SetPlatform_GetWindowSize(void(*getWindowSizeFunc)(ImGuiViewport* vp, ImVec2* result)); "
-                                                  "// Set ImGuiPlatformIO::Platform_GetWindowSize in a C-compatible mannner",
-                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*getWindowFramebufferScaleFunc)(ImGuiViewport* vp, ImVec2* result)); "
-                                                  "// Set ImGuiPlatformIO::Platform_GetWindowFramebufferScale in a C-compatible mannner",
-                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*getWindowWorkAreaInsetsFunc)(ImGuiViewport* vp, ImVec4* result)); "
-                                                  "// Set ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets in a C-compatible mannner"
+                                                  "// Set ImGuiPlatformIO::Platform_GetWindowSize in a C-compatible mannner"
                                               ])
+
+        if have_getWindowFramebufferScale:
+            mod_add_manual_helper_functions.apply(dom_root,
+                                             [
+                                                 "void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*getWindowFramebufferScaleFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                 "// Set ImGuiPlatformIO::Platform_GetWindowFramebufferScale in a C-compatible mannner",
+                                             ])
+            mod_add_defines.apply(dom_root, [ "#define IMGUI_DEAR_BINDINGS_HAS_GETWINDOWFRAMEBUFFERSCALE" ])
+
+        if have_getWindowWorkAreaInsets:
+            mod_add_manual_helper_functions.apply(dom_root,
+                                             [
+                                                 "void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*getWindowWorkAreaInsetsFunc)(ImGuiViewport* vp, ImVec4* result)); "
+                                                 "// Set ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets in a C-compatible mannner"
+                                             ])
+            mod_add_defines.apply(dom_root, ["#define IMGUI_DEAR_BINDINGS_HAS_GETWINDOWWORKAREAINSETS"])
+
         # Add comments to try and point people at the helpers
         mod_add_field_comment.apply(dom_root,
-                                   "ImGuiPlatformIO::Platform_GetWindowPos",
-                                   "(Use ImGuiPlatformIO_SetPlatform_GetWindowPos() to set this from C, otherwise you will likely encounter stack corruption)")
+                                    "ImGuiPlatformIO::Platform_GetWindowPos",
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowPos() to set this from C, otherwise you will likely encounter stack corruption)")
 
         mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowSize",
                                     "(Use ImGuiPlatformIO_SetPlatform_GetWindowSize() to set this from C, otherwise you will likely encounter stack corruption)")
 
-        mod_add_field_comment.apply(dom_root,
+        if have_getWindowFramebufferScale:
+            mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowFramebufferScale",
                                     "(Use ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale() to set this from C, otherwise you will likely encounter stack corruption)")
 
-        mod_add_field_comment.apply(dom_root,
+        if have_getWindowWorkAreaInsets:
+            mod_add_field_comment.apply(dom_root,
                                     "ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets",
                                     "(Use ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets() to set this from C, otherwise you will likely encounter stack corruption)")
 
@@ -307,15 +332,15 @@ def convert_header(
     # only in the type of the callback function. The normal disambiguation system can't handle that, so instead we
     # manually rename the older versions of those functions here.
     mod_rename_function_by_signature.apply(dom_root,
-        'ImGui_Combo',  # Function name
-        'old_callback',  # Argument to look for to identify this function
-        'ImGui_ComboObsolete'  # New name
-    )
+                                           'ImGui_Combo',  # Function name
+                                           'old_callback',  # Argument to look for to identify this function
+                                           'ImGui_ComboObsolete'  # New name
+                                           )
     mod_rename_function_by_signature.apply(dom_root,
-        'ImGui_ListBox',  # Function name
-        'old_callback',  # Argument to look for to identify this function
-        'ImGui_ListBoxObsolete'  # New name
-    )
+                                           'ImGui_ListBox',  # Function name
+                                           'old_callback',  # Argument to look for to identify this function
+                                           'ImGui_ListBoxObsolete'  # New name
+                                           )
 
     # The DirectX backends declare some DirectX types that need to not have _t appended to their typedef names
     mod_mark_structs_as_using_unmodified_name_for_typedef.apply(dom_root,
@@ -379,7 +404,7 @@ def convert_header(
                                      ],
                                      type_priorities={
                                      })
-    
+
     if not no_generate_default_arg_functions:
         mod_generate_default_argument_functions.apply(dom_root,
                                                       # We ignore functions that don't get called often because in those
@@ -415,7 +440,8 @@ def convert_header(
                                                           # Widgets
                                                           'ImGui_ProgressBar',
                                                           'ImGui_ColorPicker4',
-                                                          'ImGui_TreePushPtr', # Ensure why core lib has this default to NULL?
+                                                          'ImGui_TreePushPtr',
+                                                          # Ensure why core lib has this default to NULL?
                                                           'ImGui_BeginListBox',
                                                           'ImGui_ListBox',
                                                           'ImGui_MenuItemBoolPtr',
@@ -510,7 +536,7 @@ def convert_header(
                                                 'ImGui_Text',
                                                 'ImGuiTextBuffer_appendf'
                                             ])
-        
+
     if is_imgui_internal:
         mod_move_elements.apply(dom_root,
                                 main_src_root,
@@ -573,7 +599,6 @@ def convert_header(
                                     (code_dom.DOMPreprocessorIf, 'ImDrawIdx', False, True),
                                 ])
 
-
     # Make all functions use CIMGUI_API/CIMGUI_IMPL_API
     mod_make_all_functions_use_imgui_api.apply(dom_root)
     # Rename the API defines
@@ -620,7 +645,7 @@ def convert_header(
     ])
 
     mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
-        ("ImBitArrayForNamedKeys", 20) # template with two parameters, not supported
+        ("ImBitArrayForNamedKeys", 20)  # template with two parameters, not supported
     ])
 
     # Remove namespaced define
@@ -712,14 +737,14 @@ if __name__ == '__main__':
     print("Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.")
 
     # Debug code
-    #type_comprehender.get_type_description("void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd)").dump(0)
+    # type_comprehender.get_type_description("void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* cmd)").dump(0)
 
     default_template_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "src", "templates")
 
     parser = argparse.ArgumentParser(
-                        add_help=True,
-                        epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
-                               'parameter errors')
+        add_help=True,
+        epilog='Result code 0 is returned on success, 1 on conversion failure and 2 on '
+               'parameter errors')
     parser.add_argument('src',
                         help='Path to source header file to process (generally imgui.h)')
     parser.add_argument('-o', '--output',
@@ -803,7 +828,7 @@ if __name__ == '__main__':
             sys.exit(1)
         index = replacement_str.index('=')
         old_prefix = replacement_str[:index]
-        new_prefix = replacement_str[(index+1):]
+        new_prefix = replacement_str[(index + 1):]
         prefix_replacements[old_prefix] = new_prefix
 
     # --custom-namespace-prefix is just handled as a handy short form for --replace-prefix ImGui_=<something>

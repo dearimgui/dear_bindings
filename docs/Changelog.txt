@@ -1,7 +1,9 @@
---- v0.13 WIP
+--- v0.13
 
 * Cosmetic fix to the naming of the PlatformIO thunk helper functions, and made the comment more explicit about why
   setting those callbacks directly is a bad idea.
+* Fixed PlatformIO thunk helpers getting generated on older versions of Dear ImGui where the relevant functions
+  didn't exist yet. (#94)
 
 --- v0.12
 

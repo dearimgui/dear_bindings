@@ -54,6 +54,8 @@ static inline ::ImStr MarshalToCPP_ImStr_FromCharStr(const char* b)
 
 // Helpers for setting callbacks that return complex structures in PlatformIO
 // These require a thunk in C++-land to work correctly, which is implemented here
+// Because some of the functions involved are relatively new, we can't assume they exist and thus we make use
+// of some #defines set during the generation process to decide if we want to include the code or not
 
 #if defined(IMGUI_HAS_DOCK)
 
@@ -64,8 +66,12 @@ namespace
     {
         void(*PlatformIO_GetWindowPos_ThunkTarget)(cimgui::ImGuiViewport* vp, cimgui::ImVec2* result);
         void(*PlatformIO_GetWindowSize_ThunkTarget)(cimgui::ImGuiViewport* vp, cimgui::ImVec2* result);
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWFRAMEBUFFERSCALE
         void(*PlatformIO_GetWindowFramebufferScale_ThunkTarget)(cimgui::ImGuiViewport* vp, cimgui::ImVec2* result);
+#endif
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWWORKAREAINSETS
         void(*PlatformIO_GetWindowWorkAreaInsets_ThunkTarget)(cimgui::ImGuiViewport* vp, cimgui::ImVec4* result);
+#endif
     };
 
     // Get our thunk data for the current ImGui context, creating it if necessary
@@ -88,9 +94,14 @@ namespace
         {
             ImGui_DearBindingsThunkData* thunkData = reinterpret_cast<ImGui_DearBindingsThunkData*>(io.BackendLanguageUserData);
             if ((!thunkData->PlatformIO_GetWindowPos_ThunkTarget) &&
-                (!thunkData->PlatformIO_GetWindowSize_ThunkTarget) &&
-                (!thunkData->PlatformIO_GetWindowFramebufferScale_ThunkTarget) &&
-                (!thunkData->PlatformIO_GetWindowWorkAreaInsets_ThunkTarget))
+                (!thunkData->PlatformIO_GetWindowSize_ThunkTarget)
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWFRAMEBUFFERSCALE
+                && (!thunkData->PlatformIO_GetWindowFramebufferScale_ThunkTarget)
+#endif
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWWORKAREAINSETS
+                &&(!thunkData->PlatformIO_GetWindowWorkAreaInsets_ThunkTarget)
+#endif
+                )
             {
                 // Thunk data is unused and can be freed
                 io.BackendLanguageUserData = nullptr;
@@ -138,6 +149,7 @@ namespace
         return ConvertToCPP_ImVec2_ForThunks(result);
     }
 
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWFRAMEBUFFERSCALE
     ImVec2 ImGuiPlatformIO_GetWindowFramebufferScale_Thunk(ImGuiViewport* vp)
     {
         ImGui_DearBindingsThunkData* thunkData = ImGui_GetDearBindingsThunkData();
@@ -145,7 +157,9 @@ namespace
         thunkData->PlatformIO_GetWindowFramebufferScale_ThunkTarget(reinterpret_cast<cimgui::ImGuiViewport*>(vp), &result);
         return ConvertToCPP_ImVec2_ForThunks(result);
     }
+#endif
 
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWWORKAREAINSETS
     ImVec4 ImGuiPlatformIO_GetWindowWorkAreaInsets_Thunk(ImGuiViewport* vp)
     {
         ImGui_DearBindingsThunkData* thunkData = ImGui_GetDearBindingsThunkData();
@@ -153,6 +167,7 @@ namespace
         thunkData->PlatformIO_GetWindowWorkAreaInsets_ThunkTarget(reinterpret_cast<cimgui::ImGuiViewport*>(vp), &result);
         return ConvertToCPP_ImVec4_ForThunks(result);
     }
+#endif
 } // Anonymous namespace
 
 CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowPos(void(*func)(cimgui::ImGuiViewport* vp, cimgui::ImVec2* result))
@@ -177,6 +192,7 @@ CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowSize(void(*func)(ci
     }
 }
 
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWFRAMEBUFFERSCALE
 CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*func)(cimgui::ImGuiViewport* vp, cimgui::ImVec2* result))
 {
     ImGui_DearBindingsThunkData* thunkData = ImGui_GetDearBindingsThunkData();
@@ -187,7 +203,9 @@ CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(vo
         ImGui_TidyDearBindingsThunkData(); // Try to release thunk data if no longer required
     }
 }
+#endif
 
+#ifdef IMGUI_DEAR_BINDINGS_HAS_GETWINDOWWORKAREAINSETS
 CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*func)(cimgui::ImGuiViewport* vp, cimgui::ImVec4* result))
 {
     ImGui_DearBindingsThunkData* thunkData = ImGui_GetDearBindingsThunkData();
@@ -198,5 +216,6 @@ CIMGUI_API void cimgui::ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void
         ImGui_TidyDearBindingsThunkData(); // Try to release thunk data if no longer required
     }
 }
+#endif
 
 #endif // defined(IMGUI_HAS_DOCK)

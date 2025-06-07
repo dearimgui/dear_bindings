@@ -78,6 +78,20 @@ def create_preprocessor_if(text):
     return element
 
 
+# Create a preprocessor definition DOM element from a string
+def create_preprocessor_declaration(text):
+    stream = c_lexer.tokenize(text)
+    context = code_dom.ParseContext()
+    element = code_dom.DOMDefine.parse(context, stream)
+    # There may be a comment following the define, so check for it and attach if there is
+    attached_comment = code_dom.DOMComment.parse(context, stream)
+    if attached_comment is not None:
+        element.attached_comment = attached_comment
+        element.attached_comment.is_attached_comment = True
+        element.attached_comment.parent = element
+    return element
+
+
 # Create a code block DOM element from a string (e.g. "{ return 1.0f; }")
 def create_code_block(text):
     stream = c_lexer.tokenize(text)
