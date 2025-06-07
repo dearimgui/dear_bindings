@@ -28,14 +28,15 @@ intended for easy integration with automated build pipelines.
 
 # Recent changes
 
+* v0.12 adds support for setting certain `PlatformIO` callbacks in the docking branch that were previously not usable from C due to their return types. See the `PlatformIO callbacks` section below for full details. 
 * v0.11 introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
 * v0.10 adds (somewhat experimental) support for comverting `imgui_internal.h`.
 * v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
 * v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
-* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends
-  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details
-* v0.04 introduced a number of bugfixes and other tweaks
+* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends.
+  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details.
+* v0.04 introduced a number of bugfixes and other tweaks.
 
 You can see a full list of recent changes [here](Changelog.txt).
 
@@ -283,6 +284,30 @@ ImVector_Destruct(&ranges); // Free the vector using ImGui's heap functions
 Templates are expanded into their concrete instantiations, so for example `ImVector<char>` gets expanded to `ImVector_char`. Functions are removed from templates because at present in the cases where they presently exist they are generally hard to use correctly from C (see the above notes about constructors) and thus it seemed simpler/safer to have users interact directly with the structure contents if they need to.
 
 > See the note above about `ImVector_Construct` for an exception to this rule.
+
+### PlatformIO callbacks
+
+Some of the PlatformIO callbacks (at present only in the Docking branch of Dear ImGui) return structures, which means that they cannot be directly set to C functions - notably these four:
+
+```cpp
+ImVec2  (*Platform_GetWindowPos)(ImGuiViewport* vp);
+ImVec2  (*Platform_GetWindowSize)(ImGuiViewport* vp);
+ImVec2  (*Platform_GetWindowFramebufferScale)(ImGuiViewport* vp);
+ImVec4  (*Platform_GetWindowWorkAreaInsets)(ImGuiViewport* vp);
+```
+
+To avoid this issue, Dear Bindings provides corresponding setter functions that take a C function and automatically insert a C++ thunk that converts the return value appropriately.
+
+```cpp
+void ImGuiPlatformIO_SetPlatform_GetWindowPos(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowSize(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec4* result));
+```
+
+Note that internally these functions have to allocate a small structure to store the thunk information. This gets stored in the `BackendLanguageUserData` member of `ImGuiIO`, so if you application is using that for other purposes you will not be able to use these functions (in that case, you'll need to either implement your own thunk with the data stored elsewhere, or get in touch to see if we can find another place to store this data).
+
+Also, there is a (small) dynamic allocation associated with this, so if you need to ensure absolutely all memory is freed then when you finish with the ImGui context you should use the helper functions to set the callbacks to `null` - once all the callbacks are removed the allocated memory will be freed.  
 
 ### Removed functionality
 

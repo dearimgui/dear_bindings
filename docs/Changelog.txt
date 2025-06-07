@@ -1,6 +1,9 @@
---- v0.12 WIP
+--- v0.12
 
 * Copy the returned value to a temporary variable when the stub function needs to call to va_end (thanks to tanoxyz)
+* Added helpers for GetWindowPos/GetWindowSize/GetWindowFramebufferScale/GetWindowWorkAreaInsets in PlatformIO
+  (in the Docking branch) so that a C function can be set as a callback despite the return value being a structure
+  (#92)
 
 --- v0.11
 

@@ -63,3 +63,4 @@ from . import mod_replace_typedef_with_opaque_buffer
 from . import mod_change_class_field_type
 from . import mod_rename_prefix
 from . import mod_mark_structs_as_single_line_definition
+from . import mod_add_field_comment

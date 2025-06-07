@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.12 WIP
+# Dear Bindings Version v0.12
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -112,6 +112,12 @@ def convert_header(
     main_src_root = parse_single_header(src_file, context)
     dom_root.add_child(main_src_root)
 
+    # Check if the version of ImGui we are dealing with has docking support
+    have_docking_support = False
+    for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
+        if define.name == 'IMGUI_HAS_DOCK':
+            have_docking_support = True
+
     # Assign a destination filename based on the output file
     dest_file_name_only = os.path.basename(dest_file_no_ext)
     _, main_src_root.dest_filename = os.path.split(dest_file_no_ext)
@@ -220,6 +226,37 @@ def convert_header(
                                    "ImFontGlyphRangesBuilder::BuildRanges",
                                    "(ImVector_Construct()/ImVector_Destruct() can be used to safely "
                                    "construct out_ranges)")
+
+    # If we have docking support, add some functions to allow overriding platform IO functions that return structures
+    if have_docking_support:
+        # Implementation for these is in templates/imgui-header-template.cpp
+        mod_add_manual_helper_functions.apply(dom_root,
+                                              [
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowPos(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                  "// Set ImGuiPlatformIO::Platform_GetWindowPos in a C-compatible mannner",
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowSize(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                  "// Set ImGuiPlatformIO::Platform_GetWindowSize in a C-compatible mannner",
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result)); "
+                                                  "// Set ImGuiPlatformIO::Platform_GetWindowFramebufferScale in a C-compatible mannner",
+                                                  "void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void(*getWindowPosFunc)(ImGuiViewport* vp, ImVec4* result)); "
+                                                  "// Set ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets in a C-compatible mannner"
+                                              ])
+        # Add comments to try and point people at the helpers
+        mod_add_field_comment.apply(dom_root,
+                                   "ImGuiPlatformIO::Platform_GetWindowPos",
+                                   "(Use ImGuiPlatformIO_SetPlatform_GetWindowPos() to set this from C)")
+
+        mod_add_field_comment.apply(dom_root,
+                                    "ImGuiPlatformIO::Platform_GetWindowSize",
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowSize() to set this from C)")
+
+        mod_add_field_comment.apply(dom_root,
+                                    "ImGuiPlatformIO::Platform_GetWindowFramebufferScale",
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale() to set this from C)")
+
+        mod_add_field_comment.apply(dom_root,
+                                    "ImGuiPlatformIO::Platform_GetWindowWorkAreaInsets",
+                                    "(Use ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets() to set this from C)")
 
     mod_set_arguments_as_nullable.apply(dom_root, ["fmt"], False)  # All arguments called "fmt" are non-nullable
     mod_remove_operators.apply(dom_root)
