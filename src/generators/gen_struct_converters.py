@@ -4,8 +4,8 @@ from src import conditional_generator
 from src.code_dom.common import write_c_line, WriteContext
 
 
-# Recursively generate code to copy all the members of a struct and any contained by-valuestructs
-def generate_field_copies(file, indent, known_by_value_structs, struct, prefix):
+# Recursively generate code to copy all the members of a struct and any contained by-value structs
+def generate_field_copies(file, indent, known_by_value_structs, struct, prefix, to_cpp):
     # Emit code to copy each member
     for field in struct.list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration):
         if field.field_type.to_c_string() in known_by_value_structs:
@@ -15,10 +15,23 @@ def generate_field_copies(file, indent, known_by_value_structs, struct, prefix):
                                       indent,
                                       known_by_value_structs,
                                       known_by_value_structs[field.field_type.to_c_string()],
-                                      prefix + name + ".")
+                                      prefix + name + ".",
+                                      to_cpp)
         else:
             for name in field.names:
-                write_c_line(file, indent, WriteContext(), "dest." + prefix + name + " = src." + prefix + name + ";")
+                if field.field_type.is_pointer():
+                    # Pointer-type fields need casting
+                    if to_cpp:
+                        cast_type = "::" + field.field_type.to_c_string()
+                    else:
+                        cast_type = "cimgui::" + field.field_type.to_c_string()
+
+                    write_c_line(file, indent, WriteContext(),
+                                 "dest." + prefix + name + " = reinterpret_cast<" + cast_type + ">(src." +
+                                 prefix + name + ");")
+                else:
+                    write_c_line(file, indent, WriteContext(), "dest." + prefix + name + " = src." + prefix + name +
+                                 ";")
 
 
 # Generate code to convert by-value types to/from their CPP version
@@ -55,7 +68,7 @@ def generate(dom_root, file, indent=0):
                 write_c_line(file, indent, write_context, dest_type + " dest;")
 
                 # Emit code to copy each member
-                generate_field_copies(file, indent, known_by_value_structs, struct, "")
+                generate_field_copies(file, indent, known_by_value_structs, struct, "", to_cpp)
 
                 write_c_line(file, indent, write_context, "return dest;")
                 indent -= 1

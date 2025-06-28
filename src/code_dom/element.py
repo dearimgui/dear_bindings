@@ -290,6 +290,14 @@ class DOMElement:
             return False
         return self.parent.is_descendant_of(parent)
 
+    # Tests if this element is a descendant of (or the same as) the type given
+    def is_descendant_of_type(self, element_type):
+        if isinstance(self, element_type):
+            return True
+        if self.parent is None:
+            return False
+        return self.parent.is_descendant_of_type(element_type)
+
     # Walk this element and all children, calling a function on them
     def walk(self, func):
         func(self)

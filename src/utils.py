@@ -147,9 +147,13 @@ def are_elements_mutually_exclusive(element_a, element_b):
 
 # Turn a name into something suitable to use in a C identifier
 def sanitise_name_for_identifier(name):
+    # We replace ", " and " , " first as a way to avoid getting multiple __s in the result when those patterns appear
     return name \
+        .replace(' , ', '_') \
+        .replace(', ', '_') \
         .replace('*', 'Ptr') \
         .replace('&', 'Ref') \
+        .replace(',', '_') \
         .replace(' ', '_')
 
 
@@ -185,6 +189,7 @@ def migrate_comments(from_element, to_element):
         to_element.attached_comment.parent = to_element
         from_element.attached_comment = None
 
+
 # Build a list of all the classes/structs/enums ImGui defines, so we know which things need casting/name-fudging
 # (we also put function pointers in here as they need the same treatment, hence the "callbacks" bit)
 def get_imgui_custom_types(dom_root):
@@ -214,9 +219,10 @@ def get_imgui_custom_types(dom_root):
 
     return imgui_custom_types
 
+
 def find_nearest_parent_of_type(child, parent_type):
     current = child
-    while current != None:
+    while current is not None:
         current = current.parent
         if isinstance(current, parent_type):
             break

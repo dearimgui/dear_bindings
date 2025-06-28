@@ -111,6 +111,21 @@ class DOMType(code_dom.element.DOMElement):
                 return True
         return False
 
+    # Returns true if this type is a pointer
+    # Only considers the "outermost" type
+    def is_pointer(self):
+        if len(self.tokens) > 0:
+            if self.tokens[-1].type == 'ASTERISK':
+                return True
+        return False
+
+    # Return true if there are any (unresolved) template parameters in this type
+    def contains_template_parameters(self):
+        for tok in self.tokens:
+            if hasattr(tok, 'is_template_parameter') and tok.is_template_parameter:
+                return True
+        return False
+
     # Gets the "primary" type name involved (i.e. without any prefixes or suffixes)
     # This is mostly useful for trying to construct overload disambiguation suffixes
     def get_primary_type_name(self):

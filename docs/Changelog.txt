@@ -1,3 +1,12 @@
+--- v0.14
+
+* Fixes for compatibility with Dear ImGui v1.92.0.
+* Refactored template support so that ImStableVector<> doesn't cause errors (at present ImStableVector::push_back()
+  is not supported as there are complications with that function, but I don't think there's actually a use-case for
+  modifying ImStableVector contents from outside ImGui right now anyway). (#98)
+* Marked ImVec2i and ImTextureRef as by-value structure types.
+* Parsing support for loose member function bodies.
+
 --- v0.13
 
 * Cosmetic fix to the naming of the PlatformIO thunk helper functions, and made the comment more explicit about why

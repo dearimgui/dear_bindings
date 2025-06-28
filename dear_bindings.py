@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.13
+# Dear Bindings Version v0.14
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -185,7 +185,20 @@ def convert_header(
                                           "ImGui::DragBehaviorT",
                                           "ImGui::SliderBehaviorT",
                                           "ImGui::RoundScalarWithFormatT",
-                                          "ImGui::CheckboxFlagsT"])
+                                          "ImGui::CheckboxFlagsT",
+                                          # This is a slightly awkward one - there are two problems here. One is that
+                                          # the function stub generator goes back to the original parsed code when
+                                          # trying to generate casts and ends up using the un-instantiated template
+                                          # parameter T as the target for a cast. That is fixable, but the other issue
+                                          # is that it takes a const& to the element to push, and in the sole existing
+                                          # usage right now that's a ImFontBaked, which isn't an easy thing for the
+                                          # structure marshalling to handle. Really it should probably be fudged to
+                                          # take a pointer instead of const& or similar, as passing ImFontBaked by
+                                          # value isn't really a sensible thing to be doing in the first place, but
+                                          # for the moment I don't think there's actually any use-case for wanting to
+                                          # add things to BakedPool from outside of ImGui itself, so I'm going to
+                                          # adopt a wait-and-see stance on this for now.
+                                          "ImStableVector::push_back"])
 
     mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
                                           "ImGui::DebugNodeInputTextState"])
@@ -306,12 +319,14 @@ def convert_header(
     mod_mark_by_value_structs.apply(dom_root, by_value_structs=[
         'ImVec1',
         'ImVec2',
+        'ImVec2i',
         'ImVec2ih',
         'ImVec4',
         'ImColor',
         'ImStr',
         'ImRect',
-        'ImGuiListClipperRange'
+        'ImGuiListClipperRange',
+        'ImTextureRef'
     ])
     mod_mark_internal_members.apply(dom_root)
     mod_flatten_class_functions.apply(dom_root)
