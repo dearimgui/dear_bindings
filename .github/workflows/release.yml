@@ -98,15 +98,15 @@ jobs:
       if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_internal --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
 
-    - name: generate_dcimgui_internal_nogeneratedefaultargfunctions
+    - name: generate_dcimgui_nodefaultargfunctions_internal
       if: ${{ env.DO_RELEASE == '1' }}
-      run: python3 dear_bindings.py --output dcimgui_internal_nodefaultargfunctions --nogeneratedefaultargfunctions --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
+      run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions_internal --nogeneratedefaultargfunctions --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
 
     - name: Generate ZIP file
       if: ${{ env.DO_RELEASE == '1' }}
       run: |
            echo Zipping to ${{ env.RELEASE_TAG }}.zip
-           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_internal_nodefaultargfunctions.*
+           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.*
 
     - name: Release
       uses: softprops/action-gh-release@v2
@@ -116,7 +116,7 @@ jobs:
         # tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
         tag_name: ${{ env.RELEASE_TAG }}
         # body_path: docs/Changelog.txt
-        body: This release contains pre-generated binding files generated using Dear Bindings ${{ env.DEAR_BINDINGS_TAG }} for the Dear ImGui ${{ matrix.branch }} branch ${{ env.IMGUI_TAG }}. Files ending with _nodefaultargfunctions have default argument function generation disabled. The file is simply a compressed version of the separate files for easier downloading.
+        body: This release contains pre-generated binding files generated using Dear Bindings ${{ env.DEAR_BINDINGS_TAG }} for the Dear ImGui ${{ matrix.branch }} branch ${{ env.IMGUI_TAG }}. Files with names containing _nodefaultargfunctions have default argument function generation disabled. The file is simply a compressed version of the separate files for easier downloading.
         files: |
           dcimgui.*
           dcimgui_internal.*

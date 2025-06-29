@@ -1,3 +1,11 @@
+--- v0.15
+
+* Fixed the DX11 backend header including forward-declarations for some DirectX types that conflict with the actual
+  DX headers. (#97)
+* Fixed the GitHub release package "nodefaultargfunctions" version of dcimgui_internal.h including imgui.h with the
+  wrong filename. (As a result of this, the filename has changed from "dcimgui_internal_nodefaultargfunctions.h" to
+  "dcimgui_nodefaultargfunctions_internal.h") (#96)
+
 --- v0.14
 
 * Fixes for compatibility with Dear ImGui v1.92.0.
