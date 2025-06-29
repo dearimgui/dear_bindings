@@ -121,5 +121,5 @@ jobs:
           dcimgui.*
           dcimgui_internal.*
           dcimgui_nodefaultargfunctions.*
-          dcimgui_internal_nodefaultargfunctions.*
+          dcimgui_nodefaultargfunctions_internal.*
           ${{ env.RELEASE_TAG }}.zip

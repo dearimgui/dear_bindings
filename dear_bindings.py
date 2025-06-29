@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.14
+# Dear Bindings Version v0.16
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -165,6 +165,12 @@ def convert_header(
                                         # Templated stuff in imgui_internal.h
                                         "ImBitArray",  # template with two parameters, not supported
                                         "ImSpanAllocator",
+                                        # These appear in the DX11 backend header and conflict with the official
+                                        # definitions
+                                        "ID3D11Device",
+                                        "ID3D11DeviceContext",
+                                        "ID3D11SamplerState",
+                                        "ID3D11Buffer"
                                         ])
     # Remove all functions from certain types, as they're not really useful
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
