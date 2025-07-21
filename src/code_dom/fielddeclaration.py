@@ -6,7 +6,7 @@ from src import code_dom
 class DOMFieldDeclaration(code_dom.element.DOMElement):
     def __init__(self):
         super().__init__()
-        self.field_type = None
+        self.field_type = None  # A DOMType giving the type of the field
         self.names = []
         self.is_static = False
         self.is_extern = False

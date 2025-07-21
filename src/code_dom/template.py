@@ -70,6 +70,17 @@ class DOMTemplate(code_dom.element.DOMElement):
                 # template<> only has a single (non-comment-like) child, so stop here
                 break
 
+        # Now we have parsed all our children, we want to mark any types we contain that are our own template parameters
+
+        template_params = dom_element.get_template_parameters()
+
+        for type_element in dom_element.list_all_children_of_type(code_dom.DOMType):
+            for token in type_element.tokens:
+                for param in template_params:
+                    if token.value == param.name:
+                        # Slightly hacky - set this on the token itself
+                        token.is_template_parameter = True
+
         return dom_element
 
     # Get the class/function this template is for
@@ -78,6 +89,33 @@ class DOMTemplate(code_dom.element.DOMElement):
             if isinstance(child, code_dom.DOMClassStructUnion) or isinstance(child, code_dom.DOMFunctionDeclaration):
                 return child
         return None
+
+    class TemplateParameter:
+        def __init__(self):
+            super().__init__()
+            self.is_typename = False  # Is this a typename parameter?
+            self.name = None  # The name of this parameter
+
+    # Figure out the template parameters via some dubious parsing
+    # Returns a list of DOMTemplate.TemplateParameter objects
+    def get_template_parameters(self):
+        template_parameters = []
+        next_parameter_is_typename = False
+        for token in self.template_parameter_tokens:
+            if token.value == 'typename':
+                next_parameter_is_typename = True
+            elif token.value == 'int':
+                next_parameter_is_typename = False
+            elif token.type == 'COMMA':
+                # Just ignore
+                pass
+            else:
+                # This must be a template parameter name
+                param = DOMTemplate.TemplateParameter()
+                param.is_typename = next_parameter_is_typename
+                param.name = token.value
+                template_parameters.append(param)
+        return template_parameters
 
     # Write this element out as C code
     def write_to_c(self, file, indent=0, context=WriteContext()):

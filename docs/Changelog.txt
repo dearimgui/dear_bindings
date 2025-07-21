@@ -1,10 +1,49 @@
---- v0.11 WIP
+--- v0.15
+
+* Fixed the DX11 backend header including forward-declarations for some DirectX types that conflict with the actual
+  DX headers. (#97)
+* Fixed the GitHub release package "nodefaultargfunctions" version of dcimgui_internal.h including imgui.h with the
+  wrong filename. (As a result of this, the filename has changed from "dcimgui_internal_nodefaultargfunctions.h" to
+  "dcimgui_nodefaultargfunctions_internal.h") (#96)
+
+--- v0.14
+
+* Fixes for compatibility with Dear ImGui v1.92.0.
+* Refactored template support so that ImStableVector<> doesn't cause errors (at present ImStableVector::push_back()
+  is not supported as there are complications with that function, but I don't think there's actually a use-case for
+  modifying ImStableVector contents from outside ImGui right now anyway). (#98)
+* Marked ImVec2i and ImTextureRef as by-value structure types.
+* Parsing support for loose member function bodies.
+
+--- v0.13
+
+* Cosmetic fix to the naming of the PlatformIO thunk helper functions, and made the comment more explicit about why
+  setting those callbacks directly is a bad idea.
+* Fixed PlatformIO thunk helpers getting generated on older versions of Dear ImGui where the relevant functions
+  didn't exist yet. (#94)
+
+--- v0.12
+
+* Copy the returned value to a temporary variable when the stub function needs to call to va_end (thanks to tanoxyz)
+* Added helpers for GetWindowPos/GetWindowSize/GetWindowFramebufferScale/GetWindowWorkAreaInsets in PlatformIO
+  (in the Docking branch) so that a C function can be set as a callback despite the return value being a structure
+  (#92)
+
+--- v0.11
 
 * Fixed support for static member functions, and added metadata on static-ness. (#73)
 * Made ImVector instantiations single-line (#77)
 * Added --custom-namespace-prefix and --replace-prefix to support custom naming schemes (#80)
 * Make the imconfig.h path use the parent directory by default if --backend is specified (#81)
 * **BREAKING CHANGE** Modified default output filename to be dcimgui.h instead of cimgui.h to avoid ambiguity (#80)
+* Removed unnecessary typedefs from structs with forward declarations to avoid warnings on C99 compilers (#82)
+* Fixed backend generation command-line to include imgui.h so that template expansions work (#83)
+* Fixed (somewhat) template expansion in the case where the instantiation is unique to a file that is not where the
+  template was originally declared (notably the Vulkan backend) (#83)
+* Added logic to move ImDrawIdx further up the file so that it doesn't end up used by ImVector expansions before the
+  actual declaration. (#87)
+* Slightly experimental - mark references that were turned into pointers with is_reference in the metadata. (Thanks
+  to [@ramenguy99] for the feature suggestion and original PR)
 
 --- v0.10
 

@@ -1,3 +1,5 @@
+# This workflow performs nightly builds
+
 name: build
 
 on:
@@ -31,7 +33,9 @@ jobs:
     steps:
     # Checkout both repositories
     - uses: actions/checkout@v4
+      id: dear_bindings_checkout
     - uses: actions/checkout@v4
+      id: imgui_checkout
       with:
         path: imgui
         repository: ocornut/imgui
@@ -48,7 +52,7 @@ jobs:
           format('python3 dear_bindings.py --output dcimgui {0} --generateunformattedfunctions imgui/imgui.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
-    - name: Generate dcimgui_internal
+    - name: Generate dcimgui_internal	
       run: >- 
         ${{ 
           format('python3 dear_bindings.py --output dcimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 

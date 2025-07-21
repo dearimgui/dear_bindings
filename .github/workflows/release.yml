@@ -1,0 +1,125 @@
+# This workflow generates releases for tagged versions
+# It runs on a schedule because we can't trigger from a tag being created in a remote repository
+
+name: release
+
+on:
+  push:
+  pull_request:
+  workflow_run:
+    # Use a workflow as a trigger of scheduled builds. Forked repositories can disable scheduled builds by disabling
+    # "scheduled" workflow, while maintaining ability to perform local CI builds.
+    workflows:
+      - scheduled
+    types:
+      - requested
+
+jobs:
+  Linux:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        branch:
+          - master
+          - docking
+
+    steps:
+    # Checkout both repositories
+    - uses: actions/checkout@v4
+      id: dear_bindings_checkout
+      with:
+        ref: main
+        repository: dearimgui/dear_bindings
+        fetch-depth: 0        
+    - uses: actions/checkout@v4
+      id: imgui_checkout
+      with:
+        path: imgui
+        repository: ocornut/imgui
+        ref: ${{ matrix.branch }}
+        fetch-depth: 0
+
+    # Get the latest tags from the repository
+    - name: get_tags
+      run: |
+           # We exclude DearBindings_* here to avoid picking up our own release tags
+           echo "DEAR_BINDINGS_TAG=$(git describe --tags --abbrev=0 --exclude DearBindings_*)" >> $GITHUB_ENV
+           cd imgui
+           echo "IMGUI_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+
+    # Set our release tag
+    - name: set_release_tag
+      run: echo "RELEASE_TAG=DearBindings_${{ env.DEAR_BINDINGS_TAG }}_ImGui_${{ env.IMGUI_TAG }}" >> $GITHUB_ENV
+
+    # Check if this tag already exists
+    - name: check_release_tag
+      run: |
+          if [ $(git tag -l "${RELEASE_TAG}") ]; then
+              echo "Release tag already exists"
+              echo "DO_RELEASE=0" >> $GITHUB_ENV
+          else
+              echo "Release tag does not exist, preparing new release"
+              echo "DO_RELEASE=1" >> $GITHUB_ENV
+          fi
+
+    # Sync to those tags
+    - uses: actions/checkout@v4
+      id: dear_bindings_tag_checkout
+      if: ${{ env.DO_RELEASE == '1' }}
+      with:
+        repository: dearimgui/dear_bindings
+        ref: ${{ env.DEAR_BINDINGS_TAG }}
+        fetch-depth: 1
+    - uses: actions/checkout@v4
+      id: imgui_tag_checkout
+      if: ${{ env.DO_RELEASE == '1' }}
+      with:
+        path: imgui
+        repository: ocornut/imgui
+        ref: ${{ env.IMGUI_TAG }}
+        fetch-depth: 1
+
+    - name: install_dependencies
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: |
+        sudo pip3 install ply
+
+    - name: generate_cimui
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: python3 dear_bindings.py --output dcimgui --generateunformattedfunctions imgui/imgui.h 
+
+    - name: generate_cimui_nogeneratedefaultargfunctions
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions --nogeneratedefaultargfunctions --generateunformattedfunctions imgui/imgui.h
+
+    - name: generate_dcimgui_internal
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: python3 dear_bindings.py --output dcimgui_internal --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
+
+    - name: generate_dcimgui_nodefaultargfunctions_internal
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions_internal --nogeneratedefaultargfunctions --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
+
+    - name: Generate ZIP file
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: |
+           echo Zipping to ${{ env.RELEASE_TAG }}.zip
+           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.*
+
+    - name: Release
+      uses: softprops/action-gh-release@v2
+      if: ${{ env.DO_RELEASE == '1' }}
+      with:
+        # name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}
+        # tag_name: dear_bindings_${{ matrix.branch }}_${{ matrix.compiler }}_${{ matrix.flag_nogeneratedefaultargfunctions }}_${{ steps.dear_bindings_checkout.outputs.commit }}_${{ steps.imgui_checkout.outputs.commit }}
+        tag_name: ${{ env.RELEASE_TAG }}
+        # body_path: docs/Changelog.txt
+        body: This release contains pre-generated binding files generated using Dear Bindings ${{ env.DEAR_BINDINGS_TAG }} for the Dear ImGui ${{ matrix.branch }} branch ${{ env.IMGUI_TAG }}. Files with names containing _nodefaultargfunctions have default argument function generation disabled. The file is simply a compressed version of the separate files for easier downloading.
+        files: |
+          dcimgui.*
+          dcimgui_internal.*
+          dcimgui_nodefaultargfunctions.*
+          dcimgui_nodefaultargfunctions_internal.*
+          ${{ env.RELEASE_TAG }}.zip

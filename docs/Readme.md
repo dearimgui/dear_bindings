@@ -11,11 +11,13 @@ The intention with Dear Bindings is to try and **produce a C header file which i
 
 # Latest Prebuilt Versions
 
-You can find prebuilt versions (consisting of `dcimgui.h`, `dcimgui.cpp`, `dcimgui.json` 
-and their equivalents for `imgui_internal.h`) 
-for both `master` and `docking` branch in our 
+You can find prebuilt versions (consisting of `dcimgui.h`, `dcimgui.cpp`, `dcimgui.json` and their equivalents for `imgui_internal.h`) 
+for both the `master` and `docking` branches on our [Releases](https://github.com/dearimgui/dear_bindings/releases) page and 
 [Continuous Integration (Actions)](https://github.com/dearimgui/dear_bindings/actions) page. 
-For a given build, click "Artifacts" to find them.
+For a given build, click either "Assets" or "Artifacts" to find them.
+
+On the releases page, the `AllBindingFiles.zip` file is a zipped version of the generated binding files (`.h`/`.cpp`/`.json`) as a single download,
+intended for easy integration with automated build pipelines.
 
 # Requirements
 
@@ -26,14 +28,15 @@ For a given build, click "Artifacts" to find them.
 
 # Recent changes
 
-* v0.11 (WIP) introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
+* v0.12 adds support for setting certain `PlatformIO` callbacks in the docking branch that were previously not usable from C due to their return types. See the `PlatformIO callbacks` section below for full details. 
+* v0.11 introduces a small-but-significant breaking change as the output file names are now `dcimgui` instead of `cimgui` (to disambiguate in cases where people are using multiple binding generators) 
 * v0.10 adds (somewhat experimental) support for comverting `imgui_internal.h`.
 * v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
 * v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
-* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends
-  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details
-* v0.04 introduced a number of bugfixes and other tweaks
+* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends.
+  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details.
+* v0.04 introduced a number of bugfixes and other tweaks.
 
 You can see a full list of recent changes [here](Changelog.txt).
 
@@ -71,10 +74,18 @@ python dear_bindings.py -o dcimgui ../imgui/imgui.h
 python dear_bindings.py -o dcimgui_internal --include ../imgui/imgui.h ../imgui/imgui_internal.h
 ```
 
-For an all-in-one build (Windows-only right now), you can do:
+For an all-in-one build, you can do:
+
+On Windows
 
 ```commandline
 BuildAllBindings.bat
+```
+
+On Linux (tested on Debian)
+
+```commandline
+./BuildAllBindings.sh
 ```
 
 With a target `imgui.h`, Dear Bindings generates `dcimgui.h` (defines the C
@@ -274,6 +285,32 @@ Templates are expanded into their concrete instantiations, so for example `ImVec
 
 > See the note above about `ImVector_Construct` for an exception to this rule.
 
+### PlatformIO callbacks
+
+Some of the PlatformIO callbacks (at present only in the Docking branch of Dear ImGui) return structures, which means that they cannot be directly set to C functions - notably these four:
+
+```cpp
+ImVec2  (*Platform_GetWindowPos)(ImGuiViewport* vp);
+ImVec2  (*Platform_GetWindowSize)(ImGuiViewport* vp);
+ImVec2  (*Platform_GetWindowFramebufferScale)(ImGuiViewport* vp);
+ImVec4  (*Platform_GetWindowWorkAreaInsets)(ImGuiViewport* vp);
+```
+
+If you set these directly to point to a C function, then you will likely encounter stack corruption due to differences in the way C and C++ handle structure return values.
+
+To avoid this issue, Dear Bindings provides corresponding setter functions that take a C function and automatically insert a C++ thunk that converts the return value appropriately.
+
+```cpp
+void ImGuiPlatformIO_SetPlatform_GetWindowPos(void (*getWindowPosFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowSize(void (*getWindowSizeFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowFramebufferScale(void (*getWindowFramebufferScaleFunc)(ImGuiViewport* vp, ImVec2* result));
+void ImGuiPlatformIO_SetPlatform_GetWindowWorkAreaInsets(void (*getWindowWorkAreaInsetsFunc)(ImGuiViewport* vp, ImVec4* result));
+```
+
+Note that internally these functions have to allocate a small structure to store the thunk information. This gets stored in the `BackendLanguageUserData` member of `ImGuiIO`, so if you application is using that for other purposes you will not be able to use these functions (in that case, you'll need to either implement your own thunk with the data stored elsewhere, or get in touch to see if we can find another place to store this data).
+
+Also, there is a (small) dynamic allocation associated with this, so if you need to ensure absolutely all memory is freed then when you finish with the ImGui context you should use the helper functions to set the callbacks to `null` - once all the callbacks are removed the allocated memory will be freed.  
+
 ### Removed functionality
 
 These minor features are removed, mostly because they either rely on C++ language features to function correctly or are helpers that don't make sense as part of the bindings.
@@ -288,7 +325,7 @@ A semi-experimental feature has been added to generate binding for the various b
 To convert a backend header, use `--backend` on the command line - for example:
 
 ```commandline
-python dear_bindings.py --backend -o dcimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
+python dear_bindings.py --backend --include ..\imgui\imgui.h -o dcimgui_impl_opengl3 imgui\backends\imgui_impl_opengl3.h
 ```
 
 Tested Backends:

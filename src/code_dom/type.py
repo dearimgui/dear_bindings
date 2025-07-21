@@ -111,6 +111,21 @@ class DOMType(code_dom.element.DOMElement):
                 return True
         return False
 
+    # Returns true if this type is a pointer
+    # Only considers the "outermost" type
+    def is_pointer(self):
+        if len(self.tokens) > 0:
+            if self.tokens[-1].type == 'ASTERISK':
+                return True
+        return False
+
+    # Return true if there are any (unresolved) template parameters in this type
+    def contains_template_parameters(self):
+        for tok in self.tokens:
+            if hasattr(tok, 'is_template_parameter') and tok.is_template_parameter:
+                return True
+        return False
+
     # Gets the "primary" type name involved (i.e. without any prefixes or suffixes)
     # This is mostly useful for trying to construct overload disambiguation suffixes
     def get_primary_type_name(self):
@@ -144,6 +159,18 @@ class DOMType(code_dom.element.DOMElement):
                 return self.unmodified_element.to_c_string(context)
 
         tokens_to_emit = self.tokens
+
+        if context.emit_converted_references_as_references:
+            # Change any references that got turned into pointers _back_ into references
+            # We have to do this before the non-nullable pointer conversion because references are always non-nullable
+            # pointers and thus would get picked up by that
+            fudged_tokens = []
+            for tok in tokens_to_emit:
+                new_tok = copy.deepcopy(tok)
+                if (new_tok.value == '*') and (hasattr(new_tok, 'was_reference')) and new_tok.was_reference:
+                    new_tok.value = "&"
+                fudged_tokens.append(new_tok)
+            tokens_to_emit = fudged_tokens
 
         if context.mark_non_nullable_pointers:
             # Change any non-nullable pointers to ^s

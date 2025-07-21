@@ -8,7 +8,8 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         super().__init__()
         self.name = None  # Can be none for anonymous things if they haven't been given a temporary name
         self.is_anonymous = True
-        self.is_forward_declaration = True
+        self.is_forward_declaration = True  # Is this a forward-declaration
+        self.has_forward_declaration = False
         self.is_by_value = False  # Is this to be passed by value? (set during modification)
         self.has_placement_constructor = False # Do we need to generate a placement new style constructor to initialize default values?
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
@@ -108,7 +109,9 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
 
         declaration = ""
 
-        if context.for_c and not self.is_anonymous:
+        need_typedef = context.for_c and not self.is_anonymous and not self.has_forward_declaration
+
+        if need_typedef:
             declaration += "typedef "
 
         if self.structure_type == "STRUCT":
@@ -150,12 +153,12 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
             write_c_line(file, indent, context, "{")
             for child in self.children:
                 child.write_to_c(file, indent + 1, context)
-            if context.for_c and not self.is_anonymous:
+            if need_typedef:
                 write_c_line(file, indent, context, "} " + self.name + ";")
             else:
                 write_c_line(file, indent, context, "};")
         else:
-            if context.for_c and not self.is_anonymous:
+            if need_typedef:
                 write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + " " + self.name + ";"))
             else:
                 write_c_line(file, indent, context, self.add_attached_comment_to_line(context, declaration + ";"))

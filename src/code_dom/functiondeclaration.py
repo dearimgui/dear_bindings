@@ -36,8 +36,9 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         #                                (see mod_generate_imstr_helpers for more details)
 
         self.function_name_alignment = 0  # Column to align the function name to (see mod_align_function_names)
-        self.is_unformatted_helper = False # Set if this is a variant of a function accepting a format string with
+        self.is_unformatted_helper = False  # Set if this is a variant of a function accepting a format string with
         #                                  format string forced to '%s' and a single string argument
+        self.is_loose_function_body = False  # Set if this is a "loose" inline function body in the header file
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -109,6 +110,30 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             stream.rewind(checkpoint)
             return None
         dom_element.tokens.append(name_token)
+
+        # We potentially actually might have a class name here, so if this is followed by :: then the real name
+        # comes after it
+
+        if stream.get_token_of_type(["COLON"]) is not None:
+            if stream.get_token_of_type(["COLON"]) is None:
+                # Function name followed by a single colon isn't valid
+                stream.rewind(checkpoint)
+                return None
+
+            # At this point we know we have something of the form ClassName::FunctionName
+            # For the time being, treat that as the actual function name (we are likely just going to throw this
+            # away as it is guaranteed to be a function body with an actual declaration elsewhere)
+
+            actual_name_token = stream.get_token_of_type(["THING"])
+            if actual_name_token is None:
+                # ClassName:: with no actual function name isn't valid
+                stream.rewind(checkpoint)
+                return None
+            dom_element.tokens.append(actual_name_token)
+
+            dom_element.is_loose_function_body = True
+            name_prefix = name_token.value + "::" + name_prefix
+            name_token = actual_name_token
 
         if name_token.value == "operator":
             # If we got "operator" then we need to read the real name from the next tokens too

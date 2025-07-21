@@ -213,10 +213,18 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         # Write body containing thunk call
 
+        # We need to check if the function has to copy the result to a temporary variable and then
+        # return it later, this happens with varargs as we have to call va_end before returning
+        returns_temp_result = False
+        
         if (function.return_type is None) or (function.return_type.to_c_string() == "void"):
             thunk_call = ""
         else:
-            thunk_call = "return "
+            if uses_varargs:
+                returns_temp_result = True
+                thunk_call = "auto temp_result = "
+            else:
+                thunk_call = "return "
 
         # Generate return type cast if necessary
 
@@ -343,6 +351,9 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         if uses_varargs:
             write_c_line(file, indent, write_context, "va_end(args);")
+        
+        if returns_temp_result:
+            write_c_line(file, indent, write_context, "return temp_result;")
 
         # Close off body
 

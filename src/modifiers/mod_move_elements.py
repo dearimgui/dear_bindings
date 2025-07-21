@@ -19,13 +19,19 @@ def apply(dom_root, destination_header, elements_to_move):
             insert_near_forward_declarations = type_to_move[3]
 
         for type in dom_root.list_all_children_of_type(element_type):
+            if element_type is code_dom.DOMPreprocessorIf:
+                # Special case to allow us to find #ifdefs by their expression
+                effective_name = type.get_expression()
+            else:
+                effective_name = type.name
+
             if treat_name_as_prefix:
                 # Ignore based on name prefix
-                if not type.name.startswith(element_name):
+                if not effective_name.startswith(element_name):
                     continue
             else:
                 # Ignore based on exact name match
-                if type.name != element_name:
+                if effective_name != element_name:
                     continue
 
             new_type = type.clone()

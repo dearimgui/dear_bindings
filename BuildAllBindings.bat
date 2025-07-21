@@ -50,7 +50,7 @@ for %%n in (
 	echo.
 	echo Processing %%n
 	echo.
-	python dear_bindings.py --backend --imconfig-path %IMGUI_PATH%\imconfig.h -o %OUTPUT_PATH%\backends\dcimgui_impl_%%n %IMGUI_PATH%\backends\imgui_impl_%%n.h
+	python dear_bindings.py --backend --include %IMGUI_PATH%\imgui.h --imconfig-path %IMGUI_PATH%\imconfig.h -o %OUTPUT_PATH%\backends\dcimgui_impl_%%n %IMGUI_PATH%\backends\imgui_impl_%%n.h
 	IF ERRORLEVEL 1 GOTO fail
 )
 
