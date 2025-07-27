@@ -134,7 +134,7 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
         is_const_function = False
         self_class_type = function.original_class
         # Constructors are a special case as they don't get self passed in
-        if self_class_type is not None and not function.is_constructor and not function.is_static:
+        if self_class_type is not None and (not function.is_constructor or function.is_placement_constructor) and not function.is_static:
             has_self = True
             # The function's own is_const will be false as it has been transformed into a non-const stub, but the
             # self argument will be const in the case it was originally const
@@ -229,23 +229,28 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
         # Generate return type cast if necessary
 
         if function.is_constructor:
-            # Constructors are a special case that returns the type they are constructing
+            # 'placement new' style constructors don't return anything
+            if function.is_placement_constructor:
+                return_cast_prefix = ""
+                return_cast_suffix = ""
+            else:
+                # Constructors are a special case that returns the type they are constructing
 
-            # To use generate_cast() we need to generate a type element that represents what the C++ new() call will
-            # be returning
-            original_type_name = original_function.get_parent_class().get_fully_qualified_name()
+                # To use generate_cast() we need to generate a type element that represents what the C++ new() call will
+                # be returning
+                original_type_name = original_function.get_parent_class().get_fully_qualified_name()
 
-            if not function.is_by_value_constructor:
-                original_type_name += "*"
+                if not function.is_by_value_constructor:
+                    original_type_name += "*"
 
-            new_type = code_dom.DOMType()
-            new_type.tokens = utils.create_tokens_for_type(original_type_name)
+                new_type = code_dom.DOMType()
+                new_type.tokens = utils.create_tokens_for_type(original_type_name)
 
-            return_cast_prefix, return_cast_suffix = generate_cast(new_type,
-                                                                   function.return_type,
-                                                                   imgui_custom_types,
-                                                                   nested_classes,
-                                                                   to_cpp=False)
+                return_cast_prefix, return_cast_suffix = generate_cast(new_type,
+                                                                       function.return_type,
+                                                                       imgui_custom_types,
+                                                                       nested_classes,
+                                                                       to_cpp=False)
         else:
             return_cast_prefix, return_cast_suffix = generate_cast(original_function.return_type,
                                                                    function.return_type,
@@ -264,16 +269,22 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
                 # <function name>V function that takes a va_list
                 function_call_name += "V"
 
+        self_pointer_cast = None
         if has_self:
             # Cast self pointer
             if is_const_function:
-                thunk_call += "reinterpret_cast<const " + \
+                self_pointer_cast = "reinterpret_cast<const " + \
                               self_class_type.get_original_fully_qualified_name(include_leading_colons=True) + \
-                              "*>(self)->"
+                              "*>(self)"
             else:
-                thunk_call += "reinterpret_cast<" + \
+                self_pointer_cast = "reinterpret_cast<" + \
                               self_class_type.get_original_fully_qualified_name(include_leading_colons=True) + \
-                              "*>(self)->"
+                              "*>(self)"
+
+            if function.is_placement_constructor:
+                thunk_call += "IM_PLACEMENT_NEW(" + self_pointer_cast + ") "
+            else:
+                thunk_call += self_pointer_cast + "->"
         else:
             # If the function is not a member function, prefix the call with :: to avoid accidentally picking
             # up functions from the wrong namespace
@@ -287,7 +298,7 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
                     thunk_call += "&"
 
         if function.is_constructor:
-            if not function.is_by_value_constructor:
+            if not function.is_by_value_constructor and not function.is_placement_constructor:
                 # Add new (unless this is by-value, in which case we don't want it)
                 thunk_call += "new "
             # Constructor calls use the typename, not the nominal function name within the type
