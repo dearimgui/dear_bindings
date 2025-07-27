@@ -343,7 +343,8 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         if function.is_destructor:
             #  Destructors get a totally different bit of code generated
-            write_c_line(file, indent, write_context, "delete self;")
+            destructor_func_name = self_class_type.get_original_fully_qualified_name(include_leading_colons=False)
+            write_c_line(file, indent, write_context, "self->~" + destructor_func_name + "();")
         else:
             write_c_line(file, indent, write_context, thunk_call)
 

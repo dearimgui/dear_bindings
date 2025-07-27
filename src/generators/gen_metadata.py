@@ -376,6 +376,7 @@ def emit_struct(struct):
     result["kind"] = struct.structure_type.lower()  # Lowercase this for consistency with C
     result["by_value"] = struct.is_by_value
     result["has_placement_constructor"] = struct.has_placement_constructor
+    result["has_destructor"] = struct.has_destructor()
     result["forward_declaration"] = struct.is_forward_declaration
     result["is_anonymous"] = struct.is_anonymous
 
@@ -452,6 +453,9 @@ def emit_function(function):
     #                                                                  accepting functions with format set to '%s' and
     #                                                                  a single string argument.
     result["is_static"] = function.is_static
+    result["is_constructor"] = function.is_constructor
+    result["is_placement_constructor"] = function.is_placement_constructor
+    result["is_destructor"] = function.is_destructor
 
     # Note the original name of the class this came from
     if function.original_class is not None:

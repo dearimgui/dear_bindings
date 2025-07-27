@@ -11,7 +11,8 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         self.is_forward_declaration = True  # Is this a forward-declaration
         self.has_forward_declaration = False
         self.is_by_value = False  # Is this to be passed by value? (set during modification)
-        self.has_placement_constructor = False # Do we need to generate a placement new style constructor to initialize default values?
+        self.has_placement_constructor = False  # Does this have a placement-new style constructor to
+        # initialize default values? (set during modification)
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.base_classes = None  # List of base classes, as tuples with their accessibility (i.e. ("private", "CBase"))
@@ -93,6 +94,20 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         stream.get_token_of_type(['SEMICOLON'])  # Eat the trailing semicolon
 
         return dom_element
+
+    # Returns true if this has a constructor (of any form)
+    def has_destructor(self):
+        for function in self.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+            if function.is_constructor:
+                return True
+        return False
+
+    # Returns true if this has a destructor
+    def has_destructor(self):
+        for function in self.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+            if function.is_destructor:
+                return True
+        return False
 
     def get_fully_qualified_name(self, leaf_name="", include_leading_colons=False):
         name = self.name or "<anonymous>"

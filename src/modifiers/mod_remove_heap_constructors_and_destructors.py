@@ -7,5 +7,7 @@ def apply(dom_root):
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
         if function.is_constructor or function.is_destructor:
             parent_class = function.get_parent_class()
-            if (parent_class is not None) and (not parent_class.is_by_value) and (not parent_class.has_placement_constructor):
+            if ((parent_class is not None) and
+                    (not parent_class.is_by_value) and
+                    (not parent_class.has_placement_constructor)):
                 function.parent.remove_child(function)

@@ -14,6 +14,7 @@ def apply(dom_root):
 
         is_by_value = struct.is_by_value
         has_placement_constructor = struct.has_placement_constructor
+        has_destructor = struct.has_destructor()
 
         # Find any child functions
         # Note that this doesn't handle functions in nested classes correctly
@@ -22,6 +23,9 @@ def apply(dom_root):
 
             # Special handling for constructors/destructors
             if function.is_constructor:
+                # Constructors are named "Construct" if there is a matching "Destruct", or "Init" if they are just for
+                # initialisation and the object can be thrown away without any further processing necessary
+                function.name = "Construct" if has_destructor else "Init"
                 # Constructors get modified to return a pointer to the newly-created object
                 function.return_type = code_dom.DOMType()
                 function.return_type.parent = function
@@ -53,8 +57,8 @@ def apply(dom_root):
                 if is_by_value:
                     # We don't support this for fairly obvious reasons
                     raise Exception("By-value type " + struct.name + " has a destructor")
-                # Remove ~ and add suffix to name
-                function.name = function.name[1:] + "_destroy"
+                # Destructors are named "Destruct"
+                function.name = "Destruct"
                 # Destructors get modified to return void
                 function.return_type = code_dom.DOMType()
                 function.return_type.tokens = [utils.create_token("void")]

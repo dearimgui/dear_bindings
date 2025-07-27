@@ -407,23 +407,24 @@ for reference, but without any internal details.
 }
 ```
 
-| Key                           | Description                                            |
-|-------------------------------|--------------------------------------------------------|
-| name                          | The C name of the structure                            |
-| original_fully_qualified_name | The original C++ name of the structure                 |
-| kind _(previously "type")_    | The type of the structure (either `struct` or `union`) |
-| by_value                      | Is this structure normally pass-by-value?              |
-| has_placement_constructor     | Does this structure have an initializer function?      |
-| forward_declaration           | Is this a forward-declaration of the structure?        |
-| is_anonymous                  | Is this an anonymous struct?                           |
-| fields                        | List of contained fields                               |
-| fields.name                   | The field name                                         |
-| fields.is_array               | Is this field declared as an array?                    |
-| fields.array_bounds           | The array bounds, if the field is an array             |
-| fields.width                  | The bit width of the field, if specified               |
-| fields.is_anonymous           | Is this field anonymous?                               |
-| fields.type                   | The type of the field (see "types" for more details)   |
-| fields.default_value          | The default value of the field, if specified           |
+| Key                           | Description                                                             |
+|-------------------------------|-------------------------------------------------------------------------|
+| name                          | The C name of the structure                                             |
+| original_fully_qualified_name | The original C++ name of the structure                                  |
+| kind _(previously "type")_    | The type of the structure (either `struct` or `union`)                  |
+| by_value                      | Is this structure normally pass-by-value?                               |
+| has_placement_constructor     | Does this structure have an initializer function?                       |
+| has_destructor                | Does this structure have a destructor (which must be called if present) |
+| forward_declaration           | Is this a forward-declaration of the structure?                         |
+| is_anonymous                  | Is this an anonymous struct?                                            |
+| fields                        | List of contained fields                                                |
+| fields.name                   | The field name                                                          |
+| fields.is_array               | Is this field declared as an array?                                     |
+| fields.array_bounds           | The array bounds, if the field is an array                              |
+| fields.width                  | The bit width of the field, if specified                                |
+| fields.is_anonymous           | Is this field anonymous?                                                |
+| fields.type                   | The type of the field (see "types" for more details)                    |
+| fields.default_value          | The default value of the field, if specified                            |
 
 > Note that in versions v0.03 and earlier there was a `names` array that could contain multiple names if
 > the original C++ declaration used a single declaration with multiple names. This was confusing and complicated
@@ -521,6 +522,9 @@ want to ignore any functions with `has_imstr_helper` set.
 | is_imstr_helper               | Is this function a helper variant added that takes `const char*` instead of `ImStr` arguments?                                                                                    |
 | has_imstr_helper              | Is this function one which takes `ImStr` arguments and has had a `const char*` helper variant generated?                                                                          |                                                 |
 | is_unformatted_helper         | Is this function a helper variant of a format string accepting function that accepts an pre-formatted string instead                                                              |
+| is_constructor                | Is this a constructor?                                                                                                                                                   |
+| is_placement_constructor      | Is this a placement-new style constructor?                                                                                                                                        |
+| is_destructor                 | Is this a destructor?                                                                                                                                                             |
 | is_static                     | Was this function originally static?                                                                                                                                              |
 | original_class                | The name of the class this method originally belonged to, if any                                                                                                                  |
 
