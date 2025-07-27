@@ -358,6 +358,16 @@ def emit_struct_field_list(container, fields_root):
                     dummy_field.is_array = [False]
                     dummy_field.width_specifiers = [None]
                     dummy_field.is_anonymous = child.is_anonymous  # Technically wrong, but see above
+                    # We need to pretend this is in the same place in the tree, otherwise preprocessor defines don't
+                    # propagate correctly to it
+                    dummy_field.parent = child
+                    # If the struct had comments, temporarily attach them to the dummy field
+                    # This will result in the comments getting duplicated as they will also appear on the struct
+                    # declaration, but that's probably acceptable
+                    if child.pre_comments:
+                        dummy_field.pre_comments = child.pre_comments
+                    if child.attached_comment:
+                        dummy_field.attached_comment = child.attached_comment
                     dummy_type = utils.create_type(child.name)
                     dummy_field.field_type = dummy_type
                     emit_field(fields_root, dummy_field)
