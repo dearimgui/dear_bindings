@@ -1,4 +1,8 @@
---- v0.16 WIP
+--- v0.17
+
+* Excluded ImRect::AsVec4() from binding generation as it causes problems and isn't hugely necessary outside of C++.
+
+--- v0.16
 
 * Fixed the JSON metadata generator where preprocessor declarations on anonymous structs were getting applied to the
   fields in the structure but not the implicit field where that structure was used. (#101)

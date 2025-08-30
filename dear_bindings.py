@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.16 WIP
+# Dear Bindings Version v0.17
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -179,12 +179,17 @@ def convert_header(
 
     # Remove Value() functions which are dumb helpers over Text(), would need custom names otherwise
     mod_remove_functions.apply(dom_root, ["ImGui::Value"])
-    # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data are ignored" warning.
+    # Remove ImQsort() functions as modifiers on function pointers seem to emit a "anachronism used: modifiers on data
+    # are ignored" warning.
     mod_remove_functions.apply(dom_root, ["ImQsort"])
     # FIXME: Remove incorrectly parsed constructor due to "explicit" keyword.
     mod_remove_functions.apply(dom_root, ["ImVec2ih::ImVec2ih"])
-    # Remove ErrorLogCallbackToDebugLog() from imgui_internal.h as there isn't a ErrorLogCallbackToDebugLogV() version for the bindings to call right now
+    # Remove ErrorLogCallbackToDebugLog() from imgui_internal.h as there isn't a ErrorLogCallbackToDebugLogV() version
+    # for the bindings to call right now
     mod_remove_functions.apply(dom_root, ["ImGui::ErrorLogCallbackToDebugLog"])
+    # Remove ImRect::AsVec4() since it breaks things by returning a reference (which is something we should fix, but
+    # not a priority right now), as isn't really hugely necessary as it's just syntactic sugar over a cast anyway.
+    mod_remove_functions.apply(dom_root, ["ImRect::AsVec4"])
     # Remove some templated functions from imgui_internal.h that we don't want and cause trouble
     mod_remove_functions.apply(dom_root, ["ImGui::ScaleRatioFromValueT",
                                           "ImGui::ScaleValueFromRatioT",
