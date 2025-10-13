@@ -1,13 +1,13 @@
 Dear Bindings
 -------------
 
-Dear Bindings is tool to generate a C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top (see our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) list). 
+Dear Bindings is tool to generate a nice looking C API for [Dear ImGui](https://github.com/ocornut/imgui), and metadata so other languages can easily generate their own bindings on top (see our [Software using Dear Bindings](https://github.com/dearimgui/dear_bindings/wiki/Software-using-Dear-Bindings) list). 
 
 At present, it can convert `imgui.h` (i.e. the main Dear ImGui API), and has (semi-experimental, but not totally untested) support for `imgui_internal.h` and most of the backend headers.
 
-It should be compatible with Dear ImGui v1.84 onwards (some earlier versions also work but compatibility isn't guaranteed).
+The intention with Dear Bindings is to try and **produce a C header file which is as close as reasonably possible to what a human would generate**, and thus special attention has been given to **preserving formatting, comments and the like** such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
 
-The intention with Dear Bindings is to try and **produce a C header file which is as close as reasonably possible to what a human would generate**, and thus special attention has been given to preserving formatting, comments and the like such that (maybe!) a user won't even necessarily realise that they are working with a wrapper.
+It should be compatible with Dear ImGui v1.84 onwards (some earlier versions also work but compatibility isn't guaranteed).
 
 # Latest Prebuilt Versions
 
@@ -34,8 +34,7 @@ intended for easy integration with automated build pipelines.
 * v0.08 adds structure default values to metadata, and fixes a few bugs.
 * v0.07 adds some new metadata elements, new examples and fixes a number of bugs (especially around metadata and backends).
 * v0.06 fixes a small issue with ImGui v1.90.0 WIP where `ListBox()` and `ComboBox()` have deprecated variants that cause name clashes. Those variants are now renamed to `ImGui_ListBoxObsolete()` and `ImGui_ComboBoxObsolete()` respectively.
-* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends.
-  * Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details.
+* v0.05 introduced significantly enhanced type information in the JSON output, and experimental support for generating bindings for ImGui backends. Note that there are a number of small changes in the JSON format related to this that will require modification to code that consumes the JSON files - search [Changelog.txt](Changelog.txt) for `BREAKING CHANGE` for full details.
 * v0.04 introduced a number of bugfixes and other tweaks.
 
 You can see a full list of recent changes [here](Changelog.txt).
@@ -50,7 +49,7 @@ Dear Bindings was designed as a potential replacement to the [cimgui](https://gi
 | Preserve comments and alignment                                                                          | -- |
 | Use more polished rules to name functions, resolve overloads and offer simplified and \*Ex alternatives. | -- |
 | Experimental bindings for imgui_internal.h (as a separate file).                                         | Can generate bindings for imgui_internal.h (but output is in the same header, making it difficult to tell if you are using a public or internal function). |
-| Currently not mature, more likely to have issues                                                         | Has been used for years. |
+| Since 2021. Maybe less battle-tested.                                                                    | Since 2015. |
 
 # Usage
 
