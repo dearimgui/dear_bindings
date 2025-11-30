@@ -68,8 +68,12 @@ int main()
     ImGuiIO* io = ImGui_GetIO();
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+#ifdef IMGUI_HAS_DOCK
     io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+#endif
+#ifdef IMGUI_HAS_VIEWPORT
     io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;       // Enable Multi-Viewport / Platform Windows
+#endif
 
     // Setup Dear ImGui style
     ImGui_StyleColorsDark(NULL);
@@ -79,19 +83,24 @@ int main()
     ImGuiStyle* style = ImGui_GetStyle();
     ImGuiStyle_ScaleAllSizes(style, main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
     style->FontScaleDpi = main_scale;        // Set initial font scale. (using io->ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+#ifdef IMGUI_HAS_VIEWPORT
     io->ConfigDpiScaleFonts = true;          // [Experimental] Automatically overwrite style.FontScaleDpi in Begin() when Monitor DPI changes. This will scale fonts but _NOT_ scale sizes/padding for now.
     io->ConfigDpiScaleViewports = true;      // [Experimental] Scale Dear ImGui and Platform Windows when Monitor DPI changes.
+#endif
 
+#ifdef IMGUI_HAS_VIEWPORT
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
     {
         style->WindowRounding = 0.0f;
         style->Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+#endif
 
     // Setup Platform/Renderer backends
     cImGui_ImplSDL3_InitForSDLGPU(window);
-    ImGui_ImplSDLGPU3_InitInfo init_info = {};
+    ImGui_ImplSDLGPU3_InitInfo init_info;
+    memset(&init_info, 0, sizeof(init_info));
     init_info.Device = gpu_device;
     init_info.ColorTargetFormat = SDL_GetGPUSwapchainTextureFormat(gpu_device, window);
     init_info.MSAASamples = SDL_GPU_SAMPLECOUNT_1;                      // Only used in multi-viewports mode.
@@ -205,7 +214,8 @@ int main()
             cImGui_ImplSDLGPU3_PrepareDrawData(draw_data, command_buffer);
 
             // Setup and start a render pass
-            SDL_GPUColorTargetInfo target_info = {};
+            SDL_GPUColorTargetInfo target_info;
+            memset(&target_info, 0, sizeof(target_info));
             target_info.texture = swapchain_texture;
 	    SDL_FColor sdl_clear_color = { clear_color.x, clear_color.y, clear_color.z, clear_color.w };
             target_info.clear_color = sdl_clear_color;
@@ -222,12 +232,14 @@ int main()
             SDL_EndGPURenderPass(render_pass);
         }
 
+#ifdef IMGUI_HAS_VIEWPORT
         // Update and Render additional Platform Windows
         if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui_UpdatePlatformWindows();
             ImGui_RenderPlatformWindowsDefault();
         }
+#endif
 
         // Submit the command buffer
         SDL_SubmitGPUCommandBuffer(command_buffer);

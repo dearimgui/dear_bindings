@@ -336,6 +336,7 @@ Tested Backends:
 * OpenGL 3
 * Vulkan
 * SDL 2
+* SDL 3
 
 All other backends (except Metal/OSX) at least appear to convert cleanly with reasonable looking results. Further
 testing (adding to the list above) would be most appreciated.
@@ -346,20 +347,21 @@ The `BuildAllBindings.bat` file can be used to convert `imgui.h`, `imgui_interna
 ### Examples
 
 Some simple example/test programs can be found in the `examples/` folder.
-They assume that C bindings files (for both `imgui.h` and `imgui_internal.h`) have been generated into the `generated/` folder (`BuildAllBindings.bat` can be used to do this automatically on Windows, I'm afraid other OSes will have to do it by hand for now).
+They assume that C bindings files (for both `imgui.h` and `imgui_internal.h`) have been generated into the `generated/` folder (`BuildAllBindings.bat` can be used to do this automatically on Windows, whilst Linux-like systems can use '`BuildAllBindings.sh`).
 
 `example_null` is a very basic app that simply runs a few cycles of the ImGui update/draw loop. It has no rendering engine so nothing actually gets drawn.
-`example_win32_directx9` and `example_sdl2_opengl2` are the ImGui samples of the same names with minimal changes to port it into C.
+`example_win32_directx9` and `example_sdl2_opengl2` are the ImGui samples of the same names with minimal changes to port them into C.
 
 ### Building examples on Windows
 
 The Examples.sln solution file can be used to build all three examples on Windows using Visual Studio 2022 (older versions may work too).
 On Windows `ImGuiLib` is used as an ancillary project to provide ImGui wrapped up as a static library with C function exports.
-To build `example_sdl2_opengl`, you will need to have SDL2 installed and the SDL2_DIR environment variable set to point to your SDL2 installation.
+To build `example_sdl2_opengl` or `example_sdl3_sdlgpu3`, you will need to have SDL2/3 installed and the SDL2_DIR/SDL3_DIR environment variable set to point to your SDL installation.
+(depending on your setup, you may also need to copy the `SDL2.dll` or `SDL3.dll` file to the binary folder as well)
 
 ### Building examples on Linux/OSX
 
-`example_null` and `example_sdl2_opengl2` both contain makefiles that should build correctly on OSX and Linux (tested on Mac OS Sonoma and Ubuntu 22.04.3 LTS).
+`example_null`, `example_sdl2_opengl2` and ``example_sdl3_sdlgpu3` contain makefiles that should build correctly on OSX and Linux (tested on Mac OS Sonoma and Ubuntu 22.04.3 LTS).
 You'll need SDL2 installed via `brew install SDL2` on OSX or `apt install libsdl2-dev` or similar for that sample to work.
 These samples do not use ImGuiLib but just link the required object files directly.
 
@@ -378,7 +380,7 @@ Much of the `imgui_internal.h` support was added by @ZimM-LostPolygon.
 License
 -------
 
-Dear Bindings is copyright (c) 2021-2024 and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2025 and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
 
 Contact
 -------

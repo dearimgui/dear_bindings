@@ -19,3 +19,4 @@ obj
 examples/example_null/example_null
 examples/example_sdl2_opengl2/example_sdl_opengl2
 ReferenceVersions
+examples/example_sdl3_sdlgpu3/x64
