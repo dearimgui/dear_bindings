@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{36650ff3-9900-484f-a81c-0d8cbc3a0200}</ProjectGuid>
-    <RootNamespace>examplesdl2opengl2</RootNamespace>
+    <ProjectGuid>{34480984-FDAB-4FA8-A295-8799FB1AB744}</ProjectGuid>
+    <RootNamespace>example_sdl3_sdlgpu3</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -71,10 +71,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)..\generated;$(SolutionDir)..\generated\backends;$(SolutionDir)..\..\imgui;$(SolutionDir)..\..\imgui\backends;%SDL2_DIR%\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\generated;$(SolutionDir)..\generated\backends;$(SolutionDir)..\..\imgui;$(SolutionDir)..\..\imgui\backends;%SDL3_DIR%\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)..\generated;$(SolutionDir)..\generated\backends;$(SolutionDir)..\..\imgui;$(SolutionDir)..\..\imgui\backends;%SDL2_DIR%\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)..\generated;$(SolutionDir)..\generated\backends;$(SolutionDir)..\..\imgui;$(SolutionDir)..\..\imgui\backends;%SDL3_DIR%\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -82,7 +82,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%SDL2_DIR%\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%SDL3_DIR%\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -97,7 +97,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%SDL2_DIR%\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%SDL3_DIR%\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,13 +112,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%SDL2_DIR%\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%SDL3_DIR%\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%SDL2_DIR%\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;SDL2.lib;SDL2main.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%SDL3_DIR%\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,29 +129,29 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%SDL2_DIR%\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%SDL3_DIR%\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%SDL2_DIR%\lib\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;SDL2.lib;SDL2main.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%SDL3_DIR%\lib\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_opengl2.cpp" />
-    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_sdl2.cpp" />
-    <ClCompile Include="..\..\generated\backends\dcimgui_impl_opengl2.cpp" />
-    <ClCompile Include="..\..\generated\backends\dcimgui_impl_sdl2.cpp" />
+    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_sdlgpu3.cpp" />
+    <ClCompile Include="..\..\..\imgui\backends\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_sdlgpu3.cpp" />
+    <ClCompile Include="..\..\generated\backends\dcimgui_impl_sdl3.cpp" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_opengl2.h" />
-    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_sdl2.h" />
-    <ClInclude Include="..\..\generated\backends\dcimgui_impl_opengl2.h" />
-    <ClInclude Include="..\..\generated\backends\dcimgui_impl_sdl2.h" />
+    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_sdlgpu3.h" />
+    <ClInclude Include="..\..\..\imgui\backends\imgui_impl_sdl3.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_sdlgpu3.h" />
+    <ClInclude Include="..\..\generated\backends\dcimgui_impl_sdl3.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ImGuiLib\ImGuiLib.vcxproj">
