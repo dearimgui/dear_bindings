@@ -42,6 +42,7 @@ for %%n in (
 	sdl2
 	sdlrenderer2
 	sdl3
+	sdlgpu3
 	sdlrenderer3
 	vulkan
 	wgpu

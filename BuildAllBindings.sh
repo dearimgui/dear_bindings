@@ -24,7 +24,6 @@ echo
 echo "Processing imgui_internal.h"
 echo
 python3 dear_bindings.py -o "$OUTPUT_PATH/dcimgui_internal" --include "$IMGUI_PATH/imgui.h" "$IMGUI_PATH/imgui_internal.h" || { echo "Processing failed"; exit 1; }
-
 # Process backends
 for backend in \
     allegro5 \
@@ -40,6 +39,7 @@ for backend in \
     sdl2 \
     sdlrenderer2 \
     sdl3 \
+    sdlgpu3 \
     sdlrenderer3 \
     vulkan \
     wgpu \
