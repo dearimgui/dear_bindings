@@ -11,6 +11,7 @@ class DOMClassStructUnion(code_dom.element.DOMElement):
         self.is_forward_declaration = True  # Is this a forward-declaration
         self.has_forward_declaration = False
         self.is_by_value = False  # Is this to be passed by value? (set during modification)
+        self.has_placement_constructor = False # Do we need to generate a placement new style constructor to initialize default values?
         self.structure_type = None  # Will be "STRUCT", "CLASS" or "UNION"
         self.is_imgui_api = False  # Does this use IMGUI_API?
         self.base_classes = None  # List of base classes, as tuples with their accessibility (i.e. ("private", "CBase"))
