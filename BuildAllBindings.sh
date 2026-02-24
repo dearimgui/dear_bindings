@@ -34,6 +34,7 @@ for backend in \
     dx12 \
     glfw \
     glut \
+    null \
     opengl2 \
     opengl3 \
     sdl2 \
