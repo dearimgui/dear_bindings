@@ -46,7 +46,7 @@ jobs:
       run: |
         sudo pip3 install ply
 
-    - name: Generate cimgui
+    - name: Generate dcimgui
       run: >- 
         ${{ 
           format('python3 dear_bindings.py --output dcimgui {0} --generateunformattedfunctions imgui/imgui.h', 
@@ -58,6 +58,28 @@ jobs:
           format('python3 dear_bindings.py --output dcimgui_internal {0} --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h', 
             matrix.flag_nogeneratedefaultargfunctions == 'nogeneratedefaultargfunctions' && '--nogeneratedefaultargfunctions' || '') 
         }}
+    - name: Generate dcimgui_impl_xxx backends
+      run: |
+        mkdir backends
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_allegro5      imgui/backends/imgui_impl_allegro5.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_android       imgui/backends/imgui_impl_android.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx9           imgui/backends/imgui_impl_dx9.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx10          imgui/backends/imgui_impl_dx10.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx11          imgui/backends/imgui_impl_dx11.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx12          imgui/backends/imgui_impl_dx12.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_glfw          imgui/backends/imgui_impl_glfw.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_glut          imgui/backends/imgui_impl_glut.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_null          imgui/backends/imgui_impl_null.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_opengl2       imgui/backends/imgui_impl_opengl2.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_opengl3       imgui/backends/imgui_impl_opengl3.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdl2          imgui/backends/imgui_impl_sdl2.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlrenderer2  imgui/backends/imgui_impl_sdlrenderer2.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdl3          imgui/backends/imgui_impl_sdl3.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlgpu3       imgui/backends/imgui_impl_sdlgpu3.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlrenderer3  imgui/backends/imgui_impl_sdlrenderer3.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_vulkan        imgui/backends/imgui_impl_vulkan.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_wgpu          imgui/backends/imgui_impl_wgpu.h
+        python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_win32         imgui/backends/imgui_impl_win32.h
     - name: Build
       run: |
         ${{ matrix.compiler }}                  \
@@ -84,3 +106,5 @@ jobs:
         path: |
           dcimgui.*
           dcimgui_internal.*
+          backends/dcimgui_impl*.cpp
+          backends/dcimgui_impl*.h
