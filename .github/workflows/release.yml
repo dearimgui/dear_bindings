@@ -86,11 +86,11 @@ jobs:
       run: |
         sudo pip3 install ply
 
-    - name: generate_cimui
+    - name: generate_dcimgui
       if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui --generateunformattedfunctions imgui/imgui.h 
 
-    - name: generate_cimui_nogeneratedefaultargfunctions
+    - name: generate_dcimgui_nogeneratedefaultargfunctions
       if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions --nogeneratedefaultargfunctions --generateunformattedfunctions imgui/imgui.h
 
@@ -101,6 +101,30 @@ jobs:
     - name: generate_dcimgui_nodefaultargfunctions_internal
       if: ${{ env.DO_RELEASE == '1' }}
       run: python3 dear_bindings.py --output dcimgui_nodefaultargfunctions_internal --nogeneratedefaultargfunctions --generateunformattedfunctions --include imgui/imgui.h imgui/imgui_internal.h
+
+    - name: generate_dcimgui_backends
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: |
+          mkdir backends
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_allegro5      imgui/backends/imgui_impl_allegro5.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_android       imgui/backends/imgui_impl_android.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx9           imgui/backends/imgui_impl_dx9.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx10          imgui/backends/imgui_impl_dx10.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx11          imgui/backends/imgui_impl_dx11.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_dx12          imgui/backends/imgui_impl_dx12.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_glfw          imgui/backends/imgui_impl_glfw.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_glut          imgui/backends/imgui_impl_glut.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_null          imgui/backends/imgui_impl_null.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_opengl2       imgui/backends/imgui_impl_opengl2.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_opengl3       imgui/backends/imgui_impl_opengl3.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdl2          imgui/backends/imgui_impl_sdl2.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlrenderer2  imgui/backends/imgui_impl_sdlrenderer2.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdl3          imgui/backends/imgui_impl_sdl3.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlgpu3       imgui/backends/imgui_impl_sdlgpu3.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_sdlrenderer3  imgui/backends/imgui_impl_sdlrenderer3.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_vulkan        imgui/backends/imgui_impl_vulkan.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_wgpu          imgui/backends/imgui_impl_wgpu.h
+          python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_win32         imgui/backends/imgui_impl_win32.h
 
     - name: Generate ZIP file
       if: ${{ env.DO_RELEASE == '1' }}
@@ -122,4 +146,24 @@ jobs:
           dcimgui_internal.*
           dcimgui_nodefaultargfunctions.*
           dcimgui_nodefaultargfunctions_internal.*
+          backends/dcimgui_impl_*.cpp
+          backends/dcimgui_impl_*.h
+          backends/dcimgui_impl_allegro5.json
+          backends/dcimgui_impl_android.json
+          backends/dcimgui_impl_dx9.json
+          backends/dcimgui_impl_dx10.json
+          backends/dcimgui_impl_dx11.json
+          backends/dcimgui_impl_dx12.json
+          backends/dcimgui_impl_glut.json
+          backends/dcimgui_impl_null.json
+          backends/dcimgui_impl_opengl2.json
+          backends/dcimgui_impl_opengl3.json
+          backends/dcimgui_impl_sdl2.json
+          backends/dcimgui_impl_sdlrenderer2.json
+          backends/dcimgui_impl_sdl3.json
+          backends/dcimgui_impl_sdlgpu3.json
+          backends/dcimgui_impl_sdlrenderer3.json
+          backends/dcimgui_impl_vulkan.json
+          backends/dcimgui_impl_wgpu.json
+          backends/dcimgui_impl_win32.json
           ${{ env.RELEASE_TAG }}.zip
