@@ -1,3 +1,8 @@
+--- v0.18 WIP
+
+* Added support for SDLGPU3 backend + SDL3+SDLGPU3 example.
+* Added support for NULL backend.
+
 --- v0.17
 
 * Excluded ImRect::AsVec4() from binding generation as it causes problems and isn't hugely necessary outside of C++.
