@@ -632,20 +632,36 @@ def convert_header(
     # Remove these #defines as they don't make sense in C
     mod_remove_defines.apply(dom_root, ["IM_PLACEMENT_NEW(_PTR)", "IM_NEW(_TYPE)"])
     # Rewrite these defines to reference the new function names
-    # This could be done more generically but there are only three at present and there's a limit to how generic
+    # This could be done more generically but there are only four at present and there's a limit to how generic
     # we can get (as there's all sorts of #define trickery that could break the general case), so for now we'll
     # just do it the easy way
     mod_rewrite_defines.apply(dom_root, [
         "IM_ALLOC(_SIZE)",
         "IM_FREE(_PTR)",
-        "IMGUI_CHECKVERSION()"
+        "IMGUI_CHECKVERSION()",
+        "IMGUI_DEBUG_LOG(...)"
     ], {"ImGui::": "ImGui_"})
+    # Also rewrite IMGUI_DEBUG_LOG_FONT to use ImGui_GetCurrentContext() instead of GImGui as the latter isn't
+    # accessible from C
+    mod_rewrite_defines.apply(dom_root, [
+        "IMGUI_DEBUG_LOG_FONT(...)"
+    ], {"GImGui": "ImGui_GetCurrentContext()"})
     # Rename these to stop them generating compile warnings as they clash with those in imgui.h
     mod_rename_defines.apply(dom_root, {
         'IM_ALLOC(_SIZE)': 'CIM_ALLOC(_SIZE)',
         'IM_FREE(_PTR)': 'CIM_FREE(_PTR)',
         'IMGUI_CHECKVERSION()': 'CIMGUI_CHECKVERSION()'
     })
+    # Put these behind a guard to avoid spurious warnings
+    mod_add_define_guards.apply(dom_root, [
+        "IMGUI_DEBUG_LOG(...)",
+        "IMGUI_DEBUG_LOG_FONT(...)",
+        # We guard these specifically because although they are in theory the same, if the user has a slightly
+        # mismatched version of the headers (i.e. C++ headers from one version but generated headers from another),
+        # they will generate a warning.
+        "IMGUI_VERSION_NUM",
+        "IMGUI_VERSION"
+    ], "DEAR_BINDINGS_INTERNAL_GLUE_CODE")
 
     mod_forward_declare_structs.apply(dom_root)
     mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers

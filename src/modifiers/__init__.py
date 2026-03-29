@@ -65,3 +65,4 @@ from . import mod_rename_prefix
 from . import mod_mark_structs_as_single_line_definition
 from . import mod_add_field_comment
 from . import mod_add_defines
+from . import mod_add_define_guards

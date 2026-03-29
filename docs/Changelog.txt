@@ -1,8 +1,10 @@
---- v0.18 WIP
+--- v0.18
 
 * Added support for SDLGPU3 backend + SDL3+SDLGPU3 example.
 * Added support for NULL backend. (#110)
 * Added all generated backends to GitHub release packages. (#109)
+* Fixed IMGUI_DEBUG_LOG() macros using only-accessible-from-C++ symbols. (#115)
+* Added define guards to prevent redefinition warnings in some situations. (#114)
 
 --- v0.17
 
