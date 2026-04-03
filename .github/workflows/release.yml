@@ -130,7 +130,7 @@ jobs:
       if: ${{ env.DO_RELEASE == '1' }}
       run: |
            echo Zipping to ${{ env.RELEASE_TAG }}.zip
-           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.*
+           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.* backends/*
 
     - name: Release
       uses: softprops/action-gh-release@v2
