@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.17
+# Dear Bindings Version v0.19
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -211,9 +211,6 @@ def convert_header(
                                           # adopt a wait-and-see stance on this for now.
                                           "ImStableVector::push_back"])
 
-    mod_remove_functions.apply(dom_root, ["ImGui::GetInputTextState",
-                                          "ImGui::DebugNodeInputTextState"])
-
     mod_add_prefix_to_loose_functions.apply(dom_root, "c")
 
     if not is_backend:
@@ -319,8 +316,10 @@ def convert_header(
     mod_flatten_conditionals.apply(dom_root, "IM_VEC4_CLASS_EXTRA", False)
     mod_flatten_namespaces.apply(dom_root, {'ImGui': 'ImGui_', 'ImStb': 'ImStb_'})
     mod_flatten_nested_classes.apply(dom_root)
+
     # The custom type fudge here is a workaround for how template parameters are expanded
     mod_flatten_templates.apply(dom_root, custom_type_fudges={'const ImFont**': 'ImFont* const*'})
+
     # Remove dangling unspecialized template that flattening didn't handle
     mod_remove_structs.apply(dom_root, ["ImVector_T"])
     # Mark all the ImVector_ instantiations as single-line definitions

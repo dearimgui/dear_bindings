@@ -238,6 +238,47 @@ class DOMElement:
         # by get_writable_child_lists()).
         raise Exception("Child not found in any list - this may be because it is attached as a type or similar")
 
+    # Get the depth of this node from the overall root
+    def get_depth(self):
+        depth = 0
+        current = self
+        while current is not None:
+            depth += 1
+            current = current.parent
+        return depth
+
+    # Find the common parent node of this and another element
+    # Returns the element itself if they are equal to start with
+    def find_common_parent(self, other):
+        current_a = self
+        current_b = other
+
+        while True:
+            if current_a is None or current_b is None:
+                return None  # If either is none, give up
+
+            if current_a == current_b:
+                return current_a  # If they are equal, we have found the parent
+
+            # Walk whichever is deeper up one level
+            if current_a.get_depth() > current_b.get_depth():
+                current_a = current_a.parent
+            else:
+                current_b = current_b.parent
+
+    # Returns true if this element appears after the element given
+    def appears_after(self, other):
+        common_parent = self.find_common_parent(other)
+        for child_list in self.get_child_lists():
+            for i in range(0, len(child_list)):
+                if self.is_descendant_of(child_list[i]):
+                    return False  # We saw ourselves before we saw the other element
+                if other.is_descendant_of(child_list[i]):
+                    return True  # We saw the other element before ourselves
+        # If we didn't find either, they have no relationship (which is theoretically impossible unless they're in
+        # totally different trees), return false
+        return False
+
     # Find the element immediately prior to the child given
     def get_prev_child(self, child):
         for child_list in self.get_child_lists():

@@ -1,3 +1,11 @@
+--- v0.19
+
+* Re-added GetInputTextState() and DebugNodeInputTextState(), which were previously removed due to ImGuiInputTextState
+  requiring the STB headers (which has since been resolved) (#117)
+* Changed flattened template insertion logic so that when it doesn't have a local definition, it places instantiations
+  after #includes, thus avoiding a problem where the Vulkan backend used a Vulkan-header-defined type before it was
+  included (#116)
+
 --- v0.18
 
 * Added support for SDLGPU3 backend + SDL3+SDLGPU3 example.

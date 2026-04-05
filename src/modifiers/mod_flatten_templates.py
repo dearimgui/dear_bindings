@@ -51,6 +51,39 @@ def extract_template_parameter_range(template_name, tokens):
     return -1, -1
 
 
+# Helper to find the default insertion point for cases where we are using a template in another file
+# This works by finding the last #include, and inserting after that
+# This is necessary for (e.g.) the Vulkan backend, where we need the Vulkan header file #include before
+# we can declare an ImVector<> containing a Vulkan type (specifically ImVector_VkDynamicState_t causes problems)
+def find_default_insertion_point(dom_root):
+    all_includes = dom_root.list_all_children_of_type(code_dom.DOMInclude)
+    if len(all_includes) > 0:
+        template_insertion_point = all_includes[-1]
+    if template_insertion_point is not None:
+        # If we're inside an #ifdef at this point, skip down until we are outside it
+        while True:
+            inside_conditional_count = 0
+            for conditional in utils.get_preprocessor_conditionals(template_insertion_point):
+                expression = conditional.get_expression()
+                if expression != 'IMGUI_DISABLE':  # Ignore IMGUI_DISABLE for this test
+                    inside_conditional_count += 1
+
+            # This logic is a little fiddly. Basically, we're going to put the templates _after_ the elements
+            # we are looking at here, so if it is an #ifdef then we want to keep one level of those (as effectively
+            # we're stripping the last one by putting the templates after it). But if it isn't, then we don't want
+            # to see any here.
+            if isinstance(template_insertion_point, code_dom.DOMPreprocessorIf):
+                if inside_conditional_count <= 1:
+                    break
+            else:
+                if inside_conditional_count == 0:
+                    break
+
+            template_insertion_point = template_insertion_point.parent
+
+    return template_insertion_point
+
+
 # This modifier finds templates and flattens them, creating concrete classes/functions for each required instantiation
 # custom_type_fudges can be used to supply strings which will be matched and replaced in modified types within the
 # instantiation as a way of working around some issues with the subtleties of template expansion rules (notably
@@ -411,8 +444,13 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
                     instantiation_header = utils.find_nearest_parent_of_type(instantiation, code_dom.DOMHeaderFile)
                     reference_header = utils.find_nearest_parent_of_type(type_element, code_dom.DOMHeaderFile)
                     if instantiation_header is not reference_header:
-                        # Insert at the start of the referencing header by default
-                        insert_point = reference_header.children[0]
+
+                        # Try to find a smart insertion point for this case (after all #includes)
+                        insert_point = find_default_insertion_point(dom_root)
+
+                        # Just insert at the start of the referencing header if we failed
+                        if insert_point is None:
+                            insert_point = reference_header.children[0]
 
                         # Scan the header to see if any of the parameter types are declared and if so insert after that
                         # declaration (this is largely a "this makes sense for ImVector<>" mechanic)
