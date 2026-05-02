@@ -126,11 +126,16 @@ jobs:
           python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_wgpu          imgui/backends/imgui_impl_wgpu.h
           python3 dear_bindings.py --backend --include imgui/imgui.h --output backends/dcimgui_impl_win32         imgui/backends/imgui_impl_win32.h
 
+    - name: Copy license
+      if: ${{ env.DO_RELEASE == '1' }}
+      run: |
+          cp imgui/LICENSE.txt LICENSE.txt
+
     - name: Generate ZIP file
       if: ${{ env.DO_RELEASE == '1' }}
       run: |
            echo Zipping to ${{ env.RELEASE_TAG }}.zip
-           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.* backends/*
+           zip ${{ env.RELEASE_TAG }}.zip dcimgui.* dcimgui_internal.* dcimgui_nodefaultargfunctions.* dcimgui_nodefaultargfunctions_internal.* backends/* LICENSE.txt
 
     - name: Release
       uses: softprops/action-gh-release@v2
@@ -166,4 +171,5 @@ jobs:
           backends/dcimgui_impl_vulkan.json
           backends/dcimgui_impl_wgpu.json
           backends/dcimgui_impl_win32.json
+          LICENSE.txt
           ${{ env.RELEASE_TAG }}.zip
