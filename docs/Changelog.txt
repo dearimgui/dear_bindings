@@ -1,3 +1,7 @@
+--- v0.20
+
+* Added a note about the licensing of the generated files (#119)
+
 --- v0.19
 
 * Re-added GetInputTextState() and DebugNodeInputTextState(), which were previously removed due to ImGuiInputTextState

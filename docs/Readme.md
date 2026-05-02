@@ -380,7 +380,11 @@ Much of the `imgui_internal.h` support was added by @ZimM-LostPolygon.
 License
 -------
 
-Dear Bindings is copyright (c) 2021-2025 and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+Dear Bindings is copyright (c) 2021-2026 and licensed under the MIT license. See [LICENSE.txt](../LICENSE.txt) for full details.
+
+As generated binding files are a transformation of the original headers, the terms of the license for that library still apply to them.
+In the case of Dear ImGui, that will be the MIT license (see the Dear ImGui [LICENSE.txt](https://github.com/ocornut/imgui/blob/master/LICENSE.txt)).
+If you are using Dear Bindings to generate bindings for a different library, please consult the documentation for that library for licensing information.
 
 Contact
 -------
