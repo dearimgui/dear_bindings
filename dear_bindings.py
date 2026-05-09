@@ -1,4 +1,4 @@
-# Dear Bindings Version v0.19
+# Dear Bindings Version v0.21
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
 
@@ -155,6 +155,7 @@ def convert_header(
                                                               True)
 
     mod_attach_preceding_comments.apply(dom_root)
+    mod_remove_deleted_functions.apply(dom_root)
     mod_remove_function_bodies.apply(dom_root)
     mod_assign_anonymous_type_names.apply(dom_root)
     # Remove ImGuiOnceUponAFrame for now as it needs custom fiddling to make it usable from C

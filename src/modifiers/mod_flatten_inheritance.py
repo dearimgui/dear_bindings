@@ -25,7 +25,7 @@ def apply(dom_root):
                 break
 
         if parent_struct is None:
-            raise Exception("Failed to find parent class " + parent_struct.name + " for type " + struct.name)
+            raise Exception("Failed to find parent class " + class_name + " for type " + struct.name)
 
         parent_fields = parent_struct.clone().list_directly_contained_children_of_type(code_dom.DOMFieldDeclaration)
 

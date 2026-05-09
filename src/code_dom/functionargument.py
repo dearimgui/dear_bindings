@@ -86,6 +86,15 @@ class DOMFunctionArgument(code_dom.element.DOMElement):
 
                 dom_element.default_value_tokens.append(token)
 
+        # Check for an attached comment
+
+        attached_comment = stream.get_token_of_type(["LINE_COMMENT", "BLOCK_COMMENT"])
+        if attached_comment is not None:
+            stream.rewind_one_token()
+            dom_element.attached_comment = code_dom.comment.DOMComment.parse(context, stream)
+            dom_element.attached_comment.is_attached_comment = True
+            dom_element.attached_comment.parent = dom_element
+
         return dom_element
 
     def get_child_lists(self):

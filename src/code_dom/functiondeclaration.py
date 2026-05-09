@@ -10,6 +10,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         self.return_type = None
         self.arguments = []
         self.initialiser_list_tokens = None  # List of tokens making up the initialiser list if one exists
+        self.assignment_tokens = None  # List of tokens making up the assignment (e.g. "=delete") if one exists
         self.body = None
         self.is_const = False
         self.is_constexpr = False
@@ -38,6 +39,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         self.is_unformatted_helper = False  # Set if this is a variant of a function accepting a format string with
         #                                  format string forced to '%s' and a single string argument
         self.is_loose_function_body = False  # Set if this is a "loose" inline function body in the header file
+        self.is_deleted = False  # Set if this function has been explicitly deleted (with "=delete")
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -182,6 +184,28 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
 
         if stream.get_token_of_type(['CONST']) is not None:
             dom_element.is_const = True
+
+        # Possible assignment (eg "=delete")
+
+        assignment_opener = stream.get_token_of_type(["EQUAL"])
+        if assignment_opener is not None:
+            dom_element.assignment_tokens = []
+            dom_element.assignment_tokens.append(assignment_opener)
+            while True:
+                tok = stream.get_token()
+
+                if tok.type == 'LBRACE':
+                    # Start of code block
+                    stream.rewind_one_token()
+                    break
+                elif tok.type == 'SEMICOLON':
+                    # End of declaration
+                    stream.rewind_one_token()
+                    break
+                else:
+                    dom_element.assignment_tokens.append(tok)
+                    if tok.value == "delete":
+                        dom_element.is_deleted = True
 
         # Check for IM_FMTARGS()
 

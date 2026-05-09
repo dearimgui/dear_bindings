@@ -26,6 +26,8 @@ def apply(dom_root):
                 # Fudge some odd values that have '(int)' casts in them.
                 # This is not perfect, but shouldn't cause any problems.
                 value_string = value_string.replace("(int)", "")
+                # Same thing with ImDrawFlags
+                value_string = value_string.replace("(ImDrawFlags)", "")
 
                 compiled = compile(value_string, "<string>", "eval")
 

@@ -1,3 +1,10 @@
+--- v0.21
+
+* Added support for parsing function deletion (#120)
+* Fixed handling of comments attached to function parameters
+* Fixed cast to ImDrawFlags in an enum causing an error (#120)
+* Fixed incorrect error reporting when failing to find a base class for inheritance resolution
+
 --- v0.20
 
 * Added a note about the licensing of the generated files (#119)
