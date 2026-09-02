@@ -229,13 +229,13 @@ def convert_header(
                                                   "memory but does not call destructors on contained objects "
                                                   "(if they have them)",
                                               ])
-        # ImStr conversion helper, only enabled if IMGUI_HAS_IMSTR is on
+        # ImStrv conversion helper, only enabled if IMGUI_HAS_IMSTR is on
         mod_add_manual_helper_functions.apply(dom_root,
                                               [
-                                                  "ImStr ImStr_FromCharStr(const char* b); // Build an ImStr "
+                                                  "ImStrv ImStrv_FromCharStr(const char* b); // Build an ImStrv "
                                                   "from a regular const char* (no data is copied, so you need to make "
                                                   "sure the original char* isn't altered as long as you are using the "
-                                                  "ImStr)."
+                                                  "ImStrv)."
                                               ],
                                               # This weirdness is because we want this to compile cleanly even if
                                               # IMGUI_HAS_IMSTR wasn't defined
@@ -334,7 +334,7 @@ def convert_header(
         'ImVec2ih',
         'ImVec4',
         'ImColor',
-        'ImStr',
+        'ImStrv',
         'ImRect',
         'ImGuiListClipperRange',
         'ImTextureRef'
