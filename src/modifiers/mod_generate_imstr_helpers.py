@@ -29,6 +29,7 @@ def apply(dom_root):
             if new_function.arguments[i].arg_type.to_c_string() == 'ImStrv':
                 new_function.arguments[i].arg_type.tokens = utils.create_tokens_for_type('const char*')
         new_function.is_imstr_helper = True
+        new_function.pre_comments = []
 
         # Insert new function
 
