@@ -56,6 +56,9 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             if (prefix_token.value == 'IMGUI_API') or (prefix_token.value == 'IMGUI_IMPL_API'):
                 stream.get_token()  # Eat token
                 dom_element.is_imgui_api = True
+            elif prefix_token.value == 'IM_NODEBUGSTEP':
+                stream.get_token()  # Eat token
+                dom_element.is_no_debug_step = True
             elif prefix_token.value == 'inline':
                 stream.get_token()  # Eat token
                 dom_element.is_inline = True
