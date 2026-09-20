@@ -2,9 +2,13 @@ from src import code_dom
 from src import utils
 
 
-# This modifier generates variants of any function that takes ImStrv which instead takes a regular char* argument
-def apply(dom_root):
+# This modifier generates variants of any function that takes ImStr which instead takes a regular char* argument
+# In some cases variants already exist in the header, so we use functions_to_ignore to skip those
+def apply(dom_root, functions_to_ignore):
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
+        if function.name in functions_to_ignore:
+            continue
+
         num_args = len(function.arguments)
         has_imstr_args = False
 

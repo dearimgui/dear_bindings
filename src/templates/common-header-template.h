@@ -2,3 +2,13 @@
 // **DO NOT EDIT DIRECTLY**
 // https://github.com/dearimgui/dear_bindings
 
+// Dear Bindings version as a string
+#ifndef DEAR_BINDINGS_VERSION
+#define DEAR_BINDINGS_VERSION %DEAR_BINDINGS_VERSION%
+#endif
+
+// Dear Bindings version as an integer
+#ifndef DEAR_BINDINGS_VERSION_NUMBER
+#define DEAR_BINDINGS_VERSION_NUMBER %DEAR_BINDINGS_VERSION_NUMBER%
+#endif
+

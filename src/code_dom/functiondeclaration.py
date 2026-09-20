@@ -72,6 +72,24 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
                 # Copy constructors can look like this "operator ImVec4() const;" and thus have "operator" as a prefix
                 stream.get_token()  # Eat token
                 dom_element.is_operator = True
+            elif prefix_token.value == 'IM_FMTARGS':
+                stream.get_token()  # Eat token
+                if stream.get_token_of_type(['LPAREN']) is None:
+                    stream.rewind(checkpoint)
+                    return None
+                dom_element.im_fmtargs = stream.get_token().value
+                if stream.get_token_of_type(['RPAREN']) is None:
+                    stream.rewind(checkpoint)
+                    return None
+            elif prefix_token.value == 'IM_FMTLIST':
+                stream.get_token()  # Eat token
+                if stream.get_token_of_type(['LPAREN']) is None:
+                    stream.rewind(checkpoint)
+                    return None
+                dom_element.im_fmtlist = stream.get_token().value
+                if stream.get_token_of_type(['RPAREN']) is None:
+                    stream.rewind(checkpoint)
+                    return None
             else:
                 break
 

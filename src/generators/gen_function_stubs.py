@@ -7,8 +7,9 @@ from src.code_dom.common import write_c_line
 
 # Generate a cast between two types (if required)
 # Generate a cast from C type to C++ type if to_cpp is true, the opposite if false
+# src_is_nullptr_literal should be true if the cast will be used to cast "nullptr"
 # Returns a prefix/suffix pair
-def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp):
+def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp, src_is_nullptr_literal):
 
     cast_prefix = ""
     cast_suffix = ""
@@ -18,6 +19,7 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
         context.for_c = to_cpp
         context.for_implementation = True
         context.include_leading_colons = True
+        context.include_function_pointer_names = False
 
         from_type_str = from_type.to_c_string(context)
         to_type_str = to_type.to_c_string(context)
@@ -47,8 +49,11 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
             # cases where we need to introduce a dereference here to get from the pointer representation to a value
             additional_dereferences = '*' * (munged_from_type_str.count('*') - munged_to_type_str.count('*'))
 
-            if is_enum:
+            if is_enum or src_is_nullptr_literal:
                 # Enums need to use static_cast
+                # ...and, because C++ likes to make me cry, so does the very specific case where the thing we are
+                # casting is the "nullptr" literal, as for some unknown reason using reinterpret_cast on that is
+                # considered invalid.
                 cast_prefix = additional_dereferences + "static_cast<" + to_type_str + \
                               additional_dereferences + ">("
                 cast_suffix = ")"
@@ -80,8 +85,8 @@ def generate_cast(from_type, to_type, imgui_custom_types, nested_classes, to_cpp
 
         # Special case to marshal const char* into ImStrv
 
-        if (to_type_str == '::ImStrv') and (from_type_str == 'const ::char*'):
-            cast_prefix = "MarshalToCPP_ImStr_FromCharStr("
+        if (to_type_str == '::ImStrv') and ((from_type_str == 'const char*') or (from_type_str == 'const ::char*')):
+            cast_prefix = "MarshalToCPP_ImStrv_FromCharStr("
             cast_suffix = ")"
 
     return cast_prefix, cast_suffix
@@ -245,13 +250,15 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
                                                                    function.return_type,
                                                                    imgui_custom_types,
                                                                    nested_classes,
-                                                                   to_cpp=False)
+                                                                   to_cpp=False,
+                                                                   src_is_nullptr_literal=False)
         else:
             return_cast_prefix, return_cast_suffix = generate_cast(original_function.return_type,
                                                                    function.return_type,
                                                                    imgui_custom_types,
                                                                    nested_classes,
-                                                                   to_cpp=False)
+                                                                   to_cpp=False,
+                                                                   src_is_nullptr_literal=False)
         thunk_call += return_cast_prefix
 
         function_call_name = function.get_original_fully_qualified_name()
@@ -297,9 +304,6 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
         first_arg = True
         for (arg, original_arg) in arg_to_original_arg_list:
-            if arg.is_implicit_default and arg.stub_call_value is None:
-                continue  # Skip implicit default arguments
-
             # Generate a set of dereference operators to convert any pointer that was originally a reference and
             # converted by mod_convert_references_to_pointers back into reference form for passing to the C++ API
             # This isn't perfect but it should deal correctly with all the reasonably simple cases
@@ -309,13 +313,35 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
                     if hasattr(tok, "was_reference") and tok.was_reference:
                         dereferences += "*"
 
+            # We need special-case handling for the situation where we are passing a default value that is
+            # literally "nullptr", so detect that here
+            is_nullptr_literal = False
+            if arg.is_implicit_default and arg.stub_call_value is None:
+                is_nullptr_literal = arg.get_default_value() == "nullptr"
+
             # Generate a cast if required
             cast_prefix, cast_suffix = generate_cast(arg.arg_type, original_arg.arg_type,
-                                                     imgui_custom_types, nested_classes, to_cpp=True)
+                                                     imgui_custom_types, nested_classes, to_cpp=True,
+                                                     src_is_nullptr_literal = is_nullptr_literal)
 
             if not first_arg:
                 thunk_call += ", "
-            if arg.is_varargs:
+
+            if arg.is_implicit_default and arg.stub_call_value is None:
+                # This is a default value, which we used to not emit (and let C++ pick up the default), but
+                # there is now at least one case (RenderText() in the string_view branch) where two functions
+                # have overrides that are only distinguished by their optional arguments, so we need to be explicit
+                # about it.
+
+                default_value = arg.get_default_value()
+
+                if default_value == "ImStrv()":
+                    # Ultra-special case - don't try to convert ImStrv() default values normally, just replace them
+                    # with a standard empty C string
+                    thunk_call += "\"\""
+                else:
+                    thunk_call += cast_prefix + dereferences + arg.get_default_value() + cast_suffix
+            elif arg.is_varargs:
                 thunk_call += "args"  # Turn ... into our expanded varargs list
             else:
                 if arg.name in converted_arg_name_overrides:

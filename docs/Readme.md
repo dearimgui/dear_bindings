@@ -120,78 +120,116 @@ if you specify overlapping prefixes).
 (for reference, `--custom-namespace-prefix Foo` is just a simplified syntax for
 `--replace-prefix ImGui_=Foo`)
 
+### Customising names even further with `--remap-list`
+
+If you want a _lot_ of control over the names of generated functions (and also types and fields and parameters!),
+then you can use `--remap-list` to specify a JSON file that contains a set of regular expressions and replacement
+pairs that all names will be processed using.
+
+An example can be found in `example_remap_list.json`:
+
+```json
+{
+  "ImFontAtlas_": "FontyMcFontFace_",
+  "TexMin(.*)": "Texture\\1Min",
+  "TexMax(.*)": "Texture\\1Max"
+}
+```
+
+This renames all of the `ImFontAtlas_` functions, and also the `TexMinWidth` and `TexMinHeight` fields in `ImFontAtlas_t` from this:
+
+```cpp
+    int TexMinWidth;
+    int TexMinHeight;
+    int TexMaxWidth;
+    int TexMinHeight;
+```
+
+...to this:
+
+```cpp
+    int TextureWidthMin;
+    int TextureHeightMin;
+    int TextureWidthMax;
+    int TextureHeightMax;
+```
+
+Entries in the JSON file are processed in the order they are declared, and a name can potentially be matched and modified multiple times. As seen above, the `\1`, `\2` and so on can be used in the replacement string to substitute in matched capture groups from the original expression. Processing uses the Python `re.sub()` function - refer to Python documentation for more details.
+
+These changes are reflected in both the generated headers and the JSON metadata. This remapping is performed as a final step before code generation, and it should be noted it's perfectly possible to generate headers which simply won't compile by remapping names in such a way that collisions occur (or simply remapping to an invalid identifier).
+
+If you also pass `--remap-list-verbose` as a parameter, then a list of all the rename operations performed will be printed during processing:
+
+```
+Renamed TexMinWidth -> TextureWidthMin (rule: "TexMin(.*)" -> "Texture\1Min")
+Renamed TexMinHeight -> TextureHeightMin (rule: "TexMin(.*)" -> "Texture\1Min")
+Renamed TexMaxWidth -> TextureWidthMax (rule: "TexMax(.*)" -> "Texture\1Max")
+Renamed TexMaxHeight -> TextureHeightMax (rule: "TexMax(.*)" -> "Texture\1Max")
+Renamed ImFontAtlas_AddFont -> FontyMcFontFace_AddFont (rule: "ImFontAtlas_" -> "FontyMcFontFace_")
+Renamed ImFontAtlas_AddFontDefault -> FontyMcFontFace_AddFontDefault (rule: "ImFontAtlas_" -> "FontyMcFontFace_")
+Renamed ImFontAtlas_AddFontDefaultVector -> FontyMcFontFace_AddFontDefaultVector (rule: "ImFontAtlas_" -> "FontyMcFontFace_")
+(and lots more output like that)
+```
 
 ### All command line arguments
 
 ```commandline
 Dear Bindings: parse Dear ImGui headers, convert to C and output metadata.
-usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR]
-                        [--nopassingstructsbyvalue]
+usage: dear_bindings.py [-h] -o OUTPUT [-t TEMPLATEDIR] 
+                        [--nopassingstructsbyvalue] 
                         [--nogeneratedefaultargfunctions]
-                        [--generateunformattedfunctions] [--backend]
+                        [--generateunformattedfunctions]
+                        [--backend]
                         [--imgui-include-dir IMGUI_INCLUDE_DIR]
                         [--backend-include-dir BACKEND_INCLUDE_DIR]
-                        [--include INCLUDE] [--imconfig-path IMCONFIG_PATH]
+                        [--include INCLUDE]
+                        [--imconfig-path IMCONFIG_PATH]
                         [--emit-combined-json-metadata]
                         [--custom-namespace-prefix CUSTOM_NAMESPACE_PREFIX]
                         [--replace-prefix REPLACE_PREFIX]
+                        [--remap-list REMAP_LIST]
+                        [--remap-list-verbose]
                         src
 
 positional arguments:
-  src                   Path to source header file to process (generally
-                        imgui.h)
+  src                   Path to source header file to process (generally imgui.h)
 
 options:
   -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        Path to output files (generally dcimgui). This should
-                        have no extension, as <output>.h, <output>.cpp and
-                        <output>.json will be written.
-  -t TEMPLATEDIR, --templatedir TEMPLATEDIR
-                        Path to the implementation template directory
-                        (default: ./src/templates)
+  -o, --output OUTPUT   Path to output files (generally dcimgui). This should have no extension, as <output>.h, <output>.cpp and <output>.json
+                        will be written.
+  -t, --templatedir TEMPLATEDIR
+                        Path to the implementation template directory (default: ./src/templates)
   --nopassingstructsbyvalue
-                        Convert any by-value struct arguments to pointers (for
-                        other language bindings)
+                        Convert any by-value struct arguments to pointers (for other language bindings)
   --nogeneratedefaultargfunctions
-                        Do not generate function variants with implied default
-                        values
+                        Do not generate function variants with implied default values
   --generateunformattedfunctions
-                        Generate unformatted variants of format string
-                        supporting functions
-  --backend             Indicates that the header being processed is a backend
-                        header (experimental)
+                        Generate unformatted variants of format string supporting functions
+  --backend             Indicates that the header being processed is a backend header (experimental)
   --imgui-include-dir IMGUI_INCLUDE_DIR
-                        Path to ImGui headers to use in emitted include files.
-                        Should include a trailing slash (eg "Imgui/").
-                        (default: blank)
+                        Path to ImGui headers to use in emitted include files. Should include a trailing slash (eg "Imgui/"). (default: blank)
   --backend-include-dir BACKEND_INCLUDE_DIR
-                        Path to ImGui backend headers to use in emitted files.
-                        Should include a trailing slash (eg
-                        "Imgui/Backends/"). (default: same as --imgui-include-
-                        dir)
-  --include INCLUDE     Path to additional .h files to include (e.g. imgui.h
-                        if converting imgui_internal.h, and/or the file you
-                        set IMGUI_USER_CONFIG to, if any)
+                        Path to ImGui backend headers to use in emitted files. Should include a trailing slash (eg "Imgui/Backends/"). (default:
+                        same as --imgui-include-dir)
+  --include INCLUDE     Path to additional .h files to include (e.g. imgui.h if converting imgui_internal.h, and/or the file you set
+                        IMGUI_USER_CONFIG to, if any)
   --imconfig-path IMCONFIG_PATH
-                        Path to imconfig.h. If not specified, imconfig.h will
-                        be assumed to be in the same directory as the source
-                        file, or the directory immediately above it if
-                        --backend is specified
+                        Path to imconfig.h. If not specified, imconfig.h will be assumed to be in the same directory as the source file, or the
+                        directory immediately above it if --backend is specified
   --emit-combined-json-metadata
-                        Emit a single combined metadata JSON file instead of
-                        emitting separate metadata JSON files for each header
+                        Emit a single combined metadata JSON file instead of emitting separate metadata JSON files for each header
   --custom-namespace-prefix CUSTOM_NAMESPACE_PREFIX
-                        Specify a custom prefix to use on emitted
-                        functions/etc in place of the usual namespace-derived
-                        ImGui_
+                        Specify a custom prefix to use on emitted functions/etc in place of the usual namespace-derived ImGui_
   --replace-prefix REPLACE_PREFIX
-                        Specify a name prefix and something to replace it with
-                        as a pair of arguments of the form <old prefix>=<new
-                        prefix>. For example, "--replace-prefix ImFont_=if
-                        will" result in ImFont_FindGlyph() becoming
-                        ifFontGlyph() (and all other ImFont_ names following
-                        suit)
+                        Specify a name prefix and something to replace it with as a pair of arguments of the form <old prefix>=<new prefix>. For
+                        example, "--replace-prefix ImFont_=if will" result in ImFont_FindGlyph() becoming ifFontGlyph() (and all other ImFont_
+                        names following suit)
+  --remap-list REMAP_LIST
+                        Specify a JSON file containing remapping name regular expressions to be used.The JSON file should contain a single map
+                        with search terms as the keys and replacmentsas the values. Python re.sub() is used for evaluation and replacement - see
+                        Python documentation for the full specification. Use --remap-list-verbose to help with debugginglists for this feature.
+  --remap-list-verbose  Print verbose output for --remap-list remapping (for debugging purposes)
 
 Result code 0 is returned on success, 1 on conversion failure and 2 on
 parameter errors

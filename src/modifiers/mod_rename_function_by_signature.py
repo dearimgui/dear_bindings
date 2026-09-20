@@ -9,3 +9,4 @@ def apply(dom_root, old_name, argument_name, new_name):
             for arg in function.arguments:
                 if arg.name == argument_name:
                     function.name = new_name
+                    return  # Stop processing once we've found one instance

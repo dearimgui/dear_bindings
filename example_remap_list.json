@@ -1,0 +1,5 @@
+{
+  "ImFontAtlas_": "FontyMcFontFace_",
+  "TexMin(.*)": "Texture\\1Min",
+  "TexMax(.*)": "Texture\\1Max"
+}

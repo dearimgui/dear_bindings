@@ -15,7 +15,7 @@ CC=gcc
 UNAME_S := $(shell uname -s)
 
 CPPFLAGS=-I$(GENERATEDDIR) -I$(IMGUIDIR) -I$(GENERATEDBACKENDSDIR) -I$(BACKENDSDIR) $(SDLCFLAGS) -std=c++20
-CFLAGS=-I$(GENERATEDDIR) -I$(IMGUIDIR) -I$(GENERATEDBACKENDSDIR) -I$(BACKENDSDIR) $(SDLCFLAGS)
+CFLAGS=-I$(GENERATEDDIR) -I$(IMGUIDIR) -I$(GENERATEDBACKENDSDIR) -I$(BACKENDSDIR) $(SDLCFLAGS) 
 LIBS=$(SDLLINKFLAGS)
 
 # OSX and Linux need different mechanisms to link OpenGL
@@ -49,8 +49,8 @@ directories:
 	@mkdir -p $(OBJDIR)
 
 example_sdl2_opengl2: $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o $(OBJDIR)/dcimgui_impl_sdl2.o $(OBJDIR)/dcimgui_impl_opengl2.o
-	$(CC) -o example_sdl_opengl2 $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o $(OBJDIR)/dcimgui_impl_sdl2.o $(OBJDIR)/dcimgui_impl_opengl2.o -lstdc++ -lm $(LIBS)
+	$(CC) -o example_sdl2_opengl2 $(OBJDIR)/main.o $(OBJDIR)/imgui_impl_opengl2.o $(OBJDIR)/imgui_impl_sdl2.o $(OBJDIR)/imgui.o $(OBJDIR)/imgui_demo.o $(OBJDIR)/imgui_draw.o $(OBJDIR)/imgui_tables.o $(OBJDIR)/imgui_widgets.o $(OBJDIR)/dcimgui.o $(OBJDIR)/dcimgui_impl_sdl2.o $(OBJDIR)/dcimgui_impl_opengl2.o -lstdc++ -lm $(LIBS)
 
 clean:
 	rm -rf $(OBJDIR)
-	rm example_sdl_opengl2
+	rm example_sdl2_opengl2

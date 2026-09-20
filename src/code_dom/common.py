@@ -20,6 +20,7 @@ class WriteContext:
         self.for_backend = False  # Are we outputting backend code?
         self.suppress_newlines = False  # Do we want to remove all newlines from the output?
         self.suppress_indent = False  # Do we want to skip adding indent? (set automatically by write_c_line())
+        self.include_function_pointer_names = True  # Do we want to include the name component of function pointers?
 
 
 # Collapse a list of tokens back into a C-style string, attempting to be reasonably intelligent and/or aesthetic

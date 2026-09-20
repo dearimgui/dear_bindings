@@ -38,7 +38,7 @@ def apply(dom_root,
             if arg.default_value_tokens is not None:
                 num_args_with_defaults += 1
             else:
-                if (not arg.is_varargs) and (arg.arg_type.to_c_string() == 'ImStr'):
+                if (not arg.is_varargs) and (arg.arg_type.to_c_string() == 'ImStrv'):
                     has_non_defaulted_imstr_args = True
 
         if (num_args == 0) or (num_args_with_defaults == 0):

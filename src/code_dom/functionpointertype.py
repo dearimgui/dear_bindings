@@ -10,6 +10,7 @@ class DOMFunctionPointerType(code_dom.element.DOMElement):
         self.return_type = None
         self.arguments = []
         self.is_cdecl = False
+        self.use_pointer_cast_conversion = False  # Should the function stub generator use a pointer-based cast?
 
     # Parse tokens from the token stream given
     @staticmethod
@@ -110,7 +111,10 @@ class DOMFunctionPointerType(code_dom.element.DOMElement):
 
     def to_c_string(self, context=WriteContext()):
         cdecl_statement = " IMGUI_CDECL " if self.is_cdecl else ""
-        result = self.return_type.to_c_string(context) + " (*" + cdecl_statement + str(self.name) + ")("
+
+        name_to_use = str(self.name) if context.include_function_pointer_names else ""
+
+        result = self.return_type.to_c_string(context) + " (*" + cdecl_statement + name_to_use + ")("
         if len(self.arguments) > 0:
             first_arg = True
             for arg in self.arguments:

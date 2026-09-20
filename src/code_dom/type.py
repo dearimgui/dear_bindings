@@ -126,6 +126,22 @@ class DOMType(code_dom.element.DOMElement):
                 return True
         return False
 
+    # Returns true if the declaration contains an explicit structure type prefix (i.e. "struct" or "class")
+    # (very conservative - checks the entire type for struct/class references)
+    def has_structure_type_prefix(self):
+        for tok in self.tokens:
+            if (tok.type == 'STRUCT') or (tok.type == 'CLASS'):
+                return True
+        return False
+
+    # Remove any structure type prefixes that appear _anywhere_ in this type
+    def remove_structure_type_prefix(self):
+        new_tokens = []
+        for tok in self.tokens:
+            if (tok.type != 'STRUCT') and (tok.type != 'CLASS'):
+                new_tokens.append(tok)
+        self.tokens = new_tokens
+
     # Gets the "primary" type name involved (i.e. without any prefixes or suffixes)
     # This is mostly useful for trying to construct overload disambiguation suffixes
     def get_primary_type_name(self):

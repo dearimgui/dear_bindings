@@ -1,3 +1,24 @@
+--- v0.22
+
+* Fixed many issues with the ImGui string_view branch (#125): 
+  * Renamed "ImStr" to "ImStrv" to match the main ImGui code
+  * Removed obsolete combo/list box functions as they have variants tha clash with the new ones (POTENTIALLY BREAKING CHANGE)
+  * Excluded functions that already have char* helpers from ImStrv helper generation
+  * Made binding code that calls overrides with default arguments explicitly specify those as there is now a case 
+    where that causes ambiguity (specifically RenderText())
+  * Fixed function pointer casts in the binding code trying to include the function pointer type name in the cast
+  * Added support for parsing function declarations that use IM_FMTARGS/IM_FMTLIST before the function name
+  * Fixed binding code trying to cast nullptr using reinterpret_cast
+  * Fixed binding code trying to convert an empty ImStrv() default literal to char* using the dynamic conversion helper
+* Added the DEAR_BINDINGS_VERSION and DEAR_BINDINGS_VERSION_STRING #defines giving Dear Bindings version information (#123)
+* Added the DearBindings_GetVersion() and DearBindings_GetVersionStr() functions for runtime version detection from bindings
+  that link the API directly (#123)
+* Removed stray "struct" specifiers on function arguments that caused compile errors for certain backends
+* Fixed the makefile for example_null not linking dcimgui_internal
+* Fixed the makefile for example_sdl2_opengl2 mistakenly naming the executable example_sdl_opengl2
+* Added --remap-list, which allows passing a JSON file containing arbitary name remapping patterns in regexp format (#124)
+* Improved error reporting when function names cannot be disambiguated successfully
+
 --- v0.21
 
 * Added support for parsing function deletion (#120)

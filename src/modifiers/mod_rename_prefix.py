@@ -10,3 +10,11 @@ def apply(dom_root, prefixes_map):
             for old_prefix in prefixes_map:
                 if (element.name is not None) and element.name.startswith(old_prefix):
                     element.name = prefixes_map[old_prefix] + element.name[len(old_prefix):]
+        if hasattr(element, 'names'):
+            new_names = []
+            for name in element.names:
+                for old_prefix in prefixes_map:
+                    if (name is not None) and name.startswith(old_prefix):
+                        name = prefixes_map[old_prefix] + name[len(old_prefix):]
+                new_names.append(name)
+            element.names = new_names

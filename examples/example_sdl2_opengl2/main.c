@@ -12,6 +12,7 @@
 // See imgui_impl_sdl2.cpp for details.
 
 #include "dcimgui.h"
+#include "dcimgui_internal.h"
 #include "dcimgui_impl_sdl2.h"
 #include "dcimgui_impl_opengl2.h"
 #include <stdio.h>
@@ -147,6 +148,11 @@ int main(int argc, char** argv)
                 show_another_window = false;
             ImGui_End();
         }
+
+        // Some version information from Dear Bindings
+        ImGui_Begin("Dear Bindings", NULL, ImGuiWindowFlags_None);
+        ImGui_Text("Bindings were generated with Dear Bindings v%s (%d)", DearBindings_GetVersion(), DearBindings_GetVersionNumber());
+        ImGui_End();
 
         // Rendering
         ImGui_Render();

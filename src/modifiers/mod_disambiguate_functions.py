@@ -30,7 +30,9 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore, functions_to_rename
         if len(functions) < 2:
             continue  # No collision
 
-        if functions[0].name in functions_to_ignore:
+        original_name = functions[0].name
+
+        if original_name in functions_to_ignore:
             continue
 
         if len(functions) == 2:
@@ -166,7 +168,7 @@ def apply(dom_root, name_suffix_remaps, functions_to_ignore, functions_to_rename
 
         for function in functions:
             if function.name in new_names:
-                print("Unresolved collision between these functions:")
+                print(f"Unresolved collision between these functions (name {function.name} reused, original name {original_name}):")
                 for print_function in functions:
                     print(print_function.name + " : " + str(print_function))
                 raise Exception("Unresolved function name collision")

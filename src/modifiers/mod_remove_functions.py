@@ -3,8 +3,10 @@ from src import utils
 
 
 # This modifier removes functions with the (fully-qualified) names specified
-# Optionally removal can be limited to only functions within a specified preprocessor conditional expression
-def apply(dom_root, function_names, preprocessor_conditional_expression=None):
+# Optionally removal can be limited to only functions within a specified preprocessor conditional expression,
+# or that contain an argument that matches one of the names given
+def apply(dom_root, function_names, preprocessor_conditional_expression=None,
+          argument_names=None):
     for function in dom_root.list_all_children_of_type(code_dom.DOMFunctionDeclaration):
         if function.get_fully_qualified_name(return_fqn_even_for_member_functions=True) in function_names:
             if preprocessor_conditional_expression is not None:
@@ -13,6 +15,15 @@ def apply(dom_root, function_names, preprocessor_conditional_expression=None):
                     in_else = utils.is_in_else_clause(function, conditional)
                     if (conditional.get_expression() == preprocessor_conditional_expression) and \
                             not (conditional.is_negated ^ in_else):
+                        do_not_remove = False
+                        break
+                if do_not_remove:
+                    continue
+
+            if argument_names is not None:
+                do_not_remove = True
+                for arg in function.arguments:
+                    if arg.name in argument_names:
                         do_not_remove = False
                         break
                 if do_not_remove:

@@ -18,19 +18,24 @@ def generate_field_copies(file, indent, known_by_value_structs, struct, prefix, 
                                       prefix + name + ".",
                                       to_cpp)
         else:
+            context = WriteContext()
+            context.include_function_pointer_names = False  # We don't want function pointer names in casts
+
             for name in field.names:
-                if field.field_type.is_pointer():
+                # Special case for "const char*" here as that does not need a cast even though it's a pointer
+                if (field.field_type.is_pointer()) and (field.field_type.to_c_string() != 'const char*'):
+
                     # Pointer-type fields need casting
                     if to_cpp:
-                        cast_type = "::" + field.field_type.to_c_string()
+                        cast_type = "::" + field.field_type.to_c_string(context)
                     else:
-                        cast_type = "cimgui::" + field.field_type.to_c_string()
+                        cast_type = "cimgui::" + field.field_type.to_c_string(context)
 
-                    write_c_line(file, indent, WriteContext(),
+                    write_c_line(file, indent, context,
                                  "dest." + prefix + name + " = reinterpret_cast<" + cast_type + ">(src." +
                                  prefix + name + ");")
                 else:
-                    write_c_line(file, indent, WriteContext(), "dest." + prefix + name + " = src." + prefix + name +
+                    write_c_line(file, indent, context, "dest." + prefix + name + " = src." + prefix + name +
                                  ";")
 
 
