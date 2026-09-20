@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.22"
-version_number = 22
+version = "0.23"
+version_number = 23
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)

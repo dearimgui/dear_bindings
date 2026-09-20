@@ -335,12 +335,17 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
 
                 default_value = arg.get_default_value()
 
-                if default_value == "ImStrv()":
+                if default_value.startswith("ImVec"):
+                    # Special-case - ImVec() constants need to be correctly pushed into the main ImGui C++ namespace
+                    # Should probably figure out a more generic way to handle this
+                    default_value = "::" + default_value
+                    thunk_call += default_value  # We go straight to the C++ representation so we don't need casting
+                elif default_value == "ImStrv()":
                     # Ultra-special case - don't try to convert ImStrv() default values normally, just replace them
                     # with a standard empty C string
                     thunk_call += "\"\""
                 else:
-                    thunk_call += cast_prefix + dereferences + arg.get_default_value() + cast_suffix
+                    thunk_call += cast_prefix + dereferences + default_value + cast_suffix
             elif arg.is_varargs:
                 thunk_call += "args"  # Turn ... into our expanded varargs list
             else:

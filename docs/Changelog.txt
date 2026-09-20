@@ -1,3 +1,7 @@
+--- v0.23
+
+* Fixed a bug where some compilers failed to find the right constructor for ImVec default values
+
 --- v0.22
 
 * Fixed many issues with the ImGui string_view branch (#125): 
