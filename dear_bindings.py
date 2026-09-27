@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.23"
-version_number = 23
+version = "0.24"
+version_number = 24
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
@@ -721,7 +721,10 @@ def convert_header(
         "IMGUI_VERSION"
     ], "DEAR_BINDINGS_INTERNAL_GLUE_CODE")
 
-    mod_forward_declare_structs.apply(dom_root)
+    # The forward declaration for ImGuiTextFilterItem appears after it is used in an ImVector<>, so we need to shuffle
+    # it up even though it itself is not a full declaration (and thus normally skipped)
+    mod_forward_declare_structs.apply(dom_root, force_forward_declaration_names=[ "ImGuiTextFilterItem" ])
+
     mod_wrap_with_extern_c.apply(main_src_root)  # main_src_root here to avoid wrapping the config headers
     # For now we leave #pragma once intact on the assumption that modern compilers all support it, but if necessary
     # it can be replaced with a traditional #include guard by uncommenting the line below. If you find yourself needing

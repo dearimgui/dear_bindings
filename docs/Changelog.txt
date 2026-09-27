@@ -1,3 +1,7 @@
+--- v0.24
+
+* Fixed ImGuiTextFilterItem being declared after it is used in an ImVector<> expansion
+
 --- v0.23
 
 * Fixed a bug where some compilers failed to find the right constructor for ImVec default values

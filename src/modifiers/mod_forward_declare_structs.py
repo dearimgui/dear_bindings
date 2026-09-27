@@ -4,7 +4,11 @@ from src import utils
 
 # This modifier adds forward declarations for all structs to the top of the file, to avoid dependency problems
 # (that mainly occur as a result of template expansions)
-def apply(dom_root):
+# Normally structures that have existing forward delcarations are skipped, but they can be forced to be processed
+# by specifying them in force_forward_declaration_names (a list of structure type names). This is useful in the case
+# where the existing declaration appears after usage in a template like ImVector, which causes declaration order
+# problems for the generated C code
+def apply(dom_root, force_forward_declaration_names):
     forward_declarations = {}
 
     # Construct forward declarations
@@ -16,10 +20,9 @@ def apply(dom_root):
                 (struct.name is not None) and \
                 (struct.get_parent_class() is None):  # Only forward declare file-scope, non-anonymous structs
             if struct.name not in forward_declarations:
-                if struct.is_forward_declaration:
+                if (struct.is_forward_declaration) and not struct.name in force_forward_declaration_names:
                     # Struct is forward declared already in the file, so just mark it off in our list as existing
-                    # (technically this could cause problems if the existing forward declaration is too late to be
-                    # useful, but we'll deal with that if it ever happens)
+                    # (unless it was specified in force_forward_declaration_names)
                     forward_declarations[struct.name] = None
                 else:
                     if struct.name not in forward_declarations:
