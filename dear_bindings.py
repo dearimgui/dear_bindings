@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.24"
-version_number = 24
+version = "0.25"
+version_number = 25
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
@@ -81,7 +81,6 @@ def parse_single_header(src_file, context):
             if not tok:
                 break  # No more input
             print(tok)
-        return
 
     return code_dom.DOMHeaderFile.parse(context, stream, os.path.split(src_file)[1])
 
@@ -183,7 +182,8 @@ def convert_header(
                                         "ID3D11Buffer"
                                         ])
     # Remove all functions from certain types, as they're not really useful
-    mod_remove_all_functions_from_classes.apply(dom_root, ["ImVector", "ImSpan", "ImChunkStream"])
+    mod_remove_all_functions_from_classes.apply(dom_root,
+                                                ["ImVector", "ImSpan", "ImChunkStream", "ImSmallStack_"])
     # Remove all functions from ImPool, since we can't handle nested template functions yet
     mod_remove_all_functions_from_classes.apply(dom_root, ["ImPool"])
 
@@ -771,7 +771,7 @@ def convert_header(
     dom_root.validate_hierarchy()
 
     # Test code
-    # dom_root.dump()
+    #dom_root.dump()
 
     # Cases where the varargs list version of a function does not simply have a V added to the name and needs a
     # custom suffix instead

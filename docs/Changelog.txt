@@ -1,3 +1,9 @@
+--- v0.25
+
+* Fixed the behaviour of template flattening when default parameters are supplied (#127)
+* Fixed template flattening not flattening parameters inside array bounds (#127)
+* Removed functions from ImSmallStack_ to prevent them causing problems (#127)
+
 --- v0.24
 
 * Fixed ImGuiTextFilterItem being declared after it is used in an ImVector<> expansion

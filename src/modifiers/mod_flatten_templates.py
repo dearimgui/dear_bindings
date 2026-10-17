@@ -18,6 +18,7 @@ def extract_template_parameter(template_name, tokens, param_index):
             if end_index >= 0:
                 instantiation_parameter = ""
                 current_index = 0
+                found_parameter = False
                 min_token = len(tokens) + 1
                 max_token = -1
                 for k in range(i + 2, end_index):
@@ -31,8 +32,12 @@ def extract_template_parameter(template_name, tokens, param_index):
                             # Make 'const char*' format nicely
                             if k < end_index - 1 and tokens[k + 1].value != "*":
                                 instantiation_parameter += " "
+                            found_parameter = True
 
-                return instantiation_parameter.strip(), min_token, max_token
+                if found_parameter:
+                    return instantiation_parameter.strip(), min_token, max_token
+                else:
+                    return None, -1, -1
     return None, -1, -1
 
 
@@ -112,6 +117,41 @@ class TemplateInstantiationParameter:
         self.name = None  # The name of this parameter
         self.is_unresolved = False  # Is this an unresolved parameter?
 
+def get_domtype_tokens(e):
+    return e.tokens
+def set_domtype_tokens(e, value):
+    e.tokens = value
+
+def get_domfield_default_value_tokens(e):
+    return e.default_value_tokens
+def set_domfield_default_value_tokens(e, value):
+    e.default_value_tokens = value
+
+def get_domfield_array_bounds_tokens(e, index):
+    return e.array_bounds_tokens[index]
+def set_domfield_array_bounds_tokens(e, index, value):
+    e.array_bounds_tokens[index] = value
+
+# Find all the candidate elements for template parameter substitution
+# Returns a tuple containing the DOM element, and two functions that get/set the token array on an instance of that element
+def find_parameter_substitution_targets(instantiation):
+
+    results = []
+
+    for element in instantiation.list_all_children_of_type(code_dom.DOMType):
+        results.append((element, get_domtype_tokens, set_domtype_tokens))
+
+    for element in instantiation.list_all_children_of_type(code_dom.DOMFieldDeclaration):
+        for i in range(0, len(element.names)):
+            if element.is_array[i]:
+                if element.array_bounds_tokens[i] is not None:
+                    results.append((element,
+                                    lambda e, index=i: get_domfield_array_bounds_tokens(e, index),
+                                    lambda e, value, index=i: set_domfield_array_bounds_tokens(e, index, value)))
+        if element.default_value_tokens is not None:
+            results.append((element, get_domfield_default_value_tokens, set_domfield_default_value_tokens))
+
+    return results
 
 # Flattens one nesting level of templates. 
 # Returns list of template types that still have non-flattened usages.
@@ -138,6 +178,7 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
                 continue
 
             instantiation_parameters = []  # Array of TemplateInstantiationParameters
+            is_instance_of_this_template = False
 
             # This checks if the type tokens look like an instance of our template and extracts the parameter list
             if extract_template_parameter(template_name, type_element.tokens, 0)[0] is not None:
@@ -145,6 +186,7 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
                     instantiation_parameter, first_token, last_token = (
                         extract_template_parameter(template_name, type_element.tokens, i))
                     if instantiation_parameter is not None:
+                        is_instance_of_this_template = True
                         is_unresolved = False
                         for k in range(first_token, last_token):
                             if (hasattr(type_element.tokens[k], 'is_template_parameter') and
@@ -159,9 +201,18 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
 
                         instantiation_parameters.append(parameter)
 
-            # len(instantiation_parameters) will be 0 if this isn't our template, so this doubles as a check for that
-            # too
-            if len(instantiation_parameters) == num_template_parameters:
+            if is_instance_of_this_template:
+                # Insert default parameters as required
+                while len(instantiation_parameters) < num_template_parameters:
+                    source_parameter = template_parameters[len(instantiation_parameters)]
+                    if source_parameter.default_value is not None:
+                        parameter = TemplateInstantiationParameter()
+                        parameter.name = source_parameter.default_value
+                        parameter.is_unresolved = False  # Assume that defaults can never be other template parameters (for now...)
+                        instantiation_parameters.append(parameter)
+                    else:
+                        raise Exception(f"Instantiation of template {template_name} has too few parameters")
+
                 if instantiation_parameters not in instantiation_parameter_sets:
                     human_readable_param_list = ""
                     first = True
@@ -255,8 +306,10 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
 
             # Look for any template parameters in the instantiation and replace them as appropriate
 
-            for element in instantiation.list_all_children_of_type(code_dom.DOMType):
+            for (element, get_tokens_fn, set_tokens_fn) in find_parameter_substitution_targets(instantiation):
                 expanded_anything = False
+
+                unmodified_element_tokens = get_tokens_fn(element.unmodified_element)
 
                 # Look for any cases where a template parameter is used as part of _another_ template, and expand them
                 # e.g.
@@ -267,16 +320,16 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
 
                 # Look for the THING preceding the first LTRIANGLE to get the template name
                 element_type_name = None
-                for token_index, token in enumerate(element.unmodified_element.tokens):
+                for token_index, token in enumerate(unmodified_element_tokens):
                     if token.type == 'LTRIANGLE':
-                        thing_token = element.unmodified_element.tokens[token_index - 1]
+                        thing_token = unmodified_element_tokens[token_index - 1]
                         if thing_token.type == 'THING':
                             element_type_name = thing_token.value
 
                 # Check if this matches one of our parameter names
                 for j in range(0, num_template_parameters):
                     element_instantiation_parameter, first_token, last_token = (
-                        extract_template_parameter(element_type_name, element.unmodified_element.tokens, j))
+                        extract_template_parameter(element_type_name, unmodified_element_tokens, j))
 
                     if template_parameters[j].name == element_instantiation_parameter:
 
@@ -287,7 +340,7 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
 
                         # Replace the template parameter with type instance
 
-                        for tok in element.tokens:
+                        for tok in get_tokens_fn(element):
                             if tok.value == element_instantiation_parameter:
                                 tok.value = instantiation_parameters[j].name
                                 # Reset the "is unresolved template parameter" flag on the token
@@ -311,12 +364,14 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
 
                 modified_anything = False
 
-                for i in range(0, len(element.tokens)):
+                new_element_tokens = get_tokens_fn(element)
+
+                for i in range(0, len(new_element_tokens)):
                     for j in range(0, num_template_parameters):
-                        if element.tokens[i].value == template_parameters[j].name:
-                            element.tokens[i].value = instantiation_parameters[j].name
+                        if new_element_tokens[i].value == template_parameters[j].name:
+                            new_element_tokens[i].value = instantiation_parameters[j].name
                             # Reset the "is unresolved template parameter" flag on the token
-                            element.tokens[i].is_template_parameter = instantiation_parameters[j].is_unresolved
+                            new_element_tokens[i].is_template_parameter = instantiation_parameters[j].is_unresolved
                             # We've just generated an instantiation with an unresolved parameter, so we need another
                             # iteration to resolve that
                             if instantiation_parameters[j].is_unresolved:
@@ -344,36 +399,38 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
                                     .replace(template_parameters[j].name,
                                              implementation_instantiation_parameters[j])
 
-                    # Apply any custom fudges
+                    # Apply any custom fudges (only for DOMType for now)
 
-                    full_type = element.to_c_string()
+                    if isinstance(element, code_dom.DOMType):
+                        full_type = element.to_c_string()
 
-                    for fudge_key in custom_type_fudges.keys():
-                        if fudge_key in full_type:
-                            full_type = full_type.replace(fudge_key, custom_type_fudges[fudge_key])
+                        for fudge_key in custom_type_fudges.keys():
+                            if fudge_key in full_type:
+                                full_type = full_type.replace(fudge_key, custom_type_fudges[fudge_key])
 
-                            # Figure out if any of our source type had reference->pointer conversions done on it
-                            num_converted_references = 0
-                            for tok in element.tokens:
-                                if hasattr(tok, "was_reference") and tok.was_reference:
-                                    num_converted_references += 1
+                                # Figure out if any of our source type had reference->pointer conversions done on it
+                                num_converted_references = 0
+                                for tok in new_element_tokens:
+                                    if hasattr(tok, "was_reference") and tok.was_reference:
+                                        num_converted_references += 1
 
-                            # Supporting this wouldn't be horrifically difficult, but right now it's hard due to the
-                            # way we collapse all the tokens into one here. If this proves necessary then it's probably
-                            # a question of either redoing fudges to use token sequences, or adding something to
-                            # re-parse the fudged string into tokens and then map the was_reference flag across.
-                            if num_converted_references > 1:
-                                raise Exception("Fudged type has more than one converted reference - this is not "
-                                                "supported")
+                                # Supporting this wouldn't be horrifically difficult, but right now it's hard due to the
+                                # way we collapse all the tokens into one here. If this proves necessary then it's probably
+                                # a question of either redoing fudges to use token sequences, or adding something to
+                                # re-parse the fudged string into tokens and then map the was_reference flag across.
+                                if num_converted_references > 1:
+                                    raise Exception("Fudged type has more than one converted reference - this is not "
+                                                    "supported")
 
-                            element.tokens = utils.create_tokens_for_type(full_type)
+                                new_element_tokens = utils.create_tokens_for_type(full_type)
+                                set_tokens_fn(element, new_element_tokens)
 
-                            if num_converted_references > 0:
-                                element.tokens[0].was_reference = True
+                                if num_converted_references > 0:
+                                    new_element_tokens.was_reference = True
 
-                            if element.original_name_override is not None:
-                                element.original_name_override = element.original_name_override \
-                                    .replace(fudge_key, custom_type_fudges[fudge_key])
+                                if element.original_name_override is not None:
+                                    element.original_name_override = element.original_name_override \
+                                        .replace(fudge_key, custom_type_fudges[fudge_key])
 
             # Optionally insert new struct instances into the DOM at the very end to avoid problems with referencing
             # things that aren't declared yet at the point the template appears
@@ -413,8 +470,16 @@ def apply_single_iteration(dom_root, custom_type_fudges, generated_instantiation
                 for i in range(0, num_template_parameters):
                     element_instantiation_parameter, _, _ = \
                         extract_template_parameter(template_name, type_element.tokens, i)
+
+                    # If unspecified, apply default parameter value
+                    if element_instantiation_parameter is None:
+                        if template_parameters[i].default_value is not None:
+                            element_instantiation_parameter = template_parameters[i].default_value
+
+                    # Check that they match
                     if element_instantiation_parameter != instantiation_parameters[i].name:
                         all_match = False
+                        break
 
                 # Skip anything that doesn't match the parameter set for this instantiation
                 if not all_match:

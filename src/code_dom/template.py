@@ -95,12 +95,14 @@ class DOMTemplate(code_dom.element.DOMElement):
             super().__init__()
             self.is_typename = False  # Is this a typename parameter?
             self.name = None  # The name of this parameter
+            self.default_value = None
 
     # Figure out the template parameters via some dubious parsing
     # Returns a list of DOMTemplate.TemplateParameter objects
     def get_template_parameters(self):
         template_parameters = []
         next_parameter_is_typename = False
+        next_parameter_is_default_value = False
         for token in self.template_parameter_tokens:
             if token.value == 'typename':
                 next_parameter_is_typename = True
@@ -109,12 +111,19 @@ class DOMTemplate(code_dom.element.DOMElement):
             elif token.type == 'COMMA':
                 # Just ignore
                 pass
+            elif token.type == 'EQUAL':
+                next_parameter_is_default_value = True
             else:
-                # This must be a template parameter name
-                param = DOMTemplate.TemplateParameter()
-                param.is_typename = next_parameter_is_typename
-                param.name = token.value
-                template_parameters.append(param)
+                if next_parameter_is_default_value:
+                    # This is a default value for the parameter we just read
+                    template_parameters[-1].default_value = token.value
+                else:
+                    # This must be a template parameter name
+                    param = DOMTemplate.TemplateParameter()
+                    param.is_typename = next_parameter_is_typename
+                    param.name = token.value
+                    template_parameters.append(param)
+                next_parameter_is_default_value = False
         return template_parameters
 
     # Write this element out as C code
