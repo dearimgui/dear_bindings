@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.25"
-version_number = 25
+version = "0.26"
+version_number = 26
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
@@ -407,23 +407,27 @@ def convert_header(
     mod_rename_function_by_signature.apply(dom_root,
                                            'ImGui_Combo',  # Function name
                                            'getter',  # Argument to look for to identify this function
-                                           'ImGui_ComboObsolete'  # New name
+                                           'ImGui_ComboObsolete',  # New name
+                                           only_if_multiple=True
                                            )
     mod_rename_function_by_signature.apply(dom_root,
                                            'ImGui_ListBox',  # Function name
                                            'getter',  # Argument to look for to identify this function
-                                           'ImGui_ListBoxObsolete'  # New name
+                                           'ImGui_ListBoxObsolete',  # New name
+                                           only_if_multiple=True
                                            )
     # ...and the same thing happens with combo boxes/list boxes, but only in the ImStr helpers
     mod_rename_function_by_signature.apply(dom_root,
                                            'ImGui_ComboImStrv',  # Function name
                                            'getter',  # Argument to look for to identify this function
-                                           'ImGui_ComboImStrObsolete'  # New name
+                                           'ImGui_ComboImStrObsolete',  # New name
+                                           only_if_multiple=True
                                            )
     mod_rename_function_by_signature.apply(dom_root,
                                            'ImGui_ListBoxImStrv',  # Function name
                                            'getter',  # Argument to look for to identify this function
-                                           'ImGui_ListBoxImStrObsolete'  # New name
+                                           'ImGui_ListBoxImStrObsolete',  # New name
+                                           only_if_multiple=True
                                            )
 
     # The DirectX backends declare some DirectX types that need to not have _t appended to their typedef names

@@ -1,3 +1,9 @@
+--- v0.26
+
+* Fixed a bug where a function override for the string_view branch caused combo box/list box methods with
+  callbacks to be incorrectly given the suffix "Obsolete" instead of "Callback". (#128)
+* Fixed imgui_internal.h not compiling correctly in the string_view branch due to lack of a conversion helper.
+
 --- v0.25
 
 * Fixed the behaviour of template flattening when default parameters are supplied (#127)

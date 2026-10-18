@@ -21,3 +21,16 @@ extern "C"
 }
 }
 #undef DEAR_BINDINGS_INTERNAL_GLUE_CODE
+
+#if defined(IMGUI_HAS_IMSTR)
+
+// Internal helper to convert char* directly to C++-style ImStrv
+static inline ::ImStrv MarshalToCPP_ImStrv_FromCharStr(const char* b)
+{
+    ::ImStrv str;
+    str.Begin = b;
+    str.End = b ? b + strlen(b) : NULL;
+    return str;
+}
+
+#endif // defined(IMGUI_HAS_IMSTR)
