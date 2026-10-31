@@ -1,3 +1,7 @@
+--- v0.27
+
+* Renamed "ImGui_RenderArrowEx" to "ImGui_RenderArrowWithMoreParams" to avoid a name clash
+
 --- v0.26
 
 * Fixed a bug where a function override for the string_view branch caused combo box/list box methods with

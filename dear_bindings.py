@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.26"
-version_number = 26
+version = "0.27"
+version_number = 27
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
@@ -467,6 +467,7 @@ def convert_header(
             'ImGui_ImageButtonEx': 'ImGui_ImageButtonWithFlags',
             'ImGui_InputTextEx': 'ImGui_InputTextWithHintAndSize',
             'ImGui_RenderTextClippedEx': 'ImGui_RenderTextClippedWithDrawList',
+            'ImGui_RenderArrowEx': 'ImGui_RenderArrowWithMoreParams'
         })
 
     mod_disambiguate_functions.apply(dom_root,
