@@ -15,6 +15,7 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
         self.is_const = False
         self.is_constexpr = False
         self.is_static = False
+        self.is_extern = False
         self.is_inline = False
         self.is_operator = False
         self.is_constructor = False
@@ -65,6 +66,9 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             elif prefix_token.value == 'static':
                 stream.get_token()  # Eat token
                 dom_element.is_static = True
+            elif prefix_token.value == 'extern':
+                stream.get_token()  # Eat token
+                dom_element.is_extern = True
             elif prefix_token.value == 'constexpr':
                 stream.get_token()  # Eat token
                 dom_element.is_constexpr = True
@@ -348,6 +352,9 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
     # This is a separate function largely because mod_align_function_names needs it
     def get_prefixes_and_return_type(self, context=WriteContext()):
         declaration = ""
+        # Emit extern if required, but not "extern CIMGUI_API" in C as that expands to "extern extern \"C\""
+        if self.is_extern and (not context.for_implementation) and (not self.is_imgui_api or not context.for_c):
+            declaration += "extern "
         if self.is_imgui_api:
             if context.for_backend:
                 if context.for_c:
@@ -431,6 +438,8 @@ class DOMFunctionDeclaration(code_dom.element.DOMElement):
             result += " Inline"
         if self.is_static:
             result += " Static"
+        if self.is_extern:
+            result += " Extern"
         if self.is_imgui_api:
             result += " IMGUI_API"
         if self.im_fmtargs is not None:
