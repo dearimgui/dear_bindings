@@ -177,6 +177,31 @@ def generate(dom_root, file, imgui_custom_types, indent=0, custom_varargs_list_s
         write_c_line(file, indent, write_context, "{")
         indent += 1
 
+        # Special-case ImGuiTestEngineHook_Log which is variadic but has no V variant
+        if original_function.name == "ImGuiTestEngineHook_Log":
+            write_c_line(file, indent, write_context, "va_list args;")
+            write_c_line(file, indent, write_context, "va_start(args, fmt);")
+            write_c_line(file, indent, write_context, "va_list args_copy;")
+            write_c_line(file, indent, write_context, "va_copy(args_copy, args);")
+            write_c_line(file, indent, write_context, "int buffer_size = vsnprintf(NULL, 0, fmt, args_copy);")
+            write_c_line(file, indent, write_context, "va_end(args_copy);")
+            write_c_line(file, indent, write_context, "if (buffer_size >= 0)")
+            write_c_line(file, indent, write_context, "{")
+            write_c_line(file, indent + 1, write_context, "char* buffer = new char[buffer_size + 1];")
+            write_c_line(file, indent + 1, write_context, "vsnprintf(buffer, buffer_size + 1, fmt, args);")
+            write_c_line(file, indent + 1, write_context, "::ImGuiTestEngineHook_Log(reinterpret_cast<::ImGuiContext*>(ctx), \"%s\", buffer);")
+            write_c_line(file, indent + 1, write_context, "delete[] buffer;")
+            write_c_line(file, indent, write_context, "}")
+            write_c_line(file, indent, write_context, "va_end(args);")
+            indent -= 1
+            write_c_line(file, indent, write_context, "}")
+
+            # Remove temporary argument names
+            for arg_index in args_with_temp_names:
+                function.arguments[arg_index].name = None
+
+            continue
+
         # Write varargs decoding preamble
 
         if uses_varargs:
