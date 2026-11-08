@@ -152,9 +152,10 @@ def convert_header(
         # Backends need to reference dcimgui.h, not imgui.h
         mod_change_includes.apply(dom_root, {"\"imgui.h\"": "\"dcimgui.h\""})
 
-        # Backends need a forward-declaration for ImDrawData so that the code generator understands
-        # that it is an ImGui type and needs conversion
-        mod_add_forward_declarations.apply(main_src_root, ["struct ImDrawData;"])
+        # Backends need a forward-declaration for ImDrawData and ImTextureData so that the code
+        # generator understands that it is an ImGui type and needs conversion
+        mod_add_forward_declarations.apply(main_src_root, ["struct ImDrawData;",
+                                                           "struct ImTextureData;"])
 
         # Look for "ImGui_ImplWin32_WndProcHandler" and rewrite the #if on it (this is a bit of a hack)
         mod_rewrite_containing_preprocessor_conditional.apply(dom_root, "ImGui_ImplWin32_WndProcHandler",
