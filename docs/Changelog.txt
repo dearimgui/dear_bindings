@@ -1,3 +1,8 @@
+--- v0.28
+
+* Initial support for bindings for the Test Engine - see tests/test_engine for a simple test of this (thanks to
+  candavere for fixing this up)
+
 --- v0.27
 
 * Renamed "ImGui_RenderArrowEx" to "ImGui_RenderArrowWithMoreParams" to avoid a name clash

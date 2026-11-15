@@ -24,3 +24,4 @@ examples/example_sdl3_sdlgpu3/x64
 *.a
 examples/example_sdl2_opengl2/example_sdl2_opengl2
 examples/example_sdl3_sdlgpu3/example_sdl3_sdlgpu3
+tests/test_engine/log_forward_test
