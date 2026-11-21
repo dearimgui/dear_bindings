@@ -8,7 +8,7 @@ from src import utils
 def apply(dom_root, names, required_defines=None):
     for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
         if define.name in names:
-            if required_defines != None:
+            if required_defines is not None:
                 if isinstance(define.parent , code_dom.DOMPreprocessorIf):
                     for required_define in required_defines:
                         check = utils.create_preprocessor_if(required_define)

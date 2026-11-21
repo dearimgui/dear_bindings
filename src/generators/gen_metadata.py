@@ -503,11 +503,6 @@ def generate(dom_root, file):
 
     for define in dom_root.list_all_children_of_type(code_dom.DOMDefine):
         if not define.exclude_from_metadata:
-
-            # Don't include function-style defines
-            if "(" in define.name:
-                continue
-
             defines_root.append(emit_define(define))
 
     # Emit enums

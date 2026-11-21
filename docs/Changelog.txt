@@ -1,3 +1,7 @@
+--- v0.29
+
+* Re-introduced the `IM_COL32` macro and associated colour defines to the JSON metadata (#131)
+
 --- v0.28
 
 * Initial support for bindings for the Test Engine - see tests/test_engine for a simple test of this (thanks to

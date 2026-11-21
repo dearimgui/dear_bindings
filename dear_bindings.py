@@ -1,7 +1,7 @@
 # Dear Bindings
 # Version:
-version = "0.28"
-version_number = 28
+version = "0.29"
+version_number = 29
 
 # Generates C-language headers for Dear ImGui
 # Developed by Ben Carter (e-mail: ben AT shironekolabs.com, github: @ShironekoBen)
@@ -747,10 +747,12 @@ def convert_header(
     # Exclude some defines that aren't really useful from the metadata
     mod_exclude_defines_from_metadata.apply(dom_root, [
         "CIMGUI_IMPL_API",
-        "IM_COL32_WHITE",
-        "IM_COL32_BLACK",
-        "IM_COL32_BLACK_TRANS",
         "ImDrawCallback_ResetRenderState"
+    ])
+
+    # Exclude all function-style defines from the metadata, except those listed here
+    mod_exclude_function_style_defines_from_metadata.apply(dom_root, [
+        "IM_COL32(R,G,B,A)"  # Keep this as it is referenced (indirectly) from default values
     ])
 
     mod_replace_typedef_with_opaque_buffer.apply(dom_root, [
